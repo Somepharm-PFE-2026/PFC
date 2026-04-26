@@ -61,6 +61,8 @@ public class HelpdeskService {
         user.setMotDePasse(passwordEncoder.encode(rawPassword));
         user.setMustChangePassword(true);
         user.setStatutCompte("ACTIF");
+        user.setPasswordStatus("TEMPORAIRE"); // 🔓 Unlock the status for SuperAdmin follow-up
+        user.setTemporaryPassword(rawPassword); // Also sync to user entity for consistency
         utilisateurRepository.save(user);
 
         // 2. Update ticket
@@ -135,9 +137,21 @@ public class HelpdeskService {
         Utilisateur user = utilisateurRepository.findByMatricule(matricule)
                 .orElseThrow(() -> new RuntimeException("Matricule inconnu"));
 
+        // 🛑 PREVENT DUPLICATES: Check if an active ticket already exists
+        boolean hasActiveTicket = ticketRepository.findByUtilisateurOrderBySubmittedAtDesc(user).stream()
+                .anyMatch(t -> t.getStatus() != PasswordResetTicket.TicketStatus.SÉCURISÉ);
+
+        if (hasActiveTicket) {
+            throw new RuntimeException("Une demande de réinitialisation est déjà en cours pour ce matricule.");
+        }
+
         PasswordResetTicket ticket = new PasswordResetTicket();
         ticket.setUtilisateur(user);
         ticketRepository.save(ticket);
+        
+        // Sync user flag
+        user.setPasswordResetRequested(true);
+        utilisateurRepository.save(user);
     }
 
     public String getActiveTicketStatus(String matricule) {
@@ -145,9 +159,9 @@ public class HelpdeskService {
                 .orElse(null);
         if (user == null) return null;
         
-        // 🛡️ AUTO-HEAL: If the user has already changed their password, 
-        // any remaining reset tickets should be marked as SECURED.
-        if (Boolean.FALSE.equals(user.getMustChangePassword())) {
+        // 🛡️ AUTO-HEAL: Only clean up if the user has changed their password 
+        // AND they are NOT currently requesting a new one.
+        if (Boolean.FALSE.equals(user.getMustChangePassword()) && !Boolean.TRUE.equals(user.getPasswordResetRequested())) {
             completeResetTickets(matricule);
             return null;
         }

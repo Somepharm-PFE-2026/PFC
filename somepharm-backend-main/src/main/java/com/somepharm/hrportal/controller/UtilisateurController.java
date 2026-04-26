@@ -213,6 +213,7 @@ public class UtilisateurController {
         Utilisateur user = utilisateurRepository.findByMatricule(matricule)
                 .orElseThrow(() -> new RuntimeException("Employé introuvable"));
 
+        // Allow reset if it was requested, even if status is SECURED
         String tempPassword = "Reset" + (int) (Math.random() * 9000 + 1000) + "!";
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
@@ -246,8 +247,8 @@ public class UtilisateurController {
                     .body(Map.of("message", "Action refusée : Le compte " + matricule + " est déjà " + user.getStatutCompte() + "."));
         }
 
-        // Security Check 2: Must still have a temporary password
-        if (!"TEMPORAIRE".equals(user.getPasswordStatus())) {
+        // Security Check 2: Must still have a temporary password (unless reset is requested)
+        if (!"TEMPORAIRE".equals(user.getPasswordStatus()) && !Boolean.TRUE.equals(user.getPasswordResetRequested())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Sécurité : Ce collaborateur a déjà personnalisé son accès. Utilisez 'Régénérer MDP' si besoin."));
         }
@@ -264,12 +265,14 @@ public class UtilisateurController {
     @PutMapping("/me/request-reset")
     public ResponseEntity<?> requestReset() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Utilisateur user = utilisateurRepository.findByMatricule(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Session invalide"));
-
-        user.setPasswordResetRequested(true);
-        utilisateurRepository.save(user);
-        return ResponseEntity.ok().body(Collections.singletonMap("message", "Demande de réinitialisation envoyée au Super Admin."));
+        
+        try {
+            // 🎫 Idempotent creation (handles check + flag + ticket)
+            helpdeskService.createTicket(auth.getName());
+            return ResponseEntity.ok().body(Collections.singletonMap("message", "Demande de réinitialisation envoyée au Super Admin."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
+        }
     }
 
     @PutMapping("/me/change-password")

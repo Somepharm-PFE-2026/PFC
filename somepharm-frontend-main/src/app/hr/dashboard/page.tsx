@@ -8,6 +8,11 @@ import NotificationCenter from "../../components/NotificationCenter";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+// Internal Icon Fix - Defined before use to avoid hoisting issues
+const LayoutDashboard = ({ size }: { size: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+);
+
 const StatCard = ({ title, value, label, icon: Icon, color, trend }: any) => (
   <div className={`bg-white p-8 rounded-[3rem] shadow-sm border-b-8 ${color} hover:-translate-y-1 transition-all duration-300`}>
     <div className="flex justify-between items-center mb-4">
@@ -55,8 +60,8 @@ export default function HRDashboard() {
              <LayoutDashboard size={24} />
           </div>
           <div>
-            <h1 className="text-4xl font-black text-white italic uppercase tracking-tighter">Command Center</h1>
-            <p className="text-gray-500 font-bold uppercase text-[10px] tracking-widest mt-1">Supervision SomePharm — {stats.dateDuJour}</p>
+            <h1 className="text-4xl font-black text-white italic uppercase tracking-tighter leading-none">Command Center</h1>
+            <p className="text-gray-500 font-bold uppercase text-[10px] tracking-widest mt-2">Supervision SomePharm — {stats.dateDuJour || new Date().toLocaleDateString()}</p>
           </div>
         </div>
         <NotificationCenter />
@@ -91,7 +96,7 @@ export default function HRDashboard() {
                 <div className="bg-blue-50 p-4 rounded-2xl text-blue-600"><Zap size={24} /></div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Flux RH</span>
              </div>
-             <p className="text-4xl font-black text-gray-900">{adminData.globalPendingCount}</p>
+             <p className="text-4xl font-black text-gray-900">{adminData.globalPendingCount || 0}</p>
              <p className="text-gray-400 text-[10px] font-bold uppercase mt-1 tracking-wider text-center">En attente de signature</p>
           </div>
         </div>
@@ -166,7 +171,3 @@ export default function HRDashboard() {
   );
 }
 
-// Internal Icon Fix
-const LayoutDashboard = ({ size }: { size: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-);

@@ -5,7 +5,8 @@ import {
     Users, Clock, AlertCircle, Terminal, 
     ArrowUpRight, Wifi, Cpu, HardDrive, RefreshCw,
     ShieldAlert, Globe, Radio, Power, Mail, 
-    Key, Trash2, Save, Send, CheckCircle2, XCircle
+    Key, Trash2, Save, Send, CheckCircle2, XCircle,
+    Check, Copy
 } from "lucide-react";
 
 export default function AdminCockpit() {
@@ -17,6 +18,7 @@ export default function AdminCockpit() {
     const [tempPassword, setTempPassword] = useState<string | null>(null);
     const [backupResult, setBackupResult] = useState<any>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         fetchCockpitData();
@@ -74,9 +76,8 @@ export default function AdminCockpit() {
             }
             if (action === "regenerate" || action === "resend") {
                 setTempPassword(result.temporary_password);
-                if (action === "resend") {
-                    await triggerEmailSend(result);
-                }
+                // Trigger the email API for both cases
+                await triggerEmailSend(result);
             }
             fetchCockpitData();
             if (action === "purge") setShowModal(null);
@@ -478,9 +479,27 @@ export default function AdminCockpit() {
                                     )}
 
                                     {tempPassword && (
-                                        <div className="p-10 bg-red-50 border border-red-100 rounded-[3rem] animate-in slide-in-from-top-4">
-                                            <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-4 italic">Nouveau Mot de Passe Temporaire :</p>
-                                            <p className="text-5xl font-black text-gray-900 tracking-tighter italic">{tempPassword}</p>
+                                        <div className="p-10 bg-red-50 border border-red-100 rounded-[3rem] animate-in slide-in-from-top-4 relative group">
+                                            <div className="flex justify-between items-start">
+                                                <div className="space-y-4">
+                                                    <p className="text-[10px] font-black text-red-600 uppercase tracking-widest italic">Nouveau Mot de Passe Temporaire :</p>
+                                                    <p className="text-5xl font-black text-gray-900 tracking-tighter italic">{tempPassword}</p>
+                                                </div>
+                                                <button 
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(tempPassword);
+                                                        setCopied(true);
+                                                        setTimeout(() => setCopied(false), 2000);
+                                                    }}
+                                                    className="w-12 h-12 bg-white border border-red-100 rounded-2xl flex items-center justify-center text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm active:scale-90"
+                                                >
+                                                    {copied ? <Check size={18} /> : <Copy size={18} />}
+                                                </button>
+                                            </div>
+                                            <div className="mt-8 pt-8 border-t border-red-100/50 flex items-center gap-4">
+                                                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                                <p className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.2em] italic">Email de notification envoyé avec succès 📧</p>
+                                            </div>
                                             <p className="mt-6 text-[10px] font-bold text-red-400 uppercase leading-relaxed italic">
                                                 Ce mot de passe est affiché en clair uniquement pour vous. <br />
                                                 Le cycle "Force Change Password" a été réinitialisé.
