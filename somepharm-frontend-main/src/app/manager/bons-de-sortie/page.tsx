@@ -78,7 +78,7 @@ export default function BonDeSortiePage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}` 
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ ...payload, type: "DOCUMENT" })
       });
       
       if (res.ok) {

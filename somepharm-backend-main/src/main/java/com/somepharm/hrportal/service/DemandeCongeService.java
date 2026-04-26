@@ -86,6 +86,12 @@ public class DemandeCongeService {
         demande.setCommentaireAction(commentaire);
 
         String author = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        
+        // 🚀 SELF-APPROVAL PROTECTION: You cannot approve or reject your own request
+        if (demande.getDemandeur().getMatricule().equals(author)) {
+            throw new RuntimeException("Action interdite : vous ne pouvez pas valider ou refuser votre propre demande.");
+        }
+
         auditService.logAction("MUTATION", "Changement de statut pour la demande #" + id + " vers " + nouveauStatut, author);
 
         // --- NEW: Trigger Notification for the employee ---

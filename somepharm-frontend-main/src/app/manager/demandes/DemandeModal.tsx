@@ -85,7 +85,7 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ ...payload, type: "CONGE" }),
         });
 
         if (res.ok) {
@@ -113,7 +113,7 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ ...payload, type: "DOCUMENT" }),
         });
 
         if (res.ok) {

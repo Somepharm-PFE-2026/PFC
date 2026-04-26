@@ -321,7 +321,21 @@ export default function AdminCollaborateursPage() {
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Département</label>
-                  <select required value={newEmployeeForm.departement} onChange={(e) => setNewEmployeeForm({...newEmployeeForm, departement: e.target.value, managerId: "null", poste: ""})} className="w-full h-16 px-8 bg-gray-50 border border-gray-100 rounded-2xl font-bold focus:ring-4 focus:ring-red-600/5 outline-none">
+                  <select 
+                    required 
+                    value={newEmployeeForm.departement} 
+                    onChange={(e) => {
+                      const newDept = e.target.value;
+                      const deptData = departments.find(d => d.nomDept === newDept);
+                      setNewEmployeeForm({
+                        ...newEmployeeForm, 
+                        departement: newDept, 
+                        poste: "", 
+                        managerId: deptData?.managerId ? String(deptData.managerId) : "null"
+                      });
+                    }} 
+                    className="w-full h-16 px-8 bg-gray-50 border border-gray-100 rounded-2xl font-bold focus:ring-4 focus:ring-red-600/5 outline-none"
+                  >
                     <option value="">Sélectionner...</option>
                     {departments.map(d => <option key={d.idDept} value={d.nomDept}>{d.nomDept}</option>)}
                   </select>
@@ -353,9 +367,20 @@ export default function AdminCollaborateursPage() {
                     className={`w-full h-16 px-8 bg-gray-50 border border-gray-100 rounded-2xl font-bold focus:ring-4 focus:ring-red-600/5 outline-none transition-all ${!newEmployeeForm.departement ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <option value="null">Aucun (Top Level)</option>
-                    {employees.filter(e => (!newEmployeeForm.departement || e.departement === newEmployeeForm.departement) && (e.role === "MANAGER" || e.role === "HR_MANAGER" || e.role === "SUPER_ADMIN")).map(u => (
-                      <option key={u.idUser} value={u.idUser}>{u.nom} {u.prenom} ({u.poste})</option>
-                    ))}
+                    {(() => {
+                      const deptData = departments.find(d => d.nomDept === newEmployeeForm.departement);
+                      return employees.filter(e => {
+                        const roleName = typeof e.role === 'string' ? e.role : e.role?.nomRole;
+                        const isManager = roleName && !['EMPLOYE', 'SECURITY_AGENTS'].includes(roleName);
+                        const isInDept = e.departement === newEmployeeForm.departement;
+                        const isHeadManager = deptData && e.idUser === deptData.managerId;
+                        return (isInDept && isManager) || isHeadManager;
+                      }).map(u => (
+                        <option key={u.idUser} value={u.idUser}>
+                          {u.nom} {u.prenom} ({u.poste}){u.idUser === deptData?.managerId ? " [CHEF DE SERVICE]" : ""}
+                        </option>
+                      ));
+                    })()}
                   </select>
                 </div>
                 <div className="space-y-4">
@@ -449,7 +474,16 @@ export default function AdminCollaborateursPage() {
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Département</label>
                   <select 
                     value={editingEmployee.departement || ""}
-                    onChange={(e) => setEditingEmployee({ ...editingEmployee, departement: e.target.value, managerDirectId: "null", poste: "" })}
+                    onChange={(e) => {
+                      const newDept = e.target.value;
+                      const deptData = departments.find(d => d.nomDept === newDept);
+                      setEditingEmployee({ 
+                        ...editingEmployee, 
+                        departement: newDept, 
+                        managerDirectId: deptData?.managerId ? String(deptData.managerId) : "null", 
+                        poste: "" 
+                      });
+                    }}
                     className="w-full h-16 px-8 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-950 focus:ring-4 focus:ring-red-600/5 outline-none"
                   >
                     <option value="">Sélectionner...</option>
@@ -493,13 +527,21 @@ export default function AdminCollaborateursPage() {
                     className={`w-full h-16 px-8 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-950 focus:ring-4 focus:ring-red-600/5 outline-none transition-all ${!editingEmployee.departement ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <option value="null">Aucun (Top Level)</option>
-                    {employees.filter(e => 
-                      e.idUser !== editingEmployee.idUser && 
-                      e.departement === editingEmployee.departement &&
-                      (e.role === "MANAGER" || e.role === "HR_MANAGER" || e.role === "SUPER_ADMIN" || e.role === "RH_ADMIN")
-                    ).map(e => (
-                      <option key={e.idUser} value={e.idUser}>{e.nom} {e.prenom} ({e.poste})</option>
-                    ))}
+                    {(() => {
+                      const deptData = departments.find(d => d.nomDept === editingEmployee.departement);
+                      return employees.filter(e => {
+                        if (e.idUser === editingEmployee.idUser) return false;
+                        const roleName = typeof e.role === 'string' ? e.role : e.role?.nomRole;
+                        const isManager = roleName && !['EMPLOYE', 'SECURITY_AGENTS'].includes(roleName);
+                        const isInDept = e.departement === editingEmployee.departement;
+                        const isHeadManager = deptData && e.idUser === deptData.managerId;
+                        return (isInDept && isManager) || isHeadManager;
+                      }).map(u => (
+                        <option key={u.idUser} value={u.idUser}>
+                          {u.nom} {u.prenom} ({u.poste}){u.idUser === deptData?.managerId ? " [CHEF DE SERVICE]" : ""}
+                        </option>
+                      ));
+                    })()}
                   </select>
                 </div>
 

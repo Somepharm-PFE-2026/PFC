@@ -17,9 +17,10 @@ interface ValidationDetailWorkspaceProps {
   request: any;
   onClose: () => void;
   onAction: (id: number, action: string, comment: string) => void;
+  isOwnRequest?: boolean;
 }
 
-export default function ValidationDetailWorkspace({ request, onClose, onAction }: ValidationDetailWorkspaceProps) {
+export default function ValidationDetailWorkspace({ request, onClose, onAction, isOwnRequest }: ValidationDetailWorkspaceProps) {
   const [modalComment, setModalComment] = useState("");
   const [commentModalConfig, setCommentModalConfig] = useState<{ isOpen: boolean, type: "REFUSE" | "ATTENTE" }>({ isOpen: false, type: "REFUSE" });
   const { setSidebarRetracted } = useUI();
@@ -255,28 +256,40 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction }
                      </p>
 
                      <div className="space-y-4">
-                        <button 
-                          onClick={() => onAction(request.idRequete, "APPROUVE", "")}
-                          disabled={request.statutCycleVie === "EN_ATTENTE_MANAGER"}
-                          className="w-full bg-blue-600 text-white py-6 rounded-3xl font-black uppercase tracking-widest flex items-center justify-center gap-4 hover:bg-blue-700 hover:scale-[1.02] transition-all shadow-[0_10px_30px_rgba(37,99,235,0.3)] disabled:opacity-30 disabled:grayscale"
-                        >
-                          <CheckCircle2 size={24} /> Valider la demande
-                        </button>
+                        {isOwnRequest ? (
+                          <div className="bg-blue-50 border border-blue-100 p-8 rounded-[2rem] text-center space-y-4 animate-in fade-in duration-500">
+                             <ShieldCheck className="mx-auto text-blue-500" size={32} />
+                             <p className="text-sm font-black text-blue-900 uppercase italic">Dossier Personnel</p>
+                             <p className="text-[10px] text-blue-600 font-bold leading-relaxed px-4">
+                                Vous ne pouvez pas valider votre propre dossier. Ce dossier doit être traité par un autre administrateur RH.
+                             </p>
+                          </div>
+                        ) : (
+                          <>
+                            <button 
+                              onClick={() => onAction(request.idRequete, "APPROUVE", "")}
+                              disabled={request.statutCycleVie === "EN_ATTENTE_MANAGER"}
+                              className="w-full bg-blue-600 text-white py-6 rounded-3xl font-black uppercase tracking-widest flex items-center justify-center gap-4 hover:bg-blue-700 hover:scale-[1.02] transition-all shadow-[0_10px_30px_rgba(37,99,235,0.3)] disabled:opacity-30 disabled:grayscale"
+                            >
+                              <CheckCircle2 size={24} /> Valider la demande
+                            </button>
 
-                        <button 
-                          onClick={() => setCommentModalConfig({ isOpen: true, type: "ATTENTE" })}
-                          disabled={request.statutCycleVie === "ATTENTE"}
-                          className="w-full bg-white text-amber-600 border border-amber-200 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-amber-50 transition-all flex items-center justify-center gap-2"
-                        >
-                          <Clock size={18} /> Mettre en attente
-                        </button>
+                            <button 
+                              onClick={() => setCommentModalConfig({ isOpen: true, type: "ATTENTE" })}
+                              disabled={request.statutCycleVie === "ATTENTE"}
+                              className="w-full bg-white text-amber-600 border border-amber-200 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-amber-50 transition-all flex items-center justify-center gap-2"
+                            >
+                              <Clock size={18} /> Mettre en attente
+                            </button>
 
-                        <button 
-                          onClick={() => setCommentModalConfig({ isOpen: true, type: "REFUSE" })}
-                          className="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-2"
-                        >
-                          <XCircle size={18} /> Refuser le dossier
-                        </button>
+                            <button 
+                              onClick={() => setCommentModalConfig({ isOpen: true, type: "REFUSE" })}
+                              className="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                            >
+                              <XCircle size={18} /> Refuser le dossier
+                            </button>
+                          </>
+                        )}
                      </div>
                    </>
                  )}

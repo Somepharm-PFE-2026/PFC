@@ -326,10 +326,17 @@ export default function DemandesPage() {
 
                 <td className="p-8 text-center flex justify-center gap-2">
                   {/* Action Validation (Managers/RH view) but keep in mind that the new RH Validation page will handle RH validations, this is mostly for the employee's history. But since we use one component, let's keep basic Manager controls here for leaves. Document requests skip Manager so they only show here as EN_ATTENTE_RH */}
+                  {/* 🛡️ SELF-APPROVAL PROTECTION: User cannot validate their own requests */}
                   {user?.role === "MANAGER" && !isDoc && req.statutCycleVie === "EN_ATTENTE_MANAGER" && (
                     <div className="flex gap-2">
-                      <button onClick={() => handleUpdateStatus(req.idRequete, 'VALIDE_MANAGER', "", false)} className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition shadow-md"><Check size={16} /></button>
-                      <button onClick={() => { setRefuseId(req.idRequete); setRefuseIsDoc(false); }} className="bg-red-500 text-white p-3 rounded-xl hover:bg-red-600 transition shadow-md"><X size={16} /></button>
+                      {req.demandeurMatricule?.trim().toLowerCase() !== user?.sub?.trim().toLowerCase() ? (
+                        <>
+                          <button onClick={() => handleUpdateStatus(req.idRequete, 'VALIDE_MANAGER', "", false)} className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition shadow-md"><Check size={16} /></button>
+                          <button onClick={() => { setRefuseId(req.idRequete); setRefuseIsDoc(false); }} className="bg-red-500 text-white p-3 rounded-xl hover:bg-red-600 transition shadow-md"><X size={16} /></button>
+                        </>
+                      ) : (
+                        <span className="text-[9px] font-black text-blue-600 uppercase italic bg-blue-50 px-2 py-1 rounded-md">Dossier Personnel</span>
+                      )}
                     </div>
                   )}
 

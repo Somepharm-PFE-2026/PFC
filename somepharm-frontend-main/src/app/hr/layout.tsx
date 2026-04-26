@@ -15,6 +15,7 @@ export default function AdminLayout({
   const { isSidebarRetracted, activeHRRequest, setActiveHRRequest } = useUI();
   const router = useRouter();
   const [role, setRole] = React.useState<string | null>(null);
+  const [matricule, setMatricule] = React.useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -22,6 +23,7 @@ export default function AdminLayout({
       try {
         const decoded: any = jwtDecode(token);
         setRole(decoded.role?.replace("ROLE_", ""));
+        setMatricule(decoded.sub);
       } catch (e) {}
     }
   }, []);
@@ -62,6 +64,7 @@ export default function AdminLayout({
       {activeHRRequest && (
         <ValidationDetailWorkspace 
           request={activeHRRequest}
+          isOwnRequest={activeHRRequest.demandeur?.matricule === matricule}
           onClose={() => setActiveHRRequest(null)}
           onAction={(id, action, comment) => {
              // In the global layout, we'll use a custom event or shared state to trigger the page's handleAction

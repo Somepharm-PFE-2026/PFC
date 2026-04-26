@@ -51,9 +51,6 @@ public class Utilisateur implements UserDetails {
     @Column(name = "lockout_until")
     private java.time.LocalDateTime lockoutUntil;
 
-    @Column(name = "is_ghost_mode_active")
-    private Boolean isGhostModeActive = false;
-
     @Column(name = "temporary_password")
     private String temporaryPassword;
 

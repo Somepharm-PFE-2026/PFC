@@ -110,6 +110,12 @@ public class DemandeDocumentService {
         }
 
         String author = SecurityContextHolder.getContext().getAuthentication().getName();
+        
+        // 🚀 SELF-APPROVAL PROTECTION: You cannot approve or reject your own request
+        if (demande.getDemandeur().getMatricule().equals(author)) {
+            throw new RuntimeException("Action interdite : vous ne pouvez pas valider ou refuser votre propre demande.");
+        }
+
         auditService.logAction("MUTATION", "Changement de statut pour la demande de doc #" + id + " vers " + nouveauStatut, author);
 
         String notificationMessage = "Votre demande de document #" + id + " a été mise à jour : nouveau statut [" + nouveauStatut + "].";

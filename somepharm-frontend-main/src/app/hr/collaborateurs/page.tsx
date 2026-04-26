@@ -391,7 +391,13 @@ export default function CollaborateursPage() {
                       value={newEmployeeForm.departement}
                       onChange={(e) => {
                         const newDept = e.target.value;
-                        setNewEmployeeForm({...newEmployeeForm, departement: newDept, poste: ""}); // Reset poste when dept changes
+                        const deptData = departments.find(d => d.nomDept === newDept);
+                        setNewEmployeeForm({
+                          ...newEmployeeForm, 
+                          departement: newDept, 
+                          poste: "",
+                          managerId: deptData?.managerId ? String(deptData.managerId) : "null"
+                        }); 
                       }}
                       className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-6 font-bold outline-none transition-all text-gray-900"
                       required
@@ -408,12 +414,24 @@ export default function CollaborateursPage() {
                     <select 
                       value={newEmployeeForm.managerId}
                       onChange={(e) => setNewEmployeeForm({...newEmployeeForm, managerId: e.target.value})}
-                      className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-6 font-bold outline-none transition-all text-gray-900"
+                      disabled={!newEmployeeForm.departement}
+                      className={`w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-6 font-bold outline-none transition-all text-gray-900
+                        ${!newEmployeeForm.departement ? "opacity-50 cursor-not-allowed bg-gray-100" : ""}`}
                     >
                       <option value="null">Aucun</option>
-                      {employees.filter(e => e.role?.nomRole !== 'EMPLOYE' && (!newEmployeeForm.departement || e.departement === newEmployeeForm.departement)).map(u => (
-                        <option key={u.idUser} value={u.idUser}>{u.prenom} {u.nom} ({u.poste})</option>
-                      ))}
+                      {(() => {
+                        const deptData = departments.find(d => d.nomDept === newEmployeeForm.departement);
+                        return employees.filter(e => {
+                          const isManager = e.role?.nomRole !== 'EMPLOYE' && e.role?.nomRole !== 'SECURITY_AGENTS';
+                          const isInDept = e.departement === newEmployeeForm.departement;
+                          const isHeadManager = deptData && e.idUser === deptData.managerId;
+                          return (isInDept && isManager) || isHeadManager;
+                        }).map(u => (
+                          <option key={u.idUser} value={u.idUser}>
+                            {u.prenom} {u.nom} ({u.poste}){u.idUser === deptData?.managerId ? " [CHEF DE SERVICE]" : ""}
+                          </option>
+                        ));
+                      })()}
                     </select>
                   </div>
                   {/* Site Select */}
@@ -472,10 +490,20 @@ export default function CollaborateursPage() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Département</label>
                     <select 
-                      value={editingEmployee.departement}
-                      onChange={(e) => setEditingEmployee({...editingEmployee, departement: e.target.value})}
+                      value={editingEmployee.departement || ""}
+                      onChange={(e) => {
+                        const newDept = e.target.value;
+                        const deptData = departments.find(d => d.nomDept === newDept);
+                        setEditingEmployee({
+                          ...editingEmployee,
+                          departement: newDept,
+                          poste: "", 
+                          managerDirectId: deptData?.managerId ? String(deptData.managerId) : "null"
+                        });
+                      }}
                       className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-6 font-bold outline-none transition-all text-gray-900"
                     >
+                      <option value="">Sélectionner un service...</option>
                       {departments.map((dept: any) => (
                         <option key={dept.idDept} value={dept.nomDept}>{dept.nomDept}</option>
                       ))}
@@ -484,11 +512,14 @@ export default function CollaborateursPage() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Poste</label>
                     <select 
-                      value={editingEmployee.poste}
+                      value={editingEmployee.poste || ""}
                       onChange={(e) => setEditingEmployee({...editingEmployee, poste: e.target.value})}
-                      className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-6 font-bold outline-none transition-all text-gray-900"
+                      disabled={!editingEmployee.departement}
+                      className={`w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-6 font-bold outline-none transition-all text-gray-900 
+                        ${!editingEmployee.departement ? "opacity-50 cursor-not-allowed bg-gray-100" : ""}`}
                     >
-                      {postes.map((p: any) => (
+                      <option value="">{editingEmployee.departement ? "Sélectionner un poste..." : "Choisissez d'abord un département"}</option>
+                      {postes.filter((p: any) => p.departement?.nomDept === editingEmployee.departement).map((p: any) => (
                         <option key={p.idPoste} value={p.titre}>{p.titre}</option>
                       ))}
                     </select>
@@ -498,12 +529,25 @@ export default function CollaborateursPage() {
                     <select 
                       value={editingEmployee.managerDirectId || "null"}
                       onChange={(e) => setEditingEmployee({...editingEmployee, managerDirectId: e.target.value})}
-                      className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-6 font-bold outline-none transition-all text-gray-900"
+                      disabled={!editingEmployee.departement}
+                      className={`w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-6 font-bold outline-none transition-all text-gray-900
+                        ${!editingEmployee.departement ? "opacity-50 cursor-not-allowed bg-gray-100" : ""}`}
                     >
                       <option value="null">Aucun</option>
-                      {employees.filter(e => e.idUser !== editingEmployee.idUser).map(u => (
-                        <option key={u.idUser} value={u.idUser}>{u.prenom} {u.nom}</option>
-                      ))}
+                      {(() => {
+                        const deptData = departments.find(d => d.nomDept === editingEmployee.departement);
+                        return employees.filter(e => {
+                          if (e.idUser === editingEmployee.idUser) return false;
+                          const isManager = e.role?.nomRole !== 'EMPLOYE' && e.role?.nomRole !== 'SECURITY_AGENTS';
+                          const isInDept = e.departement === editingEmployee.departement;
+                          const isHeadManager = deptData && e.idUser === deptData.managerId;
+                          return (isInDept && isManager) || isHeadManager;
+                        }).map(u => (
+                          <option key={u.idUser} value={u.idUser}>
+                            {u.prenom} {u.nom} ({u.poste}){u.idUser === deptData?.managerId ? " [CHEF DE SERVICE]" : ""}
+                          </option>
+                        ));
+                      })()}
                     </select>
                   </div>
                   <div className="space-y-2">

@@ -24,10 +24,10 @@ public class SystemConfig {
     private String workingHoursEnd = "17:00";
 
     @Column(name = "tolerance_minutes")
-    private int toleranceMinutes = 15;
+    private Integer toleranceMinutes = 15;
 
     @Column(name = "urgency_delay_hours")
-    private int urgencyDelayHours = 48;
+    private Integer urgencyDelayHours = 48;
 
     // --- Document Settings ---
     @Column(name = "drh_signature_url")
@@ -37,24 +37,24 @@ public class SystemConfig {
     private String cachetEntrepriseUrl;
 
     @Column(name = "signature_x")
-    private float signatureX = 400;
+    private Float signatureX = 400f;
 
     @Column(name = "signature_y")
-    private float signatureY = 150;
+    private Float signatureY = 150f;
 
     @Column(name = "stamp_x")
-    private float stampX = 100;
+    private Float stampX = 100f;
 
     @Column(name = "stamp_y")
-    private float stampY = 150;
+    private Float stampY = 150f;
 
     // --- Security ---
     @Column(name = "max_failed_attempts")
-    private int maxFailedAttempts = 5;
+    private Integer maxFailedAttempts = 5;
 
     @Column(name = "lockout_duration_minutes")
-    private int lockoutDurationMinutes = 15;
+    private Integer lockoutDurationMinutes = 15;
 
     @Column(name = "qr_code_lifetime_minutes")
-    private int qrCodeLifetimeMinutes = 10;
+    private Integer qrCodeLifetimeMinutes = 10;
 }

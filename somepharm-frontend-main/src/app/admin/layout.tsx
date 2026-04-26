@@ -8,8 +8,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const router = useRouter();
     const [authorized, setAuthorized] = useState(false);
 
-    const [isGhost, setIsGhost] = useState(false);
-
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -20,7 +18,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         try {
             const decoded: any = jwtDecode(token);
             const role = decoded.role?.replace("ROLE_", "");
-            setIsGhost(!!decoded.isGhost);
             if (role !== "SUPER_ADMIN") {
                 router.push("/login");
             } else {
@@ -35,15 +32,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return (
         <div className="flex bg-gray-50 min-h-screen relative">
-            {isGhost && (
-                <div className="fixed top-0 left-0 right-0 z-[100] bg-red-600 text-white py-2 px-4 flex items-center justify-center gap-4 shadow-xl animate-in slide-in-from-top duration-500 font-black uppercase italic tracking-[0.2em] text-[10px]">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                    ⚠️ MODE GHOST — Vous naviguez en mode lecture seule pour ce profil
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                </div>
-            )}
             <SidebarSuperAdmin />
-            <main className={`flex-1 p-12 overflow-y-auto no-scrollbar ${isGhost ? "mt-10" : ""}`}>
+            <main className="flex-1 p-12 overflow-y-auto no-scrollbar">
                 {children}
             </main>
         </div>

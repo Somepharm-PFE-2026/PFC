@@ -11,6 +11,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import java.util.Optional;
+import java.util.List;
 
 @Configuration
 public class SeedDataConfig {
@@ -20,7 +21,8 @@ public class SeedDataConfig {
             UtilisateurRepository userRepository, 
             RoleRepository roleRepository,
             DepartementRepository departementRepository,
-            DepartementService departementService) {
+            com.somepharm.hrportal.repository.PointageRepository pointageRepository,
+            com.somepharm.hrportal.service.DepartementService departementService) {
         return args -> {
             String hash = "$2a$10$EPIWwlTdIVJ3RBXwvp86vO64sHbCGVZxZeQ7bBwPjJ9h8JQC7Ib/2";
 
@@ -135,6 +137,51 @@ public class SeedDataConfig {
                     userRepository.save(u);
                 }
             }
+            // =====================================================================
+            // STEP 7: Ensure VENTES Department exists and assign SP-EMP as Manager
+            // =====================================================================
+            Departement ventesDept = departementRepository.findAll().stream()
+                .filter(d -> d.getNomDept().equalsIgnoreCase("VENTES"))
+                .findFirst()
+                .orElseGet(() -> {
+                    Departement nd = new Departement();
+                    nd.setNomDept("VENTES");
+                    return departementService.createDepartement(nd);
+                });
+
+            Optional<Utilisateur> spEmpOpt = userRepository.findByMatricule("SP-EMP");
+            spEmpOpt.ifPresent(spEmp -> {
+                spEmp.setDepartement("VENTES");
+                spEmp.setPoste("RESPONSABLE DE VENTES");
+                // Ensure the department manager is set
+                if (ventesDept.getManager() == null || !ventesDept.getManager().getIdUser().equals(spEmp.getIdUser())) {
+                    ventesDept.setManager(spEmp);
+                    departementRepository.save(ventesDept);
+                }
+                userRepository.save(spEmp);
+
+                // Assign subordinates to SP-EMP (SP-EMP1, SP-EMP2, SP-EMP3)
+                List.of("SP-EMP1", "SP-EMP2", "SP-EMP3").forEach(mat -> {
+                    userRepository.findByMatricule(mat).ifPresent(sub -> {
+                        sub.setManagerDirect(spEmp);
+                        sub.setDepartement("VENTES");
+                        userRepository.save(sub);
+
+                        // Seed pointage for today if not present
+                        java.time.LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
+                        java.time.LocalDateTime endOfDay = java.time.LocalDate.now().atTime(23, 59, 59);
+                        if (pointageRepository.findByEmploye_IdUserAndHorodatageBetween(sub.getIdUser(), startOfDay, endOfDay).isEmpty()) {
+                            com.somepharm.hrportal.entity.Pointage p = new com.somepharm.hrportal.entity.Pointage();
+                            p.setEmploye(sub);
+                            p.setHorodatage(java.time.LocalDateTime.now().withHour(8).withMinute(5));
+                            p.setTypePointage("ENTREE");
+                            p.setMethode("WEB");
+                            p.setStatut("OK");
+                            pointageRepository.save(p);
+                        }
+                    });
+                });
+            });
         };
     }
 }

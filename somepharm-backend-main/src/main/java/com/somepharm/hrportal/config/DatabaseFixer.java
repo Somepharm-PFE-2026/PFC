@@ -53,6 +53,23 @@ public class DatabaseFixer implements CommandLineRunner {
                 logger.warn("⚠️ Could not reset SP-HR password/lockout: {}", e.getMessage());
             }
 
+            // 5. Fix system_config table (replace nulls with defaults)
+            try {
+                jdbcTemplate.execute("UPDATE system_config SET " +
+                    "tolerance_minutes = COALESCE(tolerance_minutes, 15), " +
+                    "urgency_delay_hours = COALESCE(urgency_delay_hours, 48), " +
+                    "lockout_duration_minutes = COALESCE(lockout_duration_minutes, 15), " +
+                    "max_failed_attempts = COALESCE(max_failed_attempts, 5), " +
+                    "qr_code_lifetime_minutes = COALESCE(qr_code_lifetime_minutes, 10), " +
+                    "signature_x = COALESCE(signature_x, 400), " +
+                    "signature_y = COALESCE(signature_y, 150), " +
+                    "stamp_x = COALESCE(stamp_x, 100), " +
+                    "stamp_y = COALESCE(stamp_y, 150)");
+                logger.info("✅ System configuration repaired (null values replaced with defaults).");
+            } catch (Exception e) {
+                logger.warn("⚠️ Could not repair system_config: {}", e.getMessage());
+            }
+
             logger.info("🚀 DatabaseFixer: Schema fix and account recovery completed successfully.");
 
 

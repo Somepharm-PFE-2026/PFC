@@ -47,7 +47,6 @@ public class JwtService {
                     extraClaims.put("solde", utilisateur.getSoldeConges());
                     extraClaims.put("departement", utilisateur.getDepartement());
                     extraClaims.put("poste", utilisateur.getPoste());
-                    extraClaims.put("isGhost", Boolean.TRUE.equals(utilisateur.getIsGhostModeActive()));
                 });
 
         return generateToken(extraClaims, userDetails);

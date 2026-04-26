@@ -64,7 +64,6 @@ public class DashboardController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            System.err.println("[DASHBOARD CRASH] Fatal error for user " + (auth != null ? auth.getName() : "unknown") + ": " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(500).body("Internal Error: " + e.getMessage());
         }

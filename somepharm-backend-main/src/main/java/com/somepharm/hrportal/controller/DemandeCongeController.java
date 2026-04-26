@@ -49,10 +49,20 @@ public class DemandeCongeController {
 
         demande.setDemandeur(user);
         
-        // 🚀 SMART ROUTING: Managers skip Level 1 approval and go straight to HR (EN_ATTENTE_RH)
-        String roleName = user.getRole().getNomRole();
-        boolean isManager = "MANAGER".equals(roleName);
-        demande.setStatutCycleVie(isManager ? "EN_ATTENTE_RH" : "EN_ATTENTE_MANAGER");
+        // 🚀 SMART ROUTING: Managers, RH, and Admins skip Level 1 (Manager) validation.
+        // A user is considered a "Manager" if:
+        // 1. They have an explicit privileged role.
+        // 2. They have direct subordinates in the hierarchy.
+        String roleName = user.getRole() != null ? user.getRole().getNomRole() : "";
+        boolean hasSubordinates = utilisateurRepository.countByManagerDirect_IdUser(user.getIdUser()) > 0;
+        
+        boolean isPrivileged = "MANAGER".equalsIgnoreCase(roleName) || 
+                              "RH_ADMIN".equalsIgnoreCase(roleName) || 
+                              "SUPER_ADMIN".equalsIgnoreCase(roleName) || 
+                              "HR_MANAGER".equalsIgnoreCase(roleName) ||
+                              hasSubordinates;
+
+        demande.setStatutCycleVie(isPrivileged ? "EN_ATTENTE_RH" : "EN_ATTENTE_MANAGER");
 
         DemandeConge saved = demandeCongeService.createDemande(demande);
         return new ResponseEntity<>(demandeCongeService.convertToDTO(saved), HttpStatus.CREATED);
