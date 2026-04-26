@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: somepharm_postgres
+    environment:
+      POSTGRES_DB: somepharm_hr_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin2026
+      TZ: Africa/Casablanca
+      PGTZ: Africa/Casablanca
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:

@@ -1,0 +1,37 @@
+package com.somepharm.hrportal.config;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+@Component
+public class GhostModeFilter extends OncePerRequestFilter {
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+        
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication != null && authentication.getPrincipal() instanceof com.somepharm.hrportal.entity.Utilisateur user) {
+            // If Ghost Mode is active and it's a mutation request, block it
+            if (Boolean.TRUE.equals(user.getIsGhostModeActive()) && 
+                !request.getMethod().equalsIgnoreCase("GET") && 
+                !request.getRequestURI().contains("/api/auth/logout")) {
+                
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.getWriter().write("MODE GHOST - Actions non autorisées en lecture seule.");
+                return;
+            }
+        }
+
+        filterChain.doFilter(request, response);
+    }
+}

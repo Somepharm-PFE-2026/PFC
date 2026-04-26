@@ -1,0 +1,17 @@
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local environment files (if any in root)
+.env
+.env.local
+.env.*.local
