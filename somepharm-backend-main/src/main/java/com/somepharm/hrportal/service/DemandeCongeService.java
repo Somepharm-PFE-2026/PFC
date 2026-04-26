@@ -44,7 +44,7 @@ public class DemandeCongeService {
      * 🚀 NEW ALGERIAN BUSINESS LOGIC:
      * Calcule uniquement les jours ouvrables (Ignore Vendredi et Samedi)
      */
-    private long calculerJoursOuvrables(LocalDate debut, LocalDate fin) {
+    public long calculerJoursOuvrables(LocalDate debut, LocalDate fin) {
         long joursOuvrables = 0;
         LocalDate dateCourante = debut;
 

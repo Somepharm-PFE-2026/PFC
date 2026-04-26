@@ -49,6 +49,20 @@ public class DemandeCongeController {
 
         demande.setDemandeur(user);
         
+        // 🛡️ SECURITY & BALANCE CHECK: Ensure the user has enough days
+        if (demande.getDateDebut() != null && demande.getDateFin() != null) {
+            // Check 1: Start date cannot be in the past
+            if (demande.getDateDebut().isBefore(java.time.LocalDate.now())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+
+            // Check 2: Balance check
+            long requestedDays = demandeCongeService.calculerJoursOuvrables(demande.getDateDebut(), demande.getDateFin());
+            if (user.getSoldeConges() < requestedDays) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+        }
+        
         // 🚀 SMART ROUTING: Managers, RH, and Admins skip Level 1 (Manager) validation.
         // A user is considered a "Manager" if:
         // 1. They have an explicit privileged role.

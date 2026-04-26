@@ -40,12 +40,80 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
 
   const [loading, setLoading] = useState(false);
   const [leaveTypes, setLeaveTypes] = useState<any[]>([]);
+  const [userBalance, setUserBalance] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       fetchLeaveTypes();
+      fetchUserBalance();
     }
   }, [isOpen]);
+
+  const fetchUserBalance = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/api/utilisateurs/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserBalance(data.soldeConges);
+      }
+    } catch (err) {
+      console.error("Error fetching user balance:", err);
+    }
+  };
+
+  const calculateWorkingDays = (start: string, end: string) => {
+    if (!start || !end) return 0;
+    let count = 0;
+    let cur = new Date(start);
+    const last = new Date(end);
+    // Safety break
+    let loopLimit = 0;
+    while (cur <= last && loopLimit < 500) {
+      const day = cur.getDay();
+      if (day !== 5 && day !== 6) { // 5 = Friday, 6 = Saturday
+        count++;
+      }
+      cur.setDate(cur.getDate() + 1);
+      loopLimit++;
+    }
+    return count;
+  };
+
+  const calculateMaxEndDate = (start: string, balance: number) => {
+    if (!start || balance <= 0) return "";
+    let count = 0;
+    let cur = new Date(start);
+    // Safety break
+    let loopLimit = 0;
+    while (count < balance && loopLimit < 500) {
+      const day = cur.getDay();
+      if (day !== 5 && day !== 6) {
+        count++;
+      }
+      if (count < balance) {
+        cur.setDate(cur.getDate() + 1);
+      }
+      loopLimit++;
+    }
+    return cur.toISOString().split('T')[0];
+  };
+
+  const requestedDays = calculateWorkingDays(formDataConge.dateDebut, formDataConge.dateFin);
+  const maxEndDate = userBalance ? calculateMaxEndDate(formDataConge.dateDebut, userBalance) : "";
+  const isBalanceExceeded = userBalance !== null && requestedDays > userBalance;
+  const today = new Date().toISOString().split('T')[0];
+
+  // 🛡️ STRICT ENFORCEMENT: Snap dateFin back to max if exceeded
+  useEffect(() => {
+    if (formDataConge.dateFin && maxEndDate && formDataConge.dateFin > maxEndDate) {
+      setFormDataConge(prev => ({ ...prev, dateFin: maxEndDate }));
+    }
+  }, [formDataConge.dateFin, maxEndDate]);
+
+
+
 
   const fetchLeaveTypes = async () => {
     try {
@@ -158,7 +226,14 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
                 Document RH
              </button>
           </div>
+
+          {category === "CONGE" && userBalance !== null && (
+            <div className="absolute top-4 right-8 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/30">
+              <span className="text-[10px] font-black uppercase tracking-tighter">Solde: {userBalance}j</span>
+            </div>
+          )}
         </div>
+
 
         <form onSubmit={handleSubmit} className="p-8 pt-12 space-y-6">
             
@@ -185,22 +260,42 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
                     <input
                       type="date"
                       required
+                      min={today}
                       className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-bold text-gray-700 outline-none focus:border-blue-500"
                       value={formDataConge.dateDebut}
-                      onChange={(e) => setFormDataConge({ ...formDataConge, dateDebut: e.target.value })}
+                      onChange={(e) => setFormDataConge({ ...formDataConge, dateDebut: e.target.value, dateFin: "" })}
                     />
                   </div>
+
                   <div>
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Au (Inclus)</label>
                     <input
                       type="date"
                       required
-                      className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-bold text-gray-700 outline-none focus:border-blue-500"
+                      disabled={!formDataConge.dateDebut}
+                      max={maxEndDate}
+                      className={`w-full bg-gray-50 border-2 ${isBalanceExceeded ? 'border-red-500 bg-red-50' : 'border-gray-100'} rounded-2xl p-4 font-bold text-gray-700 outline-none focus:border-blue-500 disabled:opacity-50`}
                       value={formDataConge.dateFin}
                       onChange={(e) => setFormDataConge({ ...formDataConge, dateFin: e.target.value })}
                     />
                   </div>
                 </div>
+
+                {formDataConge.dateDebut && formDataConge.dateFin && (
+                  <div className={`p-4 rounded-2xl flex items-center justify-between ${isBalanceExceeded ? 'bg-red-50 border-2 border-red-100' : 'bg-blue-50 border-2 border-blue-100'}`}>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Durée calculée:</span>
+                    <span className={`text-sm font-black ${isBalanceExceeded ? 'text-red-600' : 'text-blue-600'}`}>
+                      {requestedDays} jour{requestedDays > 1 ? 's' : ''} ouvrable{requestedDays > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )}
+
+                {isBalanceExceeded && (
+                  <p className="text-red-500 text-[10px] font-bold uppercase text-center animate-bounce">
+                    ⚠️ Votre solde est insuffisant ({userBalance} jours max)
+                  </p>
+                )}
+
 
                 <div>
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Justification / Motif</label>
@@ -251,11 +346,12 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (category === "CONGE" && isBalanceExceeded)}
               className="flex-[2] bg-blue-600 text-white px-6 py-4 rounded-2xl font-black uppercase text-xs shadow-lg shadow-blue-200 hover:bg-blue-700 transition disabled:opacity-50"
             >
               {loading ? "Envoi en cours..." : "Soumettre la demande"}
             </button>
+
           </div>
         </form>
       </div>
