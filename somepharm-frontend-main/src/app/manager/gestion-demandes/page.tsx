@@ -32,12 +32,11 @@ export default function ValidationManagerPage() {
 
   const fetchPendingRequests = async (token: string) => {
     try {
-      const res = await fetch("http://localhost:8080/api/demandes/all", {
+      const res = await fetch("http://localhost:8080/api/requetes/manager-queue", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        let all = await res.json();
-        const pending = all.filter((d: any) => d.statutCycleVie === "EN_ATTENTE_MANAGER");
+        let pending = await res.json();
         
         // 🚀 SORT BY URGENCY FIRST
         pending.sort((a: any, b: any) => {
@@ -58,15 +57,27 @@ export default function ValidationManagerPage() {
   const handleUpdateStatus = async (id: number, status: string, commentaire: string = "") => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`http://localhost:8080/api/demandes/${id}/statut?statut=${status}&commentaire=${encodeURIComponent(commentaire)}`, {
+      // 🚀 UNIFIED MANAGER VALIDATION ENDPOINT
+      const res = await fetch(`http://localhost:8080/api/requetes/${id}/manager-validate`, {
         method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+           action: status,
+           comment: commentaire
+        })
       });
+
       if (res.ok) {
         setDemandes(demandes.filter((d) => d.idRequete !== id));
         setRefuseId(null);
         setRefuseComment("");
-        alert(`Demande ${status.toLowerCase()} avec succès !`);
+        alert(`Action enregistrée avec succès !`);
+      } else {
+        const err = await res.text();
+        alert("Erreur: " + err);
       }
     } catch (err) {
       console.error(err);
@@ -101,8 +112,16 @@ export default function ValidationManagerPage() {
                 
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className={`px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${demande.urgent ? 'bg-amber-600 text-white' : 'bg-blue-100 text-blue-600'}`}>
-                      {demande.typeConge || (demande._group || 'DOC')}
+                    <span className={`px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${
+                      demande.statutCycleVie.startsWith('ANNUL') ? 'bg-gray-100 text-gray-400 border-gray-200' :
+                      demande.urgent ? 'bg-amber-600 text-white' : 'bg-blue-100 text-blue-600'
+                    }`}>
+                      {demande.statutCycleVie === "EN_ATTENTE_MANAGER" ? "⌛ Attente Manager" :
+                       demande.statutCycleVie === "EN_ATTENTE_CHEF_DEPT" ? "🛡️ Attente Dept Head" :
+                       demande.statutCycleVie.startsWith('ANNUL') ? "⚪ Annulée" :
+                       demande.type === 'CONGE' ? (demande.typeConge || 'CONGÉ') : 
+                       demande.type === 'DOCUMENT' ? (demande.typeDocument?.replace(/_/g, ' ') || 'DOCUMENT') : 
+                       'DEMANDE'}
                     </span>
                     {demande.urgent && (
                       <span className="bg-red-600 text-white px-3 py-1 rounded-md text-[10px] font-black uppercase flex items-center gap-1 shadow-md">
@@ -112,16 +131,25 @@ export default function ValidationManagerPage() {
                     <span className="text-sm font-black text-gray-800 uppercase">{demande.demandeurMatricule}</span>
                   </div>
                   <p className="text-xs font-bold text-gray-500">
-                    Période: {demande.dateDebut} au {demande.dateFin}
+                    {demande.type === 'CONGE' 
+                      ? `Période: ${demande.dateDebut} au ${demande.dateFin}`
+                      : demande.type === 'DOCUMENT' && demande.typeDocument === 'BON_SORTIE'
+                      ? `Sortie: ${demande.heureDebut} → ${demande.heureFin}`
+                      : `Soumis le: ${new Date(demande.dateSoumission).toLocaleDateString()}`
+                    }
                   </p>
                   <p className="text-[11px] font-medium text-gray-400 italic mt-1 truncate max-w-md">
-                     Note: {demande.motif || demande.description || "Pas de note."}
+                     Note: {demande.description || demande.motif || "Pas de note."}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                  {/* Identified: Managers MUST NOT validate their own requests. Ownership Check enforced (Trimmed + Case-Insensitive). */}
-                  {demande.demandeurMatricule?.trim().toLowerCase() !== currentUser?.sub?.trim().toLowerCase() ? (
+                  {/* Status Check: If Cancelled or Refused, show badge only */}
+                  {demande.statutCycleVie === "ANNULÉ" || demande.statutCycleVie === "ANNULE" ? (
+                    <span className="text-[10px] font-black text-gray-400 uppercase bg-gray-100 px-6 py-3 rounded-xl border-2 border-gray-200 flex items-center gap-2">
+                       <XCircle size={14} /> Demande Annulée
+                    </span>
+                  ) : demande.demandeurMatricule?.trim().toLowerCase() !== currentUser?.sub?.trim().toLowerCase() ? (
                     <>
                       <button 
                         onClick={() => handleUpdateStatus(demande.idRequete, "VALIDE_MANAGER")}

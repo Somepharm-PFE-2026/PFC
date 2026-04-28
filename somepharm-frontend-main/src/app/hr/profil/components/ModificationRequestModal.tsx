@@ -10,7 +10,7 @@ interface Props {
 export default function ModificationRequestModal({ profil, onClose }: Props) {
   const [formData, setFormData] = useState({
     typeDemande: "SITUATION_FAMILIALE",
-    nouveauStatutMarital: profil.statutMarital || "",
+    nouveauStatutMarital: profil.situationFamiliale || "",
     nouvelleAdresse: "",
     nouveauTelephone: profil.telephone || "",
     contactUrgence: profil.contactUrgence || "",
@@ -18,9 +18,26 @@ export default function ModificationRequestModal({ profil, onClose }: Props) {
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [file, setFile] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    // Validation for SITUATION_FAMILIALE
+    if (formData.typeDemande === "SITUATION_FAMILIALE") {
+      if (formData.nouveauStatutMarital === (profil.situationFamiliale || "")) {
+        setError("Veuillez sélectionner un statut différent de votre situation actuelle.");
+        return;
+      }
+      if (!file) {
+        setError("Un document justificatif est obligatoire pour modifier votre situation familiale.");
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -33,11 +50,25 @@ export default function ModificationRequestModal({ profil, onClose }: Props) {
         body: JSON.stringify({ ...formData, type: "ADMINISTRATIVE" })
       });
       if (res.ok) {
+        const data = await res.json();
+        
+        // Step 2: Upload File if provided
+        if (file) {
+          const fileData = new FormData();
+          fileData.append("file", file);
+          await fetch(`http://localhost:8080/api/requetes/${data.idRequete}/upload-justificatif`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` },
+            body: fileData
+          });
+        }
+
         setSuccess(true);
         setTimeout(onClose, 2000);
       }
     } catch (err) {
       console.error("Submission error:", err);
+      setError("Une erreur est survenue lors de l'envoi de la demande.");
     } finally {
       setLoading(false);
     }
@@ -89,7 +120,7 @@ export default function ModificationRequestModal({ profil, onClose }: Props) {
                     <div className="col-span-2">
                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 block">Nouveau Statut Marital</label>
                        <div className="flex gap-4">
-                          {["CÉLIBATAIRE", "MARIÉ", "DIVORCÉ", "VEUF"].map(status => (
+                          {["CELIBATAIRE", "MARIE", "DIVORCE", "VEUF"].map(status => (
                              <button
                                type="button"
                                key={status}
@@ -100,7 +131,7 @@ export default function ModificationRequestModal({ profil, onClose }: Props) {
                                    : "bg-white text-gray-400 border-gray-100 hover:border-blue-200 hover:text-blue-500"
                                }`}
                              >
-                                {status === "CÉLIBATAIRE" && <User size={12} className="inline mr-2 mb-0.5" />}
+                                {status === "CELIBATAIRE" && <User size={12} className="inline mr-2 mb-0.5" />}
                                 {status}
                              </button>
                           ))}
@@ -155,20 +186,40 @@ export default function ModificationRequestModal({ profil, onClose }: Props) {
                     </div>
                  )}
 
-                 <div className="col-span-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 block">Commentaires / Justification</label>
-                    <div className="relative">
-                       <FileText size={14} className="absolute left-4 top-5 text-gray-400" />
-                       <textarea 
-                         rows={3}
-                         placeholder="Précisez la raison de ce changement..."
-                         value={formData.detailsSupplementaires}
-                         onChange={(e) => setFormData({...formData, detailsSupplementaires: e.target.value})}
-                         className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-2xl outline-none font-bold text-sm transition-all resize-none"
-                       />
+                 <div className="col-span-2 grid grid-cols-2 gap-6">
+                    <div>
+                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 block">Commentaires / Détails</label>
+                       <div className="relative">
+                          <FileText size={14} className="absolute left-4 top-5 text-gray-400" />
+                          <textarea 
+                            rows={2}
+                            placeholder="Précisez la raison..."
+                            value={formData.detailsSupplementaires}
+                            onChange={(e) => setFormData({...formData, detailsSupplementaires: e.target.value})}
+                            className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-2xl outline-none font-bold text-sm transition-all resize-none"
+                          />
+                       </div>
+                    </div>
+                    <div>
+                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 block">Pièce Justificative (Obligatoire)</label>
+                       <div className="relative">
+                          <input 
+                            type="file"
+                            onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+                            className="w-full p-4 bg-gray-50 border-2 border-dashed border-gray-200 hover:border-blue-300 rounded-2xl outline-none font-bold text-xs transition-all cursor-pointer file:hidden"
+                          />
+                          <p className="text-[9px] text-gray-400 mt-1 italic">{file ? `Fichier prêt: ${file.name}` : "Cliquez pour sélectionner un PDF ou Image"}</p>
+                       </div>
                     </div>
                  </div>
               </div>
+
+              {error && (
+                <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600 animate-in slide-in-from-top-2 duration-300">
+                  <AlertCircle size={18} />
+                  <p className="text-[10px] font-black uppercase tracking-widest">{error}</p>
+                </div>
+              )}
 
               <div className="flex gap-4">
                  <button 

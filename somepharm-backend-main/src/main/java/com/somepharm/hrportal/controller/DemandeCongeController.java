@@ -6,6 +6,7 @@ import com.somepharm.hrportal.entity.Utilisateur;
 import com.somepharm.hrportal.repository.DemandeCongeRepository; // NEW: Needed to fetch raw data
 import com.somepharm.hrportal.repository.UtilisateurRepository;
 import com.somepharm.hrportal.service.DemandeCongeService;
+import com.somepharm.hrportal.service.WorkflowService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -24,15 +25,18 @@ public class DemandeCongeController {
     private final UtilisateurRepository utilisateurRepository;
     private final DemandeCongeRepository demandeCongeRepository;
     private final com.somepharm.hrportal.repository.TypeCongeRepository typeCongeRepository;
+    private final WorkflowService workflowService;
 
     public DemandeCongeController(DemandeCongeService demandeCongeService,
                                   UtilisateurRepository utilisateurRepository,
                                   DemandeCongeRepository demandeCongeRepository,
-                                  com.somepharm.hrportal.repository.TypeCongeRepository typeCongeRepository) {
+                                  com.somepharm.hrportal.repository.TypeCongeRepository typeCongeRepository,
+                                  WorkflowService workflowService) {
         this.demandeCongeService = demandeCongeService;
         this.utilisateurRepository = utilisateurRepository;
         this.demandeCongeRepository = demandeCongeRepository;
         this.typeCongeRepository = typeCongeRepository;
+        this.workflowService = workflowService;
     }
 
     @GetMapping("/types")
@@ -63,20 +67,8 @@ public class DemandeCongeController {
             }
         }
         
-        // 🚀 SMART ROUTING: Managers, RH, and Admins skip Level 1 (Manager) validation.
-        // A user is considered a "Manager" if:
-        // 1. They have an explicit privileged role.
-        // 2. They have direct subordinates in the hierarchy.
-        String roleName = user.getRole() != null ? user.getRole().getNomRole() : "";
-        boolean hasSubordinates = utilisateurRepository.countByManagerDirect_IdUser(user.getIdUser()) > 0;
-        
-        boolean isPrivileged = "MANAGER".equalsIgnoreCase(roleName) || 
-                              "RH_ADMIN".equalsIgnoreCase(roleName) || 
-                              "SUPER_ADMIN".equalsIgnoreCase(roleName) || 
-                              "HR_MANAGER".equalsIgnoreCase(roleName) ||
-                              hasSubordinates;
-
-        demande.setStatutCycleVie(isPrivileged ? "EN_ATTENTE_RH" : "EN_ATTENTE_MANAGER");
+        // 🚀 DYNAMIC ROUTING: Use WorkflowService to assign the circuit based on mapping
+        workflowService.initiateWorkflow(demande, "DEMANDE_CONGE");
 
         DemandeConge saved = demandeCongeService.createDemande(demande);
         return new ResponseEntity<>(demandeCongeService.convertToDTO(saved), HttpStatus.CREATED);
@@ -116,17 +108,9 @@ public class DemandeCongeController {
                         return true;
                     }
 
-                    // MANAGER is restricted: Only sees their exact team (Strict Direct Subordinates)
+                    // MANAGER is restricted: Only sees requests they are supposed to validate
                     if ("MANAGER".equals(roleName)) {
-                        Utilisateur demandeur = demande.getDemandeur();
-                        if (demandeur == null || demandeur.getManagerDirect() == null) {
-                            return false;
-                        }
-
-                        // 🚀 STRICT ISOLATION: Only show requests where CURRENT USER is the Direct Manager
-                        boolean isDirectManager = demandeur.getManagerDirect().getIdUser().equals(currentUser.getIdUser());
-                        
-                        return isDirectManager && "EN_ATTENTE_MANAGER".equals(demande.getStatutCycleVie());
+                        return workflowService.canUserValidate(demande, currentUser);
                     }
 
                     // NORMAL EMPLOYEES shouldn't be calling this, but if they do, block it.
@@ -152,6 +136,11 @@ public class DemandeCongeController {
             @RequestParam(required = false) String commentaire) {
 
         DemandeConge updated = demandeCongeService.updateStatut(id, statut, commentaire);
+        return ResponseEntity.ok(demandeCongeService.convertToDTO(updated));
+    }
+    @PutMapping("/{id}/annuler")
+    public ResponseEntity<DemandeCongeDTO> annulerDemande(@PathVariable Long id, Authentication auth) {
+        DemandeConge updated = demandeCongeService.annulerDemande(id, auth.getName());
         return ResponseEntity.ok(demandeCongeService.convertToDTO(updated));
     }
 }

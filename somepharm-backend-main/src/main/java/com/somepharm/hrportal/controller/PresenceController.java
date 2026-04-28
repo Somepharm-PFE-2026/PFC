@@ -83,4 +83,11 @@ public class PresenceController {
             org.springframework.security.core.Authentication auth) {
         return ResponseEntity.ok(presenceService.addManualPointage(idUser, time, type, auth.getName(), reason));
     }
+    @GetMapping("/anomalies-calendar")
+    @PreAuthorize("hasRole('RH_ADMIN') or hasRole('HR_MANAGER') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Map<String, String>> getAnomaliesCalendar(
+            @RequestParam int year,
+            @RequestParam int month) {
+        return ResponseEntity.ok(presenceService.getMonthlyAnomaliesSummary(year, month));
+    }
 }

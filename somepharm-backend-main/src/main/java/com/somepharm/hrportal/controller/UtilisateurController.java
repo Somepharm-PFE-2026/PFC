@@ -3,6 +3,8 @@ package com.somepharm.hrportal.controller;
 import com.somepharm.hrportal.dto.UserActivationResponse;
 import com.somepharm.hrportal.dto.UserSummaryDTO;
 import com.somepharm.hrportal.entity.Role;
+import com.somepharm.hrportal.entity.SituationFamiliale;
+import com.somepharm.hrportal.entity.Site;
 import com.somepharm.hrportal.entity.Utilisateur;
 import com.somepharm.hrportal.repository.UtilisateurRepository;
 import com.somepharm.hrportal.service.HelpdeskService;
@@ -32,9 +34,9 @@ public class UtilisateurController {
     private final com.somepharm.hrportal.repository.RoleRepository roleRepository;
 
     public UtilisateurController(UtilisateurRepository utilisateurRepository,
-                                 HelpdeskService helpdeskService,
-                                 com.somepharm.hrportal.repository.SiteRepository siteRepository,
-                                 com.somepharm.hrportal.repository.RoleRepository roleRepository) {
+            HelpdeskService helpdeskService,
+            com.somepharm.hrportal.repository.SiteRepository siteRepository,
+            com.somepharm.hrportal.repository.RoleRepository roleRepository) {
         this.utilisateurRepository = utilisateurRepository;
         this.helpdeskService = helpdeskService;
         this.siteRepository = siteRepository;
@@ -82,18 +84,18 @@ public class UtilisateurController {
             List<String> roles = new ArrayList<>();
             for (var a : auth.getAuthorities()) {
                 String role = a.getAuthority();
-                if (role != null) roles.add(role);
+                if (role != null)
+                    roles.add(role);
             }
 
             // 3. Check for HR/Admin privileges
-            boolean isHR = roles.stream().anyMatch(r -> 
-                r.equals("ROLE_RH_ADMIN") || r.equals("RH_ADMIN") || 
-                r.equals("ROLE_HR_MANAGER") || r.equals("HR_MANAGER") || 
-                r.equals("ROLE_SUPER_ADMIN") || r.equals("SUPER_ADMIN")
-            );
+            boolean isHR = roles.stream().anyMatch(r -> r.equals("ROLE_RH_ADMIN") || r.equals("RH_ADMIN") ||
+                    r.equals("ROLE_HR_MANAGER") || r.equals("HR_MANAGER") ||
+                    r.equals("ROLE_SUPER_ADMIN") || r.equals("SUPER_ADMIN"));
 
             if (isHR) {
-                System.out.println("[DIRECTORY DEBUG] User is HR/Admin - Returning full directory (count=" + utilisateurRepository.count() + ")");
+                System.out.println("[DIRECTORY DEBUG] User is HR/Admin - Returning full directory (count="
+                        + utilisateurRepository.count() + ")");
                 List<UserSummaryDTO> dtos = utilisateurRepository.findAll().stream()
                         .map(this::convertToSummaryDTO)
                         .collect(java.util.stream.Collectors.toList());
@@ -103,10 +105,23 @@ public class UtilisateurController {
             // 4. Fallback for Managers
             boolean isManager = roles.stream().anyMatch(r -> r.contains("MANAGER"));
             if (isManager) {
-                List<Utilisateur> directory = new ArrayList<>();
-                findSubordinatesRecursive(currentUser.getIdUser(), directory);
-                if (!directory.contains(currentUser)) directory.add(currentUser);
-                
+                List<Utilisateur> directory;
+                String poste = currentUser.getPoste();
+                int myLevel = getPositionLevel(poste);
+
+                if (myLevel == 1) {
+                    // 🛡️ Department Head: See everyone in department with lower level
+                    directory = utilisateurRepository.findByDepartement(currentUser.getDepartement());
+                    directory.removeIf(u -> getPositionLevel(u.getPoste()) <= myLevel);
+                } else {
+                    // 🛡️ Team Manager: See subordinates
+                    directory = new ArrayList<>();
+                    findSubordinatesRecursive(currentUser.getIdUser(), directory);
+                }
+
+                // Always ensure self is excluded
+                directory.removeIf(u -> u.getIdUser().equals(currentUser.getIdUser()));
+
                 List<UserSummaryDTO> dtos = directory.stream()
                         .map(this::convertToSummaryDTO)
                         .collect(java.util.stream.Collectors.toList());
@@ -133,10 +148,19 @@ public class UtilisateurController {
     @PostMapping("/create")
     public ResponseEntity<?> createUser(@RequestBody Utilisateur newUser) {
         try {
+            // 🛡️ SECURITY: Only SUPER_ADMIN can create another SUPER_ADMIN
+            if (newUser.getRole() != null && "SUPER_ADMIN".equals(newUser.getRole().getNomRole())) {
+                if (!isSuperAdmin()) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body("Droit insuffisant : Seul un SUPER_ADMIN peut créer un compte de ce rang.");
+                }
+            }
+
             // Check for unique matricule if provided
             if (newUser.getMatricule() != null && !newUser.getMatricule().isEmpty()) {
                 if (utilisateurRepository.findByMatricule(newUser.getMatricule()).isPresent()) {
-                    return ResponseEntity.status(HttpStatus.CONFLICT).body("Le matricule " + newUser.getMatricule() + " est déjà utilisé.");
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body("Le matricule " + newUser.getMatricule() + " est déjà utilisé.");
                 }
             }
 
@@ -145,10 +169,15 @@ public class UtilisateurController {
             newUser.setPasswordStatus("N/A");
             newUser.setMustChangePassword(true);
             newUser.setSoldeConges(30.0);
-            
+
+            if (newUser.getSituationFamiliale() == null) {
+                newUser.setSituationFamiliale(SituationFamiliale.CELIBATAIRE);
+            }
+
             // Set a dummy password to satisfy NOT NULL constraint
             // This will be overwritten during Step 2: Activation
-            newUser.setMotDePasse(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("LOCKED_ACCOUNTS_REQUIRE_PASSWORDS_2026"));
+            newUser.setMotDePasse(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder()
+                    .encode("LOCKED_ACCOUNTS_REQUIRE_PASSWORDS_2026"));
 
             if (newUser.getDepartement() == null || newUser.getDepartement().isEmpty()) {
 
@@ -156,14 +185,14 @@ public class UtilisateurController {
             }
 
             Utilisateur savedUser = utilisateurRepository.save(newUser);
-            
+
             // Return DTO to avoid circular reference crashes
             return ResponseEntity.ok(convertToSummaryDTO(savedUser));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la création : " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur lors de la création : " + e.getMessage());
         }
     }
-
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PutMapping("/{id}/activate")
@@ -179,7 +208,7 @@ public class UtilisateurController {
         // Generate Matricule EMP-XXXX
         String matricule = "EMP-" + (int) (Math.random() * 9000 + 1000);
         // Ensure uniqueness (simple check for demo, usually needs a better generator)
-        while(utilisateurRepository.findByMatricule(matricule).isPresent()) {
+        while (utilisateurRepository.findByMatricule(matricule).isPresent()) {
             matricule = "EMP-" + (int) (Math.random() * 9000 + 1000);
         }
 
@@ -244,13 +273,16 @@ public class UtilisateurController {
         // Security Check 1: Must be in waiting status
         if (!"EN_ATTENTE_PREMIERE_CONNEXION".equals(user.getStatutCompte())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Action refusée : Le compte " + matricule + " est déjà " + user.getStatutCompte() + "."));
+                    .body(Map.of("message",
+                            "Action refusée : Le compte " + matricule + " est déjà " + user.getStatutCompte() + "."));
         }
 
-        // Security Check 2: Must still have a temporary password (unless reset is requested)
+        // Security Check 2: Must still have a temporary password (unless reset is
+        // requested)
         if (!"TEMPORAIRE".equals(user.getPasswordStatus()) && !Boolean.TRUE.equals(user.getPasswordResetRequested())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Sécurité : Ce collaborateur a déjà personnalisé son accès. Utilisez 'Régénérer MDP' si besoin."));
+                    .body(Map.of("message",
+                            "Sécurité : Ce collaborateur a déjà personnalisé son accès. Utilisez 'Régénérer MDP' si besoin."));
         }
 
         return ResponseEntity.ok(UserActivationResponse.builder()
@@ -265,11 +297,12 @@ public class UtilisateurController {
     @PutMapping("/me/request-reset")
     public ResponseEntity<?> requestReset() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        
+
         try {
             // 🎫 Idempotent creation (handles check + flag + ticket)
             helpdeskService.createTicket(auth.getName());
-            return ResponseEntity.ok().body(Collections.singletonMap("message", "Demande de réinitialisation envoyée au Super Admin."));
+            return ResponseEntity.ok()
+                    .body(Collections.singletonMap("message", "Demande de réinitialisation envoyée au Super Admin."));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
         }
@@ -280,19 +313,21 @@ public class UtilisateurController {
         String newPassword = payload.get("newPassword");
         // Constraints: Min 8, 1 Upper, 1 Digit, 1 Special
         if (newPassword == null || newPassword.length() < 8 ||
-            !newPassword.matches(".*[A-Z].*") ||
-            !newPassword.matches(".*[0-9].*") ||
-            !newPassword.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) {
-            return ResponseEntity.badRequest().body("Le mot de passe ne respecte pas les critères de sécurité (8+ chars, Majuscule, Chiffre, Caractère spécial).");
+                !newPassword.matches(".*[A-Z].*") ||
+                !newPassword.matches(".*[0-9].*") ||
+                !newPassword.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) {
+            return ResponseEntity.badRequest().body(
+                    "Le mot de passe ne respecte pas les critères de sécurité (8+ chars, Majuscule, Chiffre, Caractère spécial).");
         }
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Utilisateur user = utilisateurRepository.findByMatricule(auth.getName())
                 .orElseThrow(() -> new RuntimeException("Session invalide"));
 
-        // SUPER_ADMIN is exempt from the forced "mustChangePassword" lock behavior during regular edits, 
+        // SUPER_ADMIN is exempt from the forced "mustChangePassword" lock behavior
+        // during regular edits,
         // but here they are changing it themselves.
-        
+
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         user.setMotDePasse(encoder.encode(newPassword));
         user.setStatutCompte("ACTIF");
@@ -302,16 +337,17 @@ public class UtilisateurController {
         user.setTemporaryPassword(null); // Clear once changed!
 
         utilisateurRepository.save(user);
-        
+
         // 🛡️ IMPORTANT: Complete and Secure the Helpdesk Reset Tickets
         helpdeskService.completeResetTickets(user.getMatricule());
-        
+
         return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasAnyRole('RH_ADMIN', 'HR_MANAGER', 'SUPER_ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateEmployee(@PathVariable Long id, @RequestBody Utilisateur updatedData, Authentication auth) {
+    public ResponseEntity<?> updateEmployee(@PathVariable Long id, @RequestBody Utilisateur updatedData,
+            Authentication auth) {
         Utilisateur existing = utilisateurRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employé introuvable"));
 
@@ -322,12 +358,15 @@ public class UtilisateurController {
         // 🛡️ ENFORCE HIERARCHY FOR DIRECT UPDATES
         if (existing.getRole() != null) {
             String targetRole = existing.getRole().getNomRole();
-            
-            if (targetRole.equals("RH_ADMIN") && !currentUserRole.equals("HR_MANAGER") && !currentUserRole.equals("SUPER_ADMIN")) {
-                return ResponseEntity.status(403).body("Seul un HR_MANAGER peut modifier directement le profil d'un RH_ADMIN");
+
+            if (targetRole.equals("RH_ADMIN") && !currentUserRole.equals("HR_MANAGER")
+                    && !currentUserRole.equals("SUPER_ADMIN")) {
+                return ResponseEntity.status(403)
+                        .body("Seul un HR_MANAGER peut modifier directement le profil d'un RH_ADMIN");
             }
             if (targetRole.equals("HR_MANAGER") && !currentUserRole.equals("SUPER_ADMIN")) {
-                return ResponseEntity.status(403).body("Seul le SUPER_ADMIN peut modifier directement le profil d'un HR_MANAGER");
+                return ResponseEntity.status(403)
+                        .body("Seul le SUPER_ADMIN peut modifier directement le profil d'un HR_MANAGER");
             }
         }
 
@@ -337,54 +376,32 @@ public class UtilisateurController {
         existing.setTelephone(updatedData.getTelephone());
         existing.setEmail(updatedData.getEmail());
         if (updatedData.getRole() != null && updatedData.getRole().getIdRole() != null) {
-            com.somepharm.hrportal.entity.Role role = roleRepository.findById(updatedData.getRole().getIdRole())
+            Role role = roleRepository.findById(updatedData.getRole().getIdRole())
                     .orElseThrow(() -> new RuntimeException("Rôle introuvable"));
             existing.setRole(role);
         }
         existing.setDateNaissance(updatedData.getDateNaissance());
         existing.setPhotoUrl(updatedData.getPhotoUrl());
         existing.setContactUrgence(updatedData.getContactUrgence());
+        if (updatedData.getSituationFamiliale() != null) {
+            existing.setSituationFamiliale(updatedData.getSituationFamiliale());
+        }
 
         // Professional context
-        boolean departmentChanged = updatedData.getDepartement() != null && !updatedData.getDepartement().equals(existing.getDepartement());
-        if (departmentChanged) {
+        // 🔒 SECURITY REFINEMENT: The department can only be assigned if it was
+        // previously null or 'Général'
+        String currentDept = existing.getDepartement();
+        if ((currentDept == null || currentDept.trim().isEmpty() || "Général".equalsIgnoreCase(currentDept))
+                && updatedData.getDepartement() != null && !updatedData.getDepartement().trim().isEmpty()) {
             existing.setDepartement(updatedData.getDepartement());
-            
-            // Auto-remove this employee as manager for subordinates in the old department
-            java.util.List<Utilisateur> subordinates = utilisateurRepository.findAllByManagerDirect_IdUser(existing.getIdUser());
-            for (Utilisateur sub : subordinates) {
-                // If subordinate is not in the newly assigned department, they lose this manager
-                if (!sub.getDepartement().equals(existing.getDepartement())) {
-                    sub.setManagerDirect(null);
-                    utilisateurRepository.save(sub);
-                }
-            }
         }
+
         existing.setPoste(updatedData.getPoste());
-        
-        // Auto-Role Assignment Logic
-        if (existing.getDepartement() != null && existing.getPoste() != null) {
-            String targetPoste = "RESPONSABLE DE " + existing.getDepartement().toUpperCase();
-            if (existing.getPoste().equalsIgnoreCase(targetPoste)) {
-                // If they are not already an admin, make them a MANAGER
-                if (existing.getRole() == null || existing.getRole().getIdRole() == 4) {
-                    com.somepharm.hrportal.entity.Role managerRole = roleRepository.findById(3L).orElse(existing.getRole());
-                    existing.setRole(managerRole);
-                }
-            } else {
-                // If they were a MANAGER but no longer hold the RESPONSABLE DE poste, downgrade to EMPLOYE
-                if (existing.getRole() != null && existing.getRole().getIdRole() == 3) {
-                    com.somepharm.hrportal.entity.Role employeRole = roleRepository.findById(4L).orElse(existing.getRole());
-                    existing.setRole(employeRole);
-                }
-            }
-        }
-        existing.setDateEmbauche(updatedData.getDateEmbauche());
 
         // Site
         if (updatedData.getSite() != null && updatedData.getSite().getIdSite() != null) {
-            com.somepharm.hrportal.entity.Site site = siteRepository.findById(updatedData.getSite().getIdSite())
-                    .orElse(null);
+            Site site = siteRepository.findById(updatedData.getSite().getIdSite())
+                    .orElseThrow(() -> new RuntimeException("Site introuvable"));
             existing.setSite(site);
         } else {
             existing.setSite(null);
@@ -395,13 +412,72 @@ public class UtilisateurController {
             Utilisateur manager = utilisateurRepository.findById(updatedData.getManagerDirect().getIdUser())
                     .orElse(null);
             // Enforce team boundary: Manager must be in the exact same department
-            if (manager != null && manager.getDepartement() != null && manager.getDepartement().equals(existing.getDepartement())) {
+            if (manager != null && manager.getDepartement() != null
+                    && manager.getDepartement().equals(existing.getDepartement())) {
                 existing.setManagerDirect(manager);
+
+                // 🛡️ SMART DEMOTION: If a Team Lead (Chef d'équipe) is now managed by another
+                // Team Lead, they must step down
+                if (manager.getPoste() != null && manager.getPoste().contains("CHEF D'EQUIPE")) {
+                    if (existing.getPoste() != null && existing.getPoste().contains("CHEF D'EQUIPE")) {
+                        System.out.println("[HIERARCHY] Stepping down " + existing.getMatricule()
+                                + " because their new manager is a Team Lead.");
+                        existing.setPoste("EMP_" + existing.getDepartement().toUpperCase());
+                        roleRepository.findByNomRole("EMPLOYE").ifPresent(existing::setRole);
+                    }
+                }
             } else {
                 existing.setManagerDirect(null);
             }
         } else {
             existing.setManagerDirect(null);
+        }
+        existing.setDateEmbauche(updatedData.getDateEmbauche());
+
+        // Auto-Role Assignment Logic (Sync Role with Position)
+        if (existing.getDepartement() != null) {
+            String deptUpper = existing.getDepartement().toUpperCase();
+
+            // 1. Force specific roles for critical departments
+            if (deptUpper.contains("SECURITE") || deptUpper.contains("SÉCURITÉ")) {
+                roleRepository.findByNomRole("SECURITY_AGENTS").ifPresent(existing::setRole);
+            } else if (deptUpper.contains("RESSOURCES HUMAINES") || deptUpper.contains("RH")) {
+                roleRepository.findByNomRole("RH_ADMIN").ifPresent(existing::setRole);
+            }
+
+            // 2. Hierarchy based elevation for other departments
+            if (existing.getPoste() != null) {
+                String managerPostePattern = "RESPONSABLE DE " + deptUpper;
+                String chefPostePattern = "CHEF D'EQUIPE";
+                String employeePostePattern = "EMP_" + deptUpper;
+                String currentPoste = existing.getPoste().toUpperCase();
+
+                if (currentPoste.equalsIgnoreCase(managerPostePattern)
+                        || currentPoste.equalsIgnoreCase(chefPostePattern)) {
+                    // Elevate to MANAGER if they are currently a standard EMPLOYE
+                    if (existing.getRole() == null || "EMPLOYE".equals(existing.getRole().getNomRole())) {
+                        roleRepository.findByNomRole("MANAGER").ifPresent(existing::setRole);
+                    }
+                } else if (currentPoste.equalsIgnoreCase(employeePostePattern)) {
+                    // 🛡️ SMART DEMOTION: If position is Employee pattern, role must be EMPLOYE
+                    // EXCEPTION: Preserve high-level admin roles (RH_ADMIN, HR_MANAGER,
+                    // SUPER_ADMIN)
+                    if (existing.getRole() != null) {
+                        String roleName = existing.getRole().getNomRole();
+                        if ("MANAGER".equals(roleName)) {
+                            System.out.println("[HIERARCHY] Demoting " + existing.getMatricule()
+                                    + " from MANAGER to EMPLOYE due to position change.");
+                            roleRepository.findByNomRole("EMPLOYE").ifPresent(existing::setRole);
+                        } else if (roleName == null
+                                || (!roleName.equals("HR_MANAGER") && !roleName.equals("SUPER_ADMIN")
+                                        && !roleName.equals("RH_ADMIN") && !roleName.equals("SECURITY_AGENTS"))) {
+                            roleRepository.findByNomRole("EMPLOYE").ifPresent(existing::setRole);
+                        }
+                    } else {
+                        roleRepository.findByNomRole("EMPLOYE").ifPresent(existing::setRole);
+                    }
+                }
+            }
         }
 
         // Leave balance
@@ -409,10 +485,18 @@ public class UtilisateurController {
             existing.setSoldeConges(updatedData.getSoldeConges());
         }
 
+        // 🛡️ STATUT COMPTE: Only SUPER_ADMIN can modify
+        if (updatedData.getStatutCompte() != null
+                && !updatedData.getStatutCompte().equals(existing.getStatutCompte())) {
+            if ("SUPER_ADMIN".equals(currentUserRole)) {
+                existing.setStatutCompte(updatedData.getStatutCompte());
+            }
+        }
+
         return ResponseEntity.ok(utilisateurRepository.save(existing));
     }
 
-    @PreAuthorize("hasAnyRole('RH_ADMIN', 'HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PutMapping("/{id}/statut")
     public ResponseEntity<Utilisateur> toggleStatus(@PathVariable Long id) {
         Utilisateur existing = utilisateurRepository.findById(id)
@@ -464,15 +548,29 @@ public class UtilisateurController {
                 .passwordStatus(u.getPasswordStatus())
                 .soldeConges(u.getSoldeConges())
                 .idManagerDirect(u.getManagerDirect() != null ? u.getManagerDirect().getIdUser() : null)
+                .idSite(u.getSite() != null ? u.getSite().getIdSite() : null)
                 .temporaryPassword(isSuperAdmin() ? u.getTemporaryPassword() : null)
+                .situationFamiliale(u.getSituationFamiliale() != null ? u.getSituationFamiliale().name() : null)
                 .build();
 
     }
 
     private boolean isSuperAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return false;
+        if (auth == null)
+            return false;
         return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_SUPER_ADMIN"));
+    }
+
+    private int getPositionLevel(String poste) {
+        if (poste == null)
+            return 3;
+        String p = poste.toUpperCase();
+        if (p.startsWith("RESPONSABLE DE "))
+            return 1;
+        if (p.contains("CHEF") || p.contains("MANAGER") || p.contains("RESPONSABLE"))
+            return 2;
+        return 3;
     }
 
 }

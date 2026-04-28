@@ -22,6 +22,7 @@ export default function PaieDocumentsPage() {
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("ALL");
   const [importing, setImporting] = useState(false);
   const [showAddDocModal, setShowAddDocModal] = useState(false);
   const [selectedDocFile, setSelectedDocFile] = useState<File | null>(null);
@@ -159,6 +160,13 @@ export default function PaieDocumentsPage() {
       if (res.ok) fetchData();
     } catch (err) { console.error(err); }
   };
+
+  const filteredDocs = docs.filter((doc: any) => {
+    const matchesSearch = doc.titre.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         doc.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategoryFilter === "ALL" || doc.categorie === selectedCategoryFilter;
+    return matchesSearch && matchesCategory;
+  });
 
   const filteredBulletins = bulletins.filter((b: any) => 
     b.employe.nom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -333,18 +341,44 @@ export default function PaieDocumentsPage() {
 
         {activeTab === "biblio" && (
           <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-             <div className="flex items-center justify-between mb-2">
+             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-2">
                 <h3 className="text-2xl font-black text-gray-900 italic tracking-tighter uppercase">Documents de Référence</h3>
-                <button 
-                  onClick={() => setShowAddDocModal(true)}
-                  className="bg-gray-900 text-white px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center gap-3"
-                >
-                   <Plus size={16} /> Ajouter un document
-                </button>
+                
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                    <input 
+                      type="text" 
+                      placeholder="Rechercher un document..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-12 pr-6 py-3 bg-white border border-gray-100 rounded-2xl text-xs font-bold outline-none w-64 shadow-sm" 
+                    />
+                  </div>
+
+                  <select 
+                    value={selectedCategoryFilter}
+                    onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+                    className="px-6 py-3 bg-white border border-gray-100 rounded-2xl text-xs font-bold outline-none shadow-sm cursor-pointer"
+                  >
+                    <option value="ALL">Toutes les catégories</option>
+                    <option value="REGLEMENT">Règlement Intérieur</option>
+                    <option value="ORGANIGRAMME">Organigramme</option>
+                    <option value="CONVENTION">Convention Collective</option>
+                    <option value="NOTE">Note de Service</option>
+                  </select>
+
+                  <button 
+                    onClick={() => setShowAddDocModal(true)}
+                    className="bg-gray-900 text-white px-6 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center gap-3 shadow-lg"
+                  >
+                     <Plus size={16} /> Ajouter
+                  </button>
+                </div>
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {docs.map((doc: any) => (
+                {filteredDocs.map((doc: any) => (
                   <div key={doc.id} className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all group">
                      <div className="bg-gray-50 w-16 h-16 rounded-2xl flex items-center justify-center text-gray-400 mb-6 group-hover:bg-blue-600 group-hover:text-white transition-all">
                         <FileText size={28} />

@@ -100,6 +100,10 @@ public class Utilisateur implements UserDetails {
     @Column(name = "contact_urgence")
     private String contactUrgence;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "situation_familiale")
+    private SituationFamiliale situationFamiliale = SituationFamiliale.CELIBATAIRE;
+
     // --- SPRING SECURITY METHODS ---
 
     @JsonIgnore

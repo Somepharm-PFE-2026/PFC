@@ -306,17 +306,16 @@ export default function BonDeSortiePage() {
             <h2 className="text-lg font-black text-gray-400 uppercase tracking-widest">Historique des sorties</h2>
             <div className="text-xs font-bold text-gray-400 flex items-center gap-1 italic"><Info size={14}/> Les codes QR s'activent après validation.</div>
           </div>
-          
-          {sorties.length === 0 ? (
+            {sorties.length === 0 ? (
              <div className="bg-white rounded-[2rem] border border-dashed border-gray-300 p-16 text-center">
                 <Shield className="mx-auto text-gray-200 mb-4" size={64} />
                 <p className="text-gray-400 font-black uppercase tracking-tight">Aucun bon de sortie actif</p>
              </div>
           ) : (
-            sorties.map((sortie, index) => {
+            sorties.map((sortie) => {
               const isApproved = sortie.statutCycleVie === 'APPROUVE' || sortie.statutCycleVie === 'APPROUVÉ';
               const isCancelled = sortie.statutCycleVie === 'ANNULÉ';
-              const isPending = sortie.statutCycleVie === 'EN_ATTENTE_RH';
+              const isCancellable = !isApproved && !isCancelled && !sortie.statutCycleVie.includes('REFUSE');
               const qrData = `BON_SORTIE|${user?.sub || 'EMP'}|${new Date(sortie.dateSoumission).toLocaleDateString()}|${sortie.heureDebut}-${sortie.heureFin}|VALIDATED_SOMEPHARM`;
               
               return (
@@ -332,7 +331,10 @@ export default function BonDeSortiePage() {
                     }`}>
                       {isApproved && <CheckCircle2 size={12}/>}
                       {isCancelled && <XCircle size={12}/>}
-                      {sortie.statutCycleVie}
+                      {sortie.statutCycleVie === "EN_ATTENTE_MANAGER" ? "⌛ Attente Manager" :
+                       sortie.statutCycleVie === "EN_ATTENTE_CHEF_DEPT" ? "🛡️ Attente Dept Head" :
+                       sortie.statutCycleVie === "EN_ATTENTE_RH" ? "⌛ Attente RH" : 
+                       sortie.statutCycleVie}
                     </span>
                     <span className="text-gray-300 text-xs font-black italic uppercase tracking-tighter">REF: #{sortie.idRequete}</span>
                   </div>
@@ -343,12 +345,12 @@ export default function BonDeSortiePage() {
                       </h3>
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Période du {new Date(sortie.dateSoumission).toLocaleDateString()}</p>
                   </div>
-
+ 
                   <p className="text-sm font-medium text-gray-500 bg-gray-50 p-4 rounded-xl border-l-4 border-gray-200">
                     {sortie.description || "Aucun motif précisé."}
                   </p>
-
-                  {isPending && (
+ 
+                  {isCancellable && (
                       <button 
                         onClick={() => annulerSortie(sortie.idRequete)}
                         className="flex items-center gap-2 text-[10px] font-black text-red-400 uppercase hover:text-red-600 transition-colors mt-2"
@@ -357,7 +359,7 @@ export default function BonDeSortiePage() {
                       </button>
                   )}
                 </div>
-
+ 
                 {/* --- QR CODE SECTION (APPROUVÉ) --- */}
                 <div className="flex flex-col items-center justify-center gap-4">
                     {isApproved ? (
@@ -385,16 +387,19 @@ export default function BonDeSortiePage() {
                     ) : (
                         <div className="w-[152px] h-[152px] bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2rem] flex flex-col items-center justify-center text-gray-300 p-6 text-center">
                             <Clock size={32} className="mb-2 opacity-20" />
-                            <p className="text-[9px] font-black uppercase leading-tight">En attente de validation RH</p>
+                            <p className="text-[9px] font-black uppercase leading-tight">
+                                {sortie.statutCycleVie === "EN_ATTENTE_MANAGER" ? "Validation Manager" : 
+                                 sortie.statutCycleVie === "EN_ATTENTE_CHEF_DEPT" ? "Validation Dept Head" : "Validation RH"}
+                            </p>
                         </div>
                     )}
                     {isApproved && <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full">Prêt pour scan</p>}
                 </div>
-
               </div>
             )})
           )}
         </div>
+
         </div>
       </div>
     </div>

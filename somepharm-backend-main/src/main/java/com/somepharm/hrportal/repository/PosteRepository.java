@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface PosteRepository extends JpaRepository<Poste, Long> {
     long countByDepartement_IdDept(Long idDept);
     Optional<Poste> findByTitre(String titre);
+    boolean existsByTitreAndDepartement_IdDept(String titre, Long idDept);
 }

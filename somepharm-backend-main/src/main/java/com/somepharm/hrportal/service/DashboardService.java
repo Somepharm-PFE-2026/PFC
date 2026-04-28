@@ -23,6 +23,8 @@ public class DashboardService {
     private final PresenceService presenceService;
     private final JourFerieRepository jourFerieRepository;
     private final EmailConfigRepository emailConfigRepository;
+    private final HolidayService holidayService;
+    private final WorkflowService workflowService;
 
     private final LocalDateTime startTime = LocalDateTime.now();
 
@@ -35,7 +37,9 @@ public class DashboardService {
                             RequeteRepository requeteRepository,
                             PresenceService presenceService,
                             JourFerieRepository jourFerieRepository,
-                            EmailConfigRepository emailConfigRepository) {
+                            EmailConfigRepository emailConfigRepository,
+                            HolidayService holidayService,
+                            WorkflowService workflowService) {
         this.utilisateurRepository = utilisateurRepository;
         this.demandeCongeRepository = demandeCongeRepository;
         this.pointageRepository = pointageRepository;
@@ -46,6 +50,8 @@ public class DashboardService {
         this.presenceService = presenceService;
         this.jourFerieRepository = jourFerieRepository;
         this.emailConfigRepository = emailConfigRepository;
+        this.holidayService = holidayService;
+        this.workflowService = workflowService;
     }
 
     public Map<String, Object> getEmployeeData(Utilisateur user) {
@@ -97,14 +103,26 @@ public class DashboardService {
         long presentTodayCount = pointageRepository.countByHorodatageBetweenAndEmploye_ManagerDirect_IdUser(start, end, manager.getIdUser());
         
         SystemConfig config = systemConfigRepository.findAll().stream().findFirst().orElse(new SystemConfig());
-        int urgencyHours = config.getUrgencyDelayHours() > 0 ? config.getUrgencyDelayHours() : 48;
-        long urgentPendingCount = demandeCongeRepository.countUrgentRequests(manager.getIdUser(), LocalDateTime.now().minusHours(urgencyHours));
+        int urgencyHours = (config != null && config.getUrgencyDelayHours() > 0) ? config.getUrgencyDelayHours() : 48;
+        LocalDateTime urgencyLimit = LocalDateTime.now().minusHours(urgencyHours);
+
+        // 🚀 LIVE WORKFLOW COUNTS: Include ALL request types (Conge, Document, etc.)
+        List<Requete> allRequetes = requeteRepository.findAll();
+        List<Requete> managerQueue = allRequetes.stream()
+                .filter(req -> com.somepharm.hrportal.service.WorkflowService.isPendingStatus(req.getStatutCycleVie()) && 
+                               "MANAGER".equals(manager.getRole().getNomRole().replace("ROLE_", "")) && // Basic check
+                               workflowService.canUserValidate(req, manager))
+                .collect(Collectors.toList());
+
+        long pendingActionCount = managerQueue.size();
+        long urgentPendingCount = managerQueue.stream()
+                .filter(req -> req.isUrgent() || (req.getDateSoumission() != null && req.getDateSoumission().isBefore(urgencyLimit)))
+                .count();
 
         data.put("teamTotalCount", totalTeam);
         data.put("teamAttendanceCount", presentTodayCount);
         data.put("presenceRateToday", totalTeam > 0 ? Math.round(((double) presentTodayCount / totalTeam) * 100) : 0);
-        data.put("pendingActionCount", demandeCongeRepository.countByDemandeur_ManagerDirect_IdUserAndStatutCycleVieIn(
-                manager.getIdUser(), List.of("EN_ATTENTE_MANAGER")));
+        data.put("pendingActionCount", pendingActionCount);
         data.put("urgentPendingCount", urgentPendingCount);
 
         // 2. Alert Hudson: Late Arrivals (Pillar 2)
@@ -124,7 +142,8 @@ public class DashboardService {
         List<String> matriculesPresent = teamPointagesToday.stream().map(p -> p.getEmploye().getMatricule()).collect(Collectors.toList());
         
         List<Utilisateur> teamMembers = utilisateurRepository.findAllByManagerDirect_IdUser(manager.getIdUser());
-        List<Map<String, String>> absentsList = teamMembers.stream()
+        boolean isHoliday = holidayService.isHoliday(today);
+        List<Map<String, String>> absentsList = isHoliday ? new ArrayList<>() : teamMembers.stream()
                 .filter(u -> !matriculesPresent.contains(u.getMatricule()))
                 .map(u -> Map.of(
                     "matricule", u.getMatricule(),
@@ -132,6 +151,7 @@ public class DashboardService {
                 ))
                 .collect(Collectors.toList());
         data.put("absentsToday", absentsList);
+        data.put("isHoliday", isHoliday);
 
         // 4. Team Capacity Heatmap - 35 Days (aligned to Sunday start)
         List<Map<String, Object>> heatmap = new ArrayList<>();
@@ -154,9 +174,11 @@ public class DashboardService {
             // In Algeria: Weekend = Fri (5), Sat (6). Work = Sun (7), Mon-Thu (1-4).
             boolean isWeekend = (dow == 5 || dow == 6);
 
+            boolean isHolidayOnDate = holidayService.isHoliday(targetDate);
+
             // Understaffed alert only looks at the next 7 days from TODAY (not from startOfPlanning)
-            // It only counts working days
-            if (isCritical && !isWeekend && !targetDate.isBefore(today) && targetDate.isBefore(today.plusDays(7))) {
+            // It only counts working days (not weekend, not holiday)
+            if (isCritical && !isWeekend && !isHolidayOnDate && !targetDate.isBefore(today) && targetDate.isBefore(today.plusDays(7))) {
                 isCurrentlyUnderstaffed = true;
             }
 
@@ -166,6 +188,7 @@ public class DashboardService {
                 "dayName", targetDate.getDayOfWeek().toString().substring(0, 3),
                 "absenceCount", count,
                 "isWeekend", isWeekend,
+                "isHoliday", isHolidayOnDate,
                 "isCritical", isCritical
             ));
         }
@@ -187,8 +210,7 @@ public class DashboardService {
         LocalDateTime end = today.atTime(LocalTime.MAX);
         long presentToday = pointageRepository.countByHorodatageBetween(start, end);
         
-        boolean isHoliday = jourFerieRepository.findAll().stream()
-                .anyMatch(h -> h.getDate().equals(today));
+        boolean isHoliday = holidayService.isHoliday(today);
 
         // Absenteeism Rate: (Employees NOT present)
         // If it's a holiday, absenteeism is 0% by definition
@@ -201,8 +223,8 @@ public class DashboardService {
         int urgencyHours = config.getUrgencyDelayHours() > 0 ? config.getUrgencyDelayHours() : 48;
 
         List<String> hrStatusList = List.of("EN_ATTENTE_RH", "VALIDE_MANAGER");
-        long globalPendingCount = demandeCongeRepository.countByStatutCycleVieIn(hrStatusList);
-        long globalUrgentCount = demandeCongeRepository.countGlobalUrgentRequests(hrStatusList, LocalDateTime.now().minusHours(urgencyHours));
+        long globalPendingCount = requeteRepository.countByStatutCycleVieIn(hrStatusList);
+        long globalUrgentCount = requeteRepository.countGlobalUrgentRequests(hrStatusList, LocalDateTime.now().minusHours(urgencyHours));
 
         data.put("totalHeadcount", totalHeadcount);
         data.put("absenteeismRate", Math.round(absenteeismRate * 10.0) / 10.0);

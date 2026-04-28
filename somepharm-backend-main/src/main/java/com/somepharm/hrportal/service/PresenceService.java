@@ -22,18 +22,21 @@ public class PresenceService {
     private final UtilisateurRepository utilisateurRepository;
     private final com.somepharm.hrportal.repository.JourFerieRepository jourFerieRepository;
     private final com.somepharm.hrportal.repository.SystemConfigRepository systemConfigRepository;
+    private final HolidayService holidayService;
     private final NotificationService notificationService;
 
     public PresenceService(PointageRepository pointageRepository, 
                            UtilisateurRepository utilisateurRepository, 
                            NotificationService notificationService,
                            com.somepharm.hrportal.repository.JourFerieRepository jourFerieRepository,
-                           com.somepharm.hrportal.repository.SystemConfigRepository systemConfigRepository) {
+                           com.somepharm.hrportal.repository.SystemConfigRepository systemConfigRepository,
+                           HolidayService holidayService) {
         this.pointageRepository = pointageRepository;
         this.utilisateurRepository = utilisateurRepository;
         this.notificationService = notificationService;
         this.jourFerieRepository = jourFerieRepository;
         this.systemConfigRepository = systemConfigRepository;
+        this.holidayService = holidayService;
     }
 
     /**
@@ -44,8 +47,7 @@ public class PresenceService {
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
 
-        boolean isHoliday = jourFerieRepository.findAll().stream()
-                .anyMatch(h -> h.getDate().equals(today));
+        boolean isHoliday = holidayService.isHoliday(today);
 
         List<Pointage> todayPointages = pointageRepository.findByHorodatageBetween(startOfDay, endOfDay);
         long totalEmployees = utilisateurRepository.count();
@@ -85,6 +87,13 @@ public class PresenceService {
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.atTime(LocalTime.MAX);
         
+        // 🕒 GET SYSTEM CONFIG for Working Hours
+        com.somepharm.hrportal.entity.SystemConfig config = systemConfigRepository.findAll().stream().findFirst()
+                .orElse(new com.somepharm.hrportal.entity.SystemConfig());
+        
+        LocalTime shiftEnd = LocalTime.parse(config.getWorkingHoursEnd() != null ? config.getWorkingHoursEnd() : "17:00");
+        LocalTime anomalyThreshold = shiftEnd.plusHours(2); // 🛡️ User Request: Wait 2-4 hours after shift
+        
         List<Pointage> pointages = pointageRepository.findByHorodatageBetween(start, end);
         
         // Group by employee
@@ -95,7 +104,15 @@ public class PresenceService {
                     List<Pointage> empLogs = entry.getValue();
                     long entries = empLogs.stream().filter(p -> "ENTREE".equals(p.getTypePointage())).count();
                     long exits = empLogs.stream().filter(p -> "SORTIE".equals(p.getTypePointage())).count();
-                    return entries != exits;
+                    
+                    if (entries == exits) return false;
+                    
+                    // 🕒 SMART FILTER: If it's today and before the anomaly threshold, don't flag missing exit
+                    if (date.equals(LocalDate.now()) && LocalTime.now().isBefore(anomalyThreshold)) {
+                        return false; 
+                    }
+                    
+                    return true;
                 })
                 .map(entry -> {
                     Map<String, Object> anomaly = new HashMap<>();
@@ -153,6 +170,31 @@ public class PresenceService {
         p.setDateModification(LocalDateTime.now());
 
         return pointageRepository.save(p);
+    }
+
+    public Map<String, String> getMonthlyAnomaliesSummary(int year, int month) {
+        LocalDate startOfMonth = LocalDate.of(year, month, 1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+        
+        Map<String, String> summary = new HashMap<>();
+        
+        // Scan each day of the month
+        for (LocalDate date = startOfMonth; !date.isAfter(endOfMonth); date = date.plusDays(1)) {
+            // We only check past days or today
+            if (date.isAfter(LocalDate.now())) {
+                summary.put(date.toString(), "PENDING");
+                continue;
+            }
+            
+            List<Map<String, Object>> anomalies = getAnomalies(date);
+            if (anomalies.isEmpty()) {
+                summary.put(date.toString(), "OK");
+            } else {
+                summary.put(date.toString(), "ANOMALY");
+            }
+        }
+        
+        return summary;
     }
 
     public Pointage savePointage(Pointage pointage) {

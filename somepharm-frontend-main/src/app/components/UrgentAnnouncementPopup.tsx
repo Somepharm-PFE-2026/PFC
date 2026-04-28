@@ -14,12 +14,41 @@ export default function UrgentAnnouncementPopup() {
 
   const fetchUrgentAnnonces = async () => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      // 1. Fetch user profile to get activationDate
+      const profileRes = await fetch("http://localhost:8080/api/utilisateurs/me", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      let activationDate: Date | null = null;
+      if (profileRes.ok) {
+        const profile = await profileRes.json();
+        if (profile.activationDate) {
+          activationDate = new Date(profile.activationDate);
+          // Set to start of day for comparison
+          activationDate.setHours(0, 0, 0, 0);
+        }
+      }
+
+      // 2. Fetch announcements
       const res = await fetch("http://localhost:8080/api/annonces/targeted", {
-        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+        headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
-        const urgent = data.find((a: any) => a.priority === "URGENT" && !a.isRead);
+        const urgent = data.find((a: any) => {
+          // Base conditions
+          if (a.priority !== "URGENT" || a.isRead) return false;
+          
+          // Activation date check: Only show if published on or after activation
+          if (activationDate) {
+            const pubDate = new Date(a.datePublication);
+            if (pubDate < activationDate) return false;
+          }
+          
+          return true;
+        });
         setUrgentAnnonce(urgent);
       }
     } catch (err) {

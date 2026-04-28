@@ -2,6 +2,7 @@ package com.somepharm.hrportal.controller;
 
 import com.somepharm.hrportal.entity.*;
 import com.somepharm.hrportal.repository.*;
+import com.somepharm.hrportal.service.HolidayService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +27,9 @@ public class ConfigController {
     private final DocumentTemplateRepository templateRepository;
     private final PosteRepository posteRepository;
     private final SiteRepository siteRepository;
+    private final RoleRepository roleRepository;
     private final com.somepharm.hrportal.repository.UtilisateurRepository utilisateurRepository;
+    private final HolidayService holidayService;
 
     public ConfigController(SystemConfigRepository systemConfigRepository,
                             TypeCongeRepository typeCongeRepository,
@@ -34,14 +37,23 @@ public class ConfigController {
                             DocumentTemplateRepository templateRepository,
                             PosteRepository posteRepository,
                             SiteRepository siteRepository,
-                            com.somepharm.hrportal.repository.UtilisateurRepository utilisateurRepository) {
+                            RoleRepository roleRepository,
+                            com.somepharm.hrportal.repository.UtilisateurRepository utilisateurRepository,
+                            HolidayService holidayService) {
         this.systemConfigRepository = systemConfigRepository;
         this.typeCongeRepository = typeCongeRepository;
         this.jourFerieRepository = jourFerieRepository;
         this.templateRepository = templateRepository;
         this.posteRepository = posteRepository;
         this.siteRepository = siteRepository;
+        this.roleRepository = roleRepository;
         this.utilisateurRepository = utilisateurRepository;
+        this.holidayService = holidayService;
+    }
+
+    @GetMapping("/roles")
+    public ResponseEntity<List<Role>> getAllRoles() {
+        return ResponseEntity.ok(roleRepository.findAll());
     }
 
     @GetMapping("/system")
@@ -68,13 +80,23 @@ public class ConfigController {
 
     @GetMapping("/holidays")
     public ResponseEntity<List<JourFerie>> getHolidays() {
-        return ResponseEntity.ok(jourFerieRepository.findAll());
+        return ResponseEntity.ok(holidayService.getVisibleHolidays());
     }
 
     @PostMapping("/holidays")
     @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN', 'RH_ADMIN')")
-    public ResponseEntity<JourFerie> saveHoliday(@RequestBody JourFerie ferie) {
+    public ResponseEntity<?> saveHoliday(@RequestBody JourFerie ferie) {
+        if (holidayService.isHoliday(ferie.getDate())) {
+            return ResponseEntity.badRequest().body("Un jour férié existe déjà à cette date.");
+        }
         return ResponseEntity.ok(jourFerieRepository.save(ferie));
+    }
+
+    @DeleteMapping("/holidays/{id}")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN', 'RH_ADMIN')")
+    public ResponseEntity<Void> deleteHoliday(@PathVariable Long id) {
+        jourFerieRepository.deleteById(id);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/holidays/import")
@@ -82,13 +104,16 @@ public class ConfigController {
     public ResponseEntity<List<JourFerie>> importNationalHolidays() {
         int year = java.time.LocalDate.now().getYear();
         List<JourFerie> nationalHolidays = List.of(
-            new JourFerie("Jour de l'An", java.time.LocalDate.of(year, 1, 1)),
-            new JourFerie("Yennayer (Nouvel An Berbère)", java.time.LocalDate.of(year, 1, 12)),
-            new JourFerie("Fête du Travail", java.time.LocalDate.of(year, 5, 1)),
-            new JourFerie("Fête de l'Indépendance", java.time.LocalDate.of(year, 7, 5)),
-            new JourFerie("Déclenchement de la Révolution", java.time.LocalDate.of(year, 11, 1)),
-            new JourFerie("Aïd el-Fitr", java.time.LocalDate.of(year, 3, 30)), // Mock mobile dates
-            new JourFerie("Aïd el-Adha", java.time.LocalDate.of(year, 6, 6))
+            // FIXED DATES -> ANNUAL
+            new JourFerie("Jour de l'An", java.time.LocalDate.of(year, 1, 1), RecurrenceType.ANNUEL),
+            new JourFerie("Yennayer (Nouvel An Berbère)", java.time.LocalDate.of(year, 1, 12), RecurrenceType.ANNUEL),
+            new JourFerie("Fête du Travail", java.time.LocalDate.of(year, 5, 1), RecurrenceType.ANNUEL),
+            new JourFerie("Fête de l'Indépendance", java.time.LocalDate.of(year, 7, 5), RecurrenceType.ANNUEL),
+            new JourFerie("Déclenchement de la Révolution", java.time.LocalDate.of(year, 11, 1), RecurrenceType.ANNUEL),
+            
+            // MOBILE DATES (Religious) -> UNIQUE
+            new JourFerie("Aïd el-Fitr", java.time.LocalDate.of(year, 3, 30), RecurrenceType.UNIQUE), 
+            new JourFerie("Aïd el-Adha", java.time.LocalDate.of(year, 6, 6), RecurrenceType.UNIQUE)
         );
 
         for (JourFerie h : nationalHolidays) {
@@ -96,7 +121,7 @@ public class ConfigController {
                 jourFerieRepository.save(h);
             }
         }
-        return ResponseEntity.ok(jourFerieRepository.findAll());
+        return ResponseEntity.ok(holidayService.getVisibleHolidays());
     }
 
     @GetMapping("/templates")

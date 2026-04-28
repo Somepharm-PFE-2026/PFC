@@ -53,6 +53,14 @@ export default function MonitoringPage() {
         finally { setActionLoading(null); }
     };
 
+    const handleConsult = (user: any) => {
+        setSuccessModal({
+            matricule: user.matricule,
+            temporary_password: user.temporaryPassword,
+            type: 'consult'
+        });
+    };
+
     const getStatusStyle = (status: string) => {
         switch (status) {
             case "ACTIF": return { bg: "bg-green-500/10 text-green-400 border-green-500/20", label: "ACTIF", pulse: true };
@@ -173,6 +181,15 @@ export default function MonitoringPage() {
                                     </td>
                                     <td className="px-12 py-8 text-right">
                                         <div className="flex justify-end gap-4">
+                                            {user.temporaryPassword && (user.statutCompte === "EN_ATTENTE_PREMIERE_CONNEXION" || user.statutCompte === "INACTIF") && (
+                                                <button 
+                                                    onClick={() => handleConsult(user)}
+                                                    className="w-14 h-14 bg-white/5 text-emerald-400 border border-white/10 rounded-2xl flex items-center justify-center hover:bg-emerald-500/10 hover:scale-110 active:scale-95 transition-all group/btn"
+                                                    title="Consulter le mot de passe temporaire"
+                                                >
+                                                    <Eye size={20} className="group-hover/btn:scale-110 transition-transform" />
+                                                </button>
+                                            )}
                                             {user.statutCompte === "INACTIF" ? (
                                                 <button 
                                                     onClick={() => handleAction(user.matricule, 'activate')}
@@ -206,13 +223,15 @@ export default function MonitoringPage() {
                         <div className="space-y-10">
                             <div className="flex items-center gap-6">
                                 <div className="w-20 h-20 bg-red-600 rounded-[2rem] flex items-center justify-center text-white shadow-[0_0_30px_rgba(220,38,38,0.5)]">
-                                    <CheckCircle2 size={40} />
+                                    {successModal.type === 'consult' ? <Shield size={40} /> : <CheckCircle2 size={40} />}
                                 </div>
                                 <div>
                                     <h2 className="text-5xl font-black italic tracking-tighter uppercase text-white">
-                                        {successModal.type === 'reset' ? 'Access Reset' : 'Node Activated'}
+                                        {successModal.type === 'consult' ? 'Consultation' : successModal.type === 'reset' ? 'Access Reset' : 'Node Activated'}
                                     </h2>
-                                    <p className="text-red-500 font-black uppercase text-[10px] tracking-[0.5em] mt-2">Security Override Successful</p>
+                                    <p className="text-red-500 font-black uppercase text-[10px] tracking-[0.5em] mt-2">
+                                        {successModal.type === 'consult' ? 'Security Retrieval Successful' : 'Security Override Successful'}
+                                    </p>
                                 </div>
                             </div>
 
@@ -220,9 +239,9 @@ export default function MonitoringPage() {
                                 <div className="p-10 bg-white/5 border border-white/10 rounded-[3rem] space-y-4">
                                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest italic">Temporary Access Key:</p>
                                     <div className="flex items-center justify-between">
-                                        <p className="text-6xl font-black text-white tracking-tighter italic font-mono uppercase">{successModal.temporary_password}</p>
+                                        <p className="text-6xl font-black text-white tracking-tighter italic font-mono uppercase">{successModal.temporary_password || 'NONE'}</p>
                                         <button 
-                                            onClick={() => navigator.clipboard.writeText(successModal.temporary_password)}
+                                            onClick={() => navigator.clipboard.writeText(successModal.temporary_password || '')}
                                             className="p-4 bg-white/5 text-gray-400 rounded-2xl hover:text-white transition-all active:scale-90"
                                         >
                                             <Copy size={24} />
@@ -234,7 +253,10 @@ export default function MonitoringPage() {
                                     <div className="flex items-start gap-4">
                                         <Shield size={20} className="text-red-600 shrink-0 mt-1" />
                                         <p className="text-[11px] font-bold text-red-400 leading-relaxed italic">
-                                            Cet identifiant est à usage unique. Le sujet ({successModal.matricule}) sera forcé de modifier cet accès lors de la connexion initiale au système.
+                                            {successModal.type === 'consult' 
+                                                ? `Cet identifiant est actuellement actif pour le sujet (${successModal.matricule}). Il sera invalidé dès la première modification par l'utilisateur.`
+                                                : `Cet identifiant est à usage unique. Le sujet (${successModal.matricule}) sera forcé de modifier cet accès lors de la connexion initiale au système.`
+                                            }
                                         </p>
                                     </div>
                                 </div>
@@ -244,7 +266,7 @@ export default function MonitoringPage() {
                                 onClick={() => setSuccessModal(null)}
                                 className="w-full h-24 bg-white text-black rounded-[2.5rem] text-xs font-black uppercase tracking-[0.3em] hover:bg-red-600 hover:text-white transition-all shadow-2xl active:scale-95"
                             >
-                                Terminer Maintenance
+                                {successModal.type === 'consult' ? 'Fermer la vue' : 'Terminer Maintenance'}
                             </button>
                         </div>
                     </div>

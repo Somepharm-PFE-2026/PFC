@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { User, ChevronDown, ChevronRight, MapPin, Briefcase } from "lucide-react";
+import { User, ChevronDown, ChevronRight, MapPin, Briefcase, Network } from "lucide-react";
 
 interface Employee {
   idUser: number;
@@ -21,15 +21,35 @@ interface TreeProps {
 }
 
 export default function EmployeeTree({ employees, managerId, level }: TreeProps) {
+  // 🛡️ Safety: Prevent infinite recursion in case of data cycles
+  if (level > 10) return null;
+
   const directReports = (employees || []).filter((emp) => {
     if (managerId === null) {
-      // Find top-level people (no manager or manager not in the list)
-      return !emp.idManagerDirect;
+      // 🛡️ Root Detection: Either no manager OR the manager is not in the current list
+      // Using == for type-flexible comparison (string vs number)
+      const hasManagerInList = emp.idManagerDirect && (employees || []).some(e => e.idUser == emp.idManagerDirect);
+      return !hasManagerInList;
     }
-    return emp.idManagerDirect === managerId;
+    return emp.idManagerDirect == managerId;
   });
 
-  if (directReports.length === 0) return null;
+  if (directReports.length === 0) {
+    if (level === 0 && (employees || []).length > 0) {
+      return (
+        <div className="p-20 text-center bg-gray-50 rounded-[2.5rem] border-2 border-dashed border-gray-200">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+            <Network size={32} />
+          </div>
+          <h3 className="text-gray-900 font-black uppercase tracking-widest text-sm mb-2">Structure Introuvable</h3>
+          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest max-w-xs mx-auto">
+            Les collaborateurs sont présents dans la liste mais aucune hiérarchie n&apos;a pu être établie.
+          </p>
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div className={`flex flex-col gap-4 ${level > 0 ? "ml-12 pl-6 border-l-2 border-dashed border-gray-200" : ""}`}>

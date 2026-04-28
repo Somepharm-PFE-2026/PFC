@@ -9,7 +9,8 @@ import {
   ArrowRight,
   Download,
   X,
-  Calendar
+  Calendar,
+  Network
 } from "lucide-react";
 
 export default function DocumentsPage() {
@@ -128,6 +129,17 @@ export default function DocumentsPage() {
        disableDownload: !getDocByCategory("NOTE"), 
        isRoute: false,
        action: () => handleDownloadDoc(getDocByCategory("NOTE")?.id, "Note_de_Service.pdf")
+    },
+    {
+       id: "organigramme",
+       title: "Organigramme",
+       description: getDocByCategory("ORGANIGRAMME")?.description || "Structure hiérarchique et organisation des départements au sein de Somepharm.",
+       icon: Network,
+       color: "bg-purple-600", lightColor: "bg-purple-50", textColor: "text-purple-600",
+       link: "#", 
+       disableDownload: !getDocByCategory("ORGANIGRAMME"), 
+       isRoute: false,
+       action: () => handleDownloadDoc(getDocByCategory("ORGANIGRAMME")?.id, "Organigramme_Somepharm.pdf")
     }
   ];
 

@@ -6,6 +6,7 @@ import com.somepharm.hrportal.entity.Utilisateur;
 import com.somepharm.hrportal.repository.DemandeDocumentRepository;
 import com.somepharm.hrportal.repository.UtilisateurRepository;
 import com.somepharm.hrportal.service.DemandeDocumentService;
+import com.somepharm.hrportal.service.WorkflowService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -24,13 +25,16 @@ public class DemandeDocumentController {
     private final DemandeDocumentService demandeDocumentService;
     private final UtilisateurRepository utilisateurRepository;
     private final DemandeDocumentRepository demandeDocumentRepository;
+    private final WorkflowService workflowService;
 
     public DemandeDocumentController(DemandeDocumentService demandeDocumentService,
                                      UtilisateurRepository utilisateurRepository,
-                                     DemandeDocumentRepository demandeDocumentRepository) {
+                                     DemandeDocumentRepository demandeDocumentRepository,
+                                     WorkflowService workflowService) {
         this.demandeDocumentService = demandeDocumentService;
         this.utilisateurRepository = utilisateurRepository;
         this.demandeDocumentRepository = demandeDocumentRepository;
+        this.workflowService = workflowService;
     }
 
     @PostMapping("/submit")
@@ -42,9 +46,8 @@ public class DemandeDocumentController {
 
         demande.setDemandeur(user);
         
-        // Documents usually go straight to RH_ADMIN for approval, bypassing the MANAGER.
-        // As per the plan: unified RH list means they go to EN_ATTENTE_RH or similar.
-        demande.setStatutCycleVie("EN_ATTENTE_RH");
+        // 🚀 DYNAMIC ROUTING: Use WorkflowService to assign the circuit based on mapping
+        workflowService.initiateWorkflow(demande, demande.getTypeDocument());
 
         DemandeDocument saved = demandeDocumentService.createDemande(demande);
         return new ResponseEntity<>(demandeDocumentService.convertToDTO(saved), HttpStatus.CREATED);
@@ -71,7 +74,7 @@ public class DemandeDocumentController {
 
         // Only RH_ADMIN and SUPER_ADMIN should see all document requests
         String roleName = currentUser.getRole().getNomRole();
-        if (!"RH_ADMIN".equals(roleName) && !"SUPER_ADMIN".equals(roleName) && !"HR_MANAGER".equals(roleName)) {
+        if (!"RH_ADMIN".equals(roleName) && !"SUPER_ADMIN".equals(roleName) && !"HR_MANAGER".equals(roleName) && !"MANAGER".equals(roleName)) {
              return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -84,8 +87,14 @@ public class DemandeDocumentController {
                     if ("RH_ADMIN".equals(currentRole) || "SUPER_ADMIN".equals(currentRole) || "HR_MANAGER".equals(currentRole)) {
                         return true;
                     }
-                    // Default logic: only see pending/standard items if any (mostly handled by specific endpoints)
-                    return "EN_ATTENTE_RH".equals(demande.getStatutCycleVie());
+                    
+                    // 🚀 MANAGER/CHEF access: Only see if designated validateur
+                    if ("MANAGER".equals(currentRole)) {
+                        return workflowService.canUserValidate(demande, currentUser);
+                    }
+
+                    // Default fallback
+                    return false;
                 })
                 .sorted((d1, d2) -> {
                     if (d1.getDateSoumission() == null) return 1;

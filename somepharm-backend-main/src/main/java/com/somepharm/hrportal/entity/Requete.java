@@ -77,4 +77,11 @@ public abstract class Requete {
 
     @Column(name = "nudge_count", nullable = false)
     private int nudgeCount = 0;
+
+    @ManyToOne
+    @JoinColumn(name = "id_circuit")
+    private WorkflowCircuit currentCircuit;
+
+    @Column(name = "current_etape_ordre")
+    private Integer currentEtapeOrdre;
 }

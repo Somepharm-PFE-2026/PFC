@@ -1,9 +1,11 @@
 package com.somepharm.hrportal.controller;
 
+import com.somepharm.hrportal.entity.BulletinPaie;
 import com.somepharm.hrportal.entity.DemandeConge;
 import com.somepharm.hrportal.entity.DemandeDocument;
 import com.somepharm.hrportal.entity.Requete;
 import com.somepharm.hrportal.entity.Utilisateur;
+import com.somepharm.hrportal.repository.BulletinPaieRepository;
 import com.somepharm.hrportal.repository.RequeteRepository;
 import com.somepharm.hrportal.repository.UtilisateurRepository;
 import com.somepharm.hrportal.service.DocumentService;
@@ -27,11 +29,13 @@ public class DocumentController {
     private final DocumentService documentService;
     private final UtilisateurRepository utilisateurRepository;
     private final RequeteRepository requeteRepository;
+    private final BulletinPaieRepository bulletinRepository;
 
-    public DocumentController(DocumentService documentService, UtilisateurRepository utilisateurRepository, RequeteRepository requeteRepository) {
+    public DocumentController(DocumentService documentService, UtilisateurRepository utilisateurRepository, RequeteRepository requeteRepository, BulletinPaieRepository bulletinRepository) {
         this.documentService = documentService;
         this.utilisateurRepository = utilisateurRepository;
         this.requeteRepository = requeteRepository;
+        this.bulletinRepository = bulletinRepository;
     }
 
     @GetMapping("/fiche-paie")
@@ -39,6 +43,13 @@ public class DocumentController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Utilisateur employe = utilisateurRepository.findByMatricule(auth.getName())
                 .orElseThrow(() -> new RuntimeException("Employé introuvable"));
+
+        BulletinPaie bp = bulletinRepository.findByEmployeAndMoisAndAnnee(employe, mois, annee)
+                .orElseThrow(() -> new RuntimeException("Bulletin de paie introuvable"));
+
+        if (bp.getDatePublication() == null) {
+            return ResponseEntity.status(403).build(); // Forbidden if not published
+        }
 
         byte[] pdfBytes = documentService.genererFicheDePaie(employe, mois, annee);
         String fileName = "Fiche_Paie_" + employe.getMatricule() + "_" + mois + "_" + annee + ".pdf";

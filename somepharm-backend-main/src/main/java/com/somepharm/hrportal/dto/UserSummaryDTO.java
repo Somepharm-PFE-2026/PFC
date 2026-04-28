@@ -18,7 +18,9 @@ public class UserSummaryDTO {
     private String passwordStatus;
     private Double soldeConges;
     private Long idManagerDirect;
+    private Long idSite;
     private String temporaryPassword;
+    private String situationFamiliale;
 }
 
 

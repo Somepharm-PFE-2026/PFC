@@ -18,11 +18,13 @@ public class DemandeCongeService {
     private final DemandeCongeRepository demandeCongeRepository;
     private final AuditService auditService;
     private final NotificationService notificationService;
+    private final HolidayService holidayService;
 
-    public DemandeCongeService(DemandeCongeRepository demandeCongeRepository, AuditService auditService, NotificationService notificationService) {
+    public DemandeCongeService(DemandeCongeRepository demandeCongeRepository, AuditService auditService, NotificationService notificationService, HolidayService holidayService) {
         this.demandeCongeRepository = demandeCongeRepository;
         this.auditService = auditService;
         this.notificationService = notificationService;
+        this.holidayService = holidayService;
     }
 
     public DemandeConge createDemande(DemandeConge demande) {
@@ -51,7 +53,7 @@ public class DemandeCongeService {
         while (!dateCourante.isAfter(fin)) {
             DayOfWeek jour = dateCourante.getDayOfWeek();
             // En Algérie, le week-end = Vendredi et Samedi
-            if (jour != DayOfWeek.FRIDAY && jour != DayOfWeek.SATURDAY) {
+            if (jour != DayOfWeek.FRIDAY && jour != DayOfWeek.SATURDAY && !holidayService.isHoliday(dateCourante)) {
                 joursOuvrables++;
             }
             // Passer au jour suivant
@@ -98,6 +100,27 @@ public class DemandeCongeService {
         String notificationMessage = "Votre demande de congé #" + id + " a été mise à jour : nouveau statut [" + nouveauStatut + "].";
         notificationService.createNotification(demande.getDemandeur().getIdUser(), notificationMessage);
 
+        return demandeCongeRepository.save(demande);
+    }
+
+    @Transactional
+    public DemandeConge annulerDemande(Long id, String matricule) {
+        DemandeConge demande = demandeCongeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
+        
+        if (!demande.getDemandeur().getMatricule().equals(matricule)) {
+            throw new RuntimeException("Vous n'êtes pas autorisé à annuler cette demande.");
+        }
+        
+        if (demande.getStatutCycleVie() != null && (demande.getStatutCycleVie().startsWith("APPROUV") || demande.getStatutCycleVie().startsWith("REFUS"))) {
+            throw new RuntimeException("Les demandes déjà traitées ne peuvent pas être annulées.");
+        }
+        
+        demande.setStatutCycleVie("ANNULÉ");
+        
+        String author = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        auditService.logAction("MUTATION", "Annulation de la demande de congé #" + id, author);
+        
         return demandeCongeRepository.save(demande);
     }
 

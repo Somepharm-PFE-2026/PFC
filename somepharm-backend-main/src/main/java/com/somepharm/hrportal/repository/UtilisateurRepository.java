@@ -31,4 +31,8 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
     long countByPoste(String poste);
 
     long countByStatutCompte(String statutCompte);
+
+    long countByRole_NomRoleIgnoreCase(String nomRole);
+
+    long countBySite_IdSite(Long idSite);
 }

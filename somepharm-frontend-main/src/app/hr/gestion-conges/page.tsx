@@ -17,7 +17,12 @@ import {
   Edit2,
   CheckCircle2,
   LayoutList,
-  ChevronLeft
+  ChevronLeft,
+  Search,
+  Filter,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 
 export default function GestionCongesPage() {
@@ -31,11 +36,80 @@ export default function GestionCongesPage() {
   const [isAdjusting, setIsAdjusting] = useState<any>(null);
   const [adjustForm, setAdjustForm] = useState({ amount: 0, reason: "" });
   const [leaveTypes, setLeaveTypes] = useState<any[]>([]);
+  
+  // Filtering & Sorting State
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterDept, setFilterDept] = useState("ALL");
+  const [filterStatus, setFilterStatus] = useState("ALL");
+  const [filterType, setFilterType] = useState("ALL");
+  const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' | null }>({ key: 'start', direction: 'desc' });
+
+  const calculateDuration = (start: string, end: string) => {
+    const s = new Date(start);
+    const e = new Date(end);
+    const diffTime = Math.abs(e.getTime() - s.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  };
+
+  const departments = Array.from(new Set(balances.map(d => d.departement))).filter(Boolean).sort();
+  const leaveTypesList = Array.from(new Set(planningData.map(d => d.type))).filter(Boolean).sort();
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredAndSortedData = planningData
+    .filter(item => {
+      const matchesSearch = item.employee.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            (item.matricule && item.matricule.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                            (item.departement && item.departement.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesDept = filterDept === "ALL" || item.departement === filterDept;
+      const matchesStatus = filterStatus === "ALL" || 
+                           (filterStatus === "APPROVED" && item.isApproved) || 
+                           (filterStatus === "PENDING" && !item.isApproved);
+      const matchesType = filterType === "ALL" || item.type === filterType;
+      return matchesSearch && matchesDept && matchesStatus && matchesType;
+    })
+    .sort((a, b) => {
+      if (!sortConfig.direction || !sortConfig.key) return 0;
+      
+      let aValue: any = a[sortConfig.key];
+      let bValue: any = b[sortConfig.key];
+
+      if (sortConfig.key === 'duration') {
+        aValue = calculateDuration(a.start, a.end);
+        bValue = calculateDuration(b.start, b.end);
+      }
+
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+  // LIVE STATS CALCULATION
+  const todayStr = new Date().toISOString().split('T')[0];
+  
+  // 1. Calculate active absences for current filter
+  const liveActiveAbsences = filteredAndSortedData.filter(abs => {
+    const start = new Date(abs.start).toISOString().split('T')[0];
+    const end = new Date(abs.end).toISOString().split('T')[0];
+    return abs.isApproved && todayStr >= start && todayStr <= end;
+  }).length;
+
+  // 2. Calculate total employees for current filtered department
+  const filteredEmployeesCount = balances.filter(u => 
+    filterDept === "ALL" || u.departement === filterDept
+  ).length || stats?.totalEmployees || 1;
+
+  const liveAbsenteeismRate = ((liveActiveAbsences / filteredEmployeesCount) * 100).toFixed(1);
 
   const tabs = [
     { id: "planning", name: "Vision Globale", icon: Calendar },
     { id: "balances", name: "Suivi des Soldes", icon: TableIcon },
-    { id: "reporting", name: "Indicateurs & Reporting", icon: TrendingUp },
     { id: "rules", name: "Guide des Règles", icon: Info },
     { id: "exports", name: "Exports Paie", icon: FileDown },
   ];
@@ -98,13 +172,14 @@ export default function GestionCongesPage() {
     }
   };
 
-  const exportCSV = () => {
+  const exportCSV = (data = planningData) => {
     // Generate simple CSV for demo
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Matricule,Employe,Departement,Date Debut,Date Fin,Type,Statut\n";
+    csvContent += "Matricule,Employe,Departement,Date Debut,Date Fin,Type,Statut,Duree\n";
     
-    planningData.forEach(row => {
-      csvContent += `${row.matricule},${row.employee},${row.departement},${row.start},${row.end},${row.type},${row.status}\n`;
+    data.forEach(row => {
+      const duration = calculateDuration(row.start, row.end);
+      csvContent += `${row.matricule},${row.employee},${row.departement},${row.start},${row.end},${row.type},${row.status},${duration}\n`;
     });
     
     const encodedUri = encodeURI(csvContent);
@@ -113,6 +188,7 @@ export default function GestionCongesPage() {
     link.setAttribute("download", `export_conges_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
   if (loading) return (
@@ -147,7 +223,7 @@ export default function GestionCongesPage() {
             </div>
             <div>
               <p className="text-[9px] font-black uppercase text-gray-400 tracking-wider">Taux d'Absentéisme</p>
-              <p className="text-xl font-black text-gray-800">{stats?.absenteeismRate || 0}%</p>
+              <p className="text-xl font-black text-gray-800">{liveAbsenteeismRate}%</p>
             </div>
           </div>
           <div className="bg-white p-4 rounded-2xl border shadow-sm flex items-center gap-4">
@@ -156,7 +232,7 @@ export default function GestionCongesPage() {
             </div>
             <div>
               <p className="text-[9px] font-black uppercase text-gray-400 tracking-wider">Effectif Absent</p>
-              <p className="text-xl font-black text-gray-800">{stats?.activeAbsencesCount || 0} <span className="text-[10px] text-gray-400">Collaborateurs</span></p>
+              <p className="text-xl font-black text-gray-800">{liveActiveAbsences} <span className="text-[10px] text-gray-400">Collaborateurs</span></p>
             </div>
           </div>
         </div>
@@ -194,47 +270,141 @@ export default function GestionCongesPage() {
 
               <div className="flex items-center gap-4">
                 {/* View Switcher */}
-                <div className="flex bg-gray-100 p-1 rounded-xl border">
+                <div className="flex bg-gray-100 p-1.5 rounded-[1rem] border shadow-inner">
                   <button 
                     onClick={() => setViewMode("list")}
-                    className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white shadow-md text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
                   >
-                    <LayoutList size={18} />
+                    <LayoutList size={16} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Liste</span>
                   </button>
                   <button 
                     onClick={() => setViewMode("calendar")}
-                    className={`p-2 rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${viewMode === 'calendar' ? 'bg-white shadow-md text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
                   >
-                    <Calendar size={18} />
+                    <Calendar size={16} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Calendrier</span>
                   </button>
                 </div>
 
                 {viewMode === 'calendar' && (
-                  <div className="flex items-center gap-2 bg-white border rounded-xl p-1 shadow-sm">
+                  <div className="flex items-center gap-3 bg-white border rounded-[1rem] p-1.5 shadow-sm">
                     <button 
                       onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}
-                      className="p-1.5 hover:bg-gray-50 rounded-lg text-gray-400"
+                      className="p-2 hover:bg-gray-50 rounded-lg text-gray-400 transition-colors"
                     >
-                      <ChevronLeft size={16} />
+                      <ChevronLeft size={18} />
                     </button>
                     <button 
                       onClick={() => setCurrentMonth(new Date())}
-                      className="px-3 py-1.5 hover:bg-gray-50 rounded-lg text-[9px] font-black text-gray-600 uppercase"
+                      className="px-4 py-2 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-[10px] font-black text-gray-600 uppercase tracking-widest transition-all"
                     >
                       Aujourd'hui
                     </button>
                     <button 
                       onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}
-                      className="p-1.5 hover:bg-gray-50 rounded-lg text-gray-400"
+                      className="p-2 hover:bg-gray-50 rounded-lg text-gray-400 transition-colors"
                     >
-                      <ChevronRight size={16} />
+                      <ChevronRight size={18} />
                     </button>
                   </div>
                 )}
 
-                <div className="hidden lg:flex gap-4 text-[9px] font-bold uppercase tracking-widest text-gray-400 ml-4">
-                  <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-blue-600 rounded-full"></div> Validé</div>
-                  <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-blue-200 rounded-full border border-dashed border-blue-400"></div> En Attente</div>
+                <div className="hidden xl:flex gap-6 items-center px-6 py-2 bg-gray-50 rounded-2xl border ml-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 bg-blue-600 rounded-full shadow-lg shadow-blue-200"></div>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">Validé</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full border-2 border-dashed border-blue-400 animate-pulse"></div>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">En Attente</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* FILTER BAR */}
+            <div className="flex flex-col gap-4 mb-8 bg-gray-50/50 p-6 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="flex flex-wrap gap-4 items-center">
+                <div className="relative flex-1 min-w-[300px]">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="Rechercher un employé, matricule ou département..." 
+                    className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl font-bold text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-sm"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                
+                <div className="flex flex-wrap gap-3">
+                  <div className="relative">
+                    <select 
+                      className="appearance-none bg-white border border-gray-200 rounded-2xl pl-5 pr-12 py-4 font-black text-[11px] uppercase tracking-widest outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all cursor-pointer shadow-sm"
+                      value={filterDept}
+                      onChange={(e) => setFilterDept(e.target.value)}
+                    >
+                      <option value="ALL">Départements (Tous)</option>
+                      {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                    <Filter className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                  </div>
+
+                  <div className="relative">
+                    <select 
+                      className="appearance-none bg-white border border-gray-200 rounded-2xl pl-5 pr-12 py-4 font-black text-[11px] uppercase tracking-widest outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all cursor-pointer shadow-sm"
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                    >
+                      <option value="ALL">Statuts (Tous)</option>
+                      <option value="PENDING">En Attente</option>
+                      <option value="APPROVED">Validé</option>
+                    </select>
+                    <Filter className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                  </div>
+
+                  <button 
+                    onClick={() => exportCSV(filteredAndSortedData)}
+                    className="flex items-center gap-3 px-6 py-4 bg-gray-800 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-gray-900 transition-all shadow-lg shadow-gray-200"
+                  >
+                    <FileDown size={16} />
+                    Exporter la vue
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between px-2">
+                <div className="flex items-center gap-4">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                    {filteredAndSortedData.length} résultats trouvés
+                    {searchTerm && <span className="italic normal-case text-blue-600 font-bold ml-1">pour "{searchTerm}"</span>}
+                  </p>
+                  {(searchTerm || filterDept !== "ALL" || filterStatus !== "ALL" || filterType !== "ALL") && (
+                    <button 
+                      onClick={() => {
+                        setSearchTerm("");
+                        setFilterDept("ALL");
+                        setFilterStatus("ALL");
+                        setFilterType("ALL");
+                      }}
+                      className="text-[10px] font-black text-red-500 uppercase tracking-widest hover:underline"
+                    >
+                      Effacer les filtres
+                    </button>
+                  )}
+                </div>
+                
+                <div className="relative">
+                    <select 
+                      className="appearance-none bg-transparent pl-2 pr-8 py-1 font-black text-[10px] uppercase tracking-widest text-gray-400 outline-none cursor-pointer"
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value)}
+                    >
+                      <option value="ALL">Type de congé : Tous</option>
+                      {leaveTypesList.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <Filter className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={10} />
                 </div>
               </div>
             </div>
@@ -243,68 +413,126 @@ export default function GestionCongesPage() {
               <div className="space-y-4 overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="text-left bg-gray-50 border-b">
-                      <th className="p-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Employé</th>
-                      <th className="p-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Période</th>
+                    <tr className="text-left bg-gray-50/80 border-b">
+                      <th 
+                        className="p-4 text-[10px] font-black uppercase text-gray-400 tracking-widest cursor-pointer hover:text-blue-600 transition-colors group"
+                        onClick={() => handleSort('employee')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Employé
+                          {sortConfig.key === 'employee' ? (
+                            sortConfig.direction === 'asc' ? <ArrowUp size={10} /> : <ArrowDown size={10} />
+                          ) : <ArrowUpDown size={10} className="opacity-0 group-hover:opacity-100" />}
+                        </div>
+                      </th>
+                      <th 
+                        className="p-4 text-[10px] font-black uppercase text-gray-400 tracking-widest cursor-pointer hover:text-blue-600 transition-colors group"
+                        onClick={() => handleSort('start')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Période
+                          {sortConfig.key === 'start' ? (
+                            sortConfig.direction === 'asc' ? <ArrowUp size={10} /> : <ArrowDown size={10} />
+                          ) : <ArrowUpDown size={10} className="opacity-0 group-hover:opacity-100" />}
+                        </div>
+                      </th>
+                      <th 
+                        className="p-4 text-[10px] font-black uppercase text-gray-400 tracking-widest cursor-pointer hover:text-blue-600 transition-colors group text-center"
+                        onClick={() => handleSort('duration')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Durée
+                          {sortConfig.key === 'duration' ? (
+                            sortConfig.direction === 'asc' ? <ArrowUp size={10} /> : <ArrowDown size={10} />
+                          ) : <ArrowUpDown size={10} className="opacity-0 group-hover:opacity-100" />}
+                        </div>
+                      </th>
                       <th className="p-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Type</th>
-                      <th className="p-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Aperçu</th>
+                      <th className="p-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Statut</th>
+                      <th className="p-4 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {planningData.map((row, i) => (
-                      <tr key={i} className="hover:bg-gray-50/50 transition">
+                    {filteredAndSortedData.map((row, i) => (
+                      <tr key={i} className="hover:bg-blue-50/30 transition group border-b border-gray-50 last:border-0">
                         <td className="p-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xs">
+                            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-sm shadow-sm border border-blue-100">
                               {row.employee.charAt(0)}
                             </div>
                             <div>
                               <p className="font-black text-gray-800 text-sm">{row.employee}</p>
-                              <p className="text-[10px] text-gray-400 font-bold uppercase">{row.departement}</p>
+                              <p className="text-[10px] text-gray-400 font-bold uppercase flex items-center gap-2">
+                                <span className="text-blue-600/50">#{row.matricule}</span>
+                                <span>•</span>
+                                <span>{row.departement}</span>
+                              </p>
                             </div>
                           </div>
                         </td>
                         <td className="p-4">
-                          <span className="text-xs font-bold text-gray-500 whitespace-nowrap">
-                            {new Date(row.start).toLocaleDateString()} → {new Date(row.end).toLocaleDateString()}
+                          <div className="flex flex-col">
+                            <span className="text-[11px] font-black text-gray-700">
+                              {new Date(row.start).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} → {new Date(row.end).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className="text-xs font-black text-gray-800 bg-gray-100 px-2 py-1 rounded-lg">
+                            {calculateDuration(row.start, row.end)} <span className="text-[8px] uppercase text-gray-400">Jrs</span>
                           </span>
                         </td>
                         <td className="p-4">
-                          <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-gray-100 text-gray-600 shadow-sm" style={{ backgroundColor: `${row.color}15`, color: row.color, border: `1px solid ${row.color}30` }}>
+                          <span className="px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm border" style={{ backgroundColor: `${row.color}15`, color: row.color, borderColor: `${row.color}30` }}>
                             {row.type}
                           </span>
                         </td>
-                        <td className="p-4 w-64">
-                           <div className="flex items-center gap-3">
-                              <div className="relative flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                 <div 
-                                   className={`absolute h-full rounded-full transition-all duration-1000 ${!row.isApproved ? "opacity-30 border-2 border-dashed border-white/50" : ""}`}
-                                   style={{ 
-                                      width: `${Math.min(100, (new Date(row.end).getTime() - new Date(row.start).getTime()) / (1000 * 60 * 60 * 24 * 30) * 100)}%`, 
-                                      backgroundColor: row.color 
-                                   }}
-                                 ></div>
-                              </div>
-                              {!row.isApproved && (
-                                <a 
-                                  href="/hr/validation-rh"
-                                  className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm group-hover:scale-110"
-                                  title="Traiter cette demande"
-                                >
-                                  <ChevronRight size={14} />
-                                </a>
-                              )}
-                           </div>
+                        <td className="p-4">
+                          {row.isApproved ? (
+                            <div className="flex items-center gap-2 text-green-600">
+                              <CheckCircle2 size={14} />
+                              <span className="text-[9px] font-black uppercase tracking-widest">Validé</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-amber-500 animate-pulse">
+                              <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                              <span className="text-[9px] font-black uppercase tracking-widest">En Attente</span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-4 text-right">
+                           {!row.isApproved ? (
+                              <a 
+                                href="/hr/validation-rh"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm font-black text-[9px] uppercase tracking-widest group"
+                              >
+                                Traiter <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                              </a>
+                            ) : (
+                              <div className="text-[9px] font-black text-gray-300 uppercase tracking-widest italic pr-4">Archivé</div>
+                            )}
                         </td>
                       </tr>
                     ))}
-                    {planningData.length === 0 && (
+                    {filteredAndSortedData.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="p-20 text-center">
-                          <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 opacity-50">
-                            <AlertTriangle size={32} />
+                        <td colSpan={6} className="p-20 text-center">
+                          <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
+                            <Search size={40} />
                           </div>
-                          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.2em]">Aucune absence enregistrée pour cette période</p>
+                          <h4 className="text-gray-800 font-black uppercase tracking-tighter italic text-lg">Aucun résultat</h4>
+                          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">Ajustez vos filtres pour trouver ce que vous cherchez</p>
+                          <button 
+                            onClick={() => {
+                              setSearchTerm("");
+                              setFilterDept("ALL");
+                              setFilterStatus("ALL");
+                              setFilterType("ALL");
+                            }}
+                            className="mt-6 px-6 py-2 bg-white border rounded-xl text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 transition-all"
+                          >
+                            Effacer les filtres
+                          </button>
                         </td>
                       </tr>
                     )}
@@ -312,23 +540,26 @@ export default function GestionCongesPage() {
                 </table>
               </div>
             ) : (
-              <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="animate-in fade-in zoom-in-95 duration-500">
                 {/* CALENDAR VIEW GRID */}
-                <div className="grid grid-cols-7 gap-px bg-gray-100 border rounded-2xl overflow-hidden shadow-inner">
-                  {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(day => (
-                    <div key={day} className="bg-gray-50 p-3 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                <div className="grid grid-cols-7 gap-[1px] bg-gray-100 border-x border-b rounded-b-[2rem] overflow-hidden shadow-2xl">
+                  {['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'].map(day => (
+                    <div key={day} className="bg-white p-5 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-t">
                       {day}
                     </div>
                   ))}
                   
-                  {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay() === 0 ? 6 : new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay() - 1 }).map((_, i) => (
-                    <div key={`empty-${i}`} className="bg-white/50 min-h-[120px]"></div>
+                  {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay() }).map((_, i) => (
+                    <div key={`empty-${i}`} className="bg-gray-50/40 min-h-[140px] border-t border-l border-gray-100/50"></div>
                   ))}
 
                   {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate() }).map((_, i) => {
                     const day = i + 1;
-                    const dateStr = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toISOString().split('T')[0];
-                    const dayAbsences = planningData.filter(abs => {
+                    const currentDayDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+                    const dateStr = currentDayDate.toISOString().split('T')[0];
+                    const isWeekend = currentDayDate.getDay() === 5 || currentDayDate.getDay() === 6;
+                    
+                    const dayAbsences = filteredAndSortedData.filter(abs => {
                       const start = new Date(abs.start).toISOString().split('T')[0];
                       const end = new Date(abs.end).toISOString().split('T')[0];
                       return dateStr >= start && dateStr <= end;
@@ -337,27 +568,53 @@ export default function GestionCongesPage() {
                     const isToday = new Date().toISOString().split('T')[0] === dateStr;
 
                     return (
-                      <div key={day} className={`bg-white min-h-[120px] p-2 border-t border-l flex flex-col gap-1 hover:bg-blue-50/30 transition-colors ${isToday ? 'bg-blue-50/50' : ''}`}>
-                        <span className={`text-[10px] font-black mb-1 w-6 h-6 flex items-center justify-center rounded-lg ${isToday ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400'}`}>
-                          {day}
-                        </span>
-                        <div className="space-y-1 overflow-y-auto max-h-[80px] custom-scrollbar">
+                      <div 
+                        key={day} 
+                        className={`bg-white min-h-[140px] p-3 border-t border-l border-gray-100 flex flex-col gap-2 transition-all duration-300 group/day relative
+                          ${isWeekend ? 'bg-gray-50/60' : 'bg-white'} 
+                          ${isToday ? 'ring-2 ring-inset ring-blue-500/10 z-10' : ''}
+                          hover:shadow-[0_0_30px_rgba(0,0,0,0.08)] hover:scale-[1.02] hover:z-20 hover:bg-blue-50/10`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <span className={`text-[12px] font-black w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-500
+                            ${isToday ? 'bg-blue-600 text-white shadow-xl shadow-blue-200 scale-110' : 'text-gray-300 group-hover/day:text-gray-800'}`}>
+                            {day}
+                          </span>
+                          {dayAbsences.length > 0 && (
+                            <span className="text-[8px] font-black text-gray-300 uppercase tracking-tighter bg-gray-50 px-2 py-1 rounded-lg group-hover/day:bg-blue-50 group-hover/day:text-blue-500 transition-all">
+                              {dayAbsences.length}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="space-y-1.5 overflow-y-auto max-h-[85px] custom-scrollbar pr-1">
                           {dayAbsences.map((abs, idx) => (
                             <div 
                               key={idx}
                               title={`${abs.employee} - ${abs.type}`}
-                              className={`px-1.5 py-0.5 rounded text-[8px] font-black truncate border-l-2 transition-all hover:scale-105 cursor-help
-                                ${abs.isApproved ? 'shadow-sm' : 'opacity-50 border-dashed'}`}
+                              className={`px-2.5 py-1.5 rounded-xl text-[9px] font-black truncate border-l-4 shadow-sm transition-all hover:translate-x-1 cursor-pointer
+                                ${abs.isApproved ? '' : 'opacity-60 border-dashed bg-white/50 border shadow-none italic'}`}
                               style={{ 
-                                backgroundColor: `${abs.color}15`, 
+                                backgroundColor: abs.isApproved ? `${abs.color}15` : 'transparent', 
                                 color: abs.color, 
-                                borderLeftColor: abs.color 
+                                borderLeftColor: abs.color,
+                                borderColor: !abs.isApproved ? `${abs.color}30` : 'transparent'
                               }}
                             >
-                              {abs.employee.split(' ')[0]}
+                              <div className="flex items-center gap-1.5">
+                                {!abs.isApproved && <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shadow-[0_0_8px_currentColor]"></div>}
+                                {abs.employee.split(' ')[0]}
+                              </div>
                             </div>
                           ))}
                         </div>
+                        
+                        {/* Interactive Dot Indicator if many absences */}
+                        {dayAbsences.length > 4 && (
+                           <div className="absolute bottom-2 right-2 text-[8px] font-black text-gray-300">
+                             +{dayAbsences.length - 4} plus
+                           </div>
+                        )}
                       </div>
                     );
                   })}
@@ -419,59 +676,6 @@ export default function GestionCongesPage() {
           </div>
         )}
 
-        {/* TAB CONTENT: REPORTING */}
-        {activeTab === "reporting" && (
-          <div className="p-8 grid md:grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="bg-purple-100 p-3 rounded-2xl text-purple-600"><AlertTriangle size={20} /></div>
-                    <h4 className="font-black text-gray-800 uppercase italic tracking-tighter">Gestion du Risque (Dette Sociale)</h4>
-                </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6 leading-relaxed">
-                    Collaborateurs ayant les plus gros soldes restants. Un solde élevé représente une provision financière non déduite.
-                </p>
-                <div className="space-y-4">
-                    {stats?.topSocialDebt.map((item: any, i: number) => (
-                        <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border-l-4 border-purple-500">
-                             <div>
-                                <p className="font-black text-gray-800 text-sm">{item.matricule}</p>
-                                <p className="text-[9px] font-bold text-purple-600 uppercase tracking-widest">Alerte Accumulation</p>
-                             </div>
-                             <div className="text-right">
-                                <p className="text-2xl font-black text-gray-800">{item.solde}</p>
-                                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Jours dus</p>
-                             </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-8 rounded-[2rem] text-white shadow-xl flex flex-col justify-between">
-                <div>
-                    <h4 className="font-black text-white uppercase italic tracking-tighter text-xl mb-4">Indicateurs de Performance</h4>
-                    <p className="text-blue-200 font-bold text-xs leading-relaxed max-w-xs uppercase tracking-widest mb-10">
-                        Surveillance en temps réel du taux d'engagement et des absences validées ce mois-ci.
-                    </p>
-                    
-                    <div className="flex items-end gap-2 mb-2">
-                        <span className="text-6xl font-black italic">{100 - (stats?.absenteeismRate || 0)}%</span>
-                        <span className="text-xs font-black text-blue-200 uppercase tracking-[0.2em] mb-3">Taux de Présence</span>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                        <p className="text-[9px] font-black text-blue-200 uppercase tracking-wider mb-2">Export Paie Prêt</p>
-                        <p className="font-black text-xl italic">{planningData.filter(d => d.isApproved).length} <span className="text-[8px] font-bold opacity-40">Dossiers</span></p>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                        <p className="text-[9px] font-black text-blue-200 uppercase tracking-wider mb-2">Risque Absence</p>
-                        <p className="font-black text-xl italic">{planningData.filter(d => !d.isApproved).length} <span className="text-[8px] font-bold opacity-40">En attente</span></p>
-                    </div>
-                </div>
-            </div>
-          </div>
-        )}
 
         {/* TAB CONTENT: RULES */}
         {activeTab === "rules" && (
@@ -512,7 +716,7 @@ export default function GestionCongesPage() {
             <div className="flex gap-4">
                 <div className="relative group">
                   <button 
-                    onClick={exportCSV}
+                    onClick={() => exportCSV()}
                     className="bg-gray-800 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-gray-900 transition-all flex items-center gap-3"
                   >
                     Générer Export Global (CSV) <ChevronRight size={16} />

@@ -105,6 +105,23 @@ export default function DemandesPage() {
       return sortOrder === "NEWEST" ? dateB - dateA : dateA - dateB;
     });
 
+  const handleCancel = async (id: number, isDoc: boolean) => {
+    if (!confirm("Voulez-vous vraiment annuler cette demande ?")) return;
+    try {
+      const baseUrl = isDoc ? "http://localhost:8080/api/demandes-documents" : "http://localhost:8080/api/demandes";
+      const res = await fetch(`${baseUrl}/${id}/annuler`, {
+        method: "PUT",
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (res.ok) {
+        fetchData(token, user?.role);
+      } else {
+        const err = await res.text();
+        alert("Erreur: " + err);
+      }
+    } catch (err) { console.error(err); }
+  };
+
   const handleUpdateStatus = async (id: number, newStatus: string, commentaire: string = "", isDoc: boolean) => {
     try {
       const baseUrl = isDoc ? "http://localhost:8080/api/demandes-documents" : "http://localhost:8080/api/demandes";
@@ -328,6 +345,7 @@ export default function DemandesPage() {
             {filteredAndSortedRequests.map((req: any) => {
               const isApproved = req.statutCycleVie === 'APPROUVE' || req.statutCycleVie === 'APPROUVÉ';
               const isDoc = req._group === 'DOCUMENT';
+              const isCancellable = !isApproved && !req.statutCycleVie.includes("REFUSE") && req.statutCycleVie !== "ANNULE" && req.statutCycleVie !== "ANNULÉ";
 
               return (
               <tr key={`${req._group}-${req.idRequete}`} className="hover:bg-blue-50/30 transition-colors">
@@ -367,13 +385,17 @@ export default function DemandesPage() {
                     <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter shadow-sm border ${
                       isApproved ? 'bg-green-50 border-green-200 text-green-700' : 
                       req.statutCycleVie === 'ATTENTE' ? 'bg-amber-100 border-amber-300 text-amber-800 animate-pulse' :
-                      req.statutCycleVie.includes('REFUSE') ? 'bg-red-50 border-red-200 text-red-700' : 'bg-amber-50 border-amber-200 text-amber-700'
+                      req.statutCycleVie.includes('REFUSE') ? 'bg-red-50 border-red-200 text-red-700' : 
+                      req.statutCycleVie.startsWith('ANNUL') ? 'bg-gray-50 border-gray-200 text-gray-400' :
+                      'bg-amber-50 border-amber-200 text-amber-700'
                     }`}>
                       {req.statutCycleVie === "EN_ATTENTE_MANAGER" ? "⌛ Attente Manager" :
+                       req.statutCycleVie === "EN_ATTENTE_CHEF_DEPT" ? "🛡️ Attente Dept Head" :
                        req.statutCycleVie === "EN_ATTENTE_RH" ? "⌛ Attente RH" :
                        req.statutCycleVie === "VALIDE_MANAGER" ? "🛡️ Validé Manager" :
                        req.statutCycleVie === "APPROUVE" ? "✅ Approuvé" : 
                        req.statutCycleVie === "ATTENTE" ? "🚨 Action Requise" :
+                       req.statutCycleVie.startsWith("ANNUL") ? "⚪ Annulée" :
                        req.statutCycleVie === "REFUSE" ? "❌ Refusé" : req.statutCycleVie}
                     </span>
                     {req.commentaireAction && (
@@ -384,7 +406,7 @@ export default function DemandesPage() {
                   </div>
                 </td>
 
-                <td className="p-8 text-center flex justify-center gap-2">
+                <td className="p-8 text-center flex flex-col items-center justify-center gap-2">
                   {/* Action Validation (Managers/RH view) but keep in mind that the new RH Validation page will handle RH validations, this is mostly for the employee's history. But since we use one component, let's keep basic Manager controls here for leaves. Document requests skip Manager so they only show here as EN_ATTENTE_RH */}
                   {/* 🛡️ HARDENED VALIDATION SHIELD: Managers MUST NOT validate their own requests. Strict comparison (Trimmed + Lowercase) */}
                   {user?.role === "MANAGER" && !isDoc && req.statutCycleVie === "EN_ATTENTE_MANAGER" && (req.demandeurMatricule?.trim().toLowerCase() !== user?.sub?.trim().toLowerCase()) && (
@@ -395,7 +417,7 @@ export default function DemandesPage() {
                   )}
 
                   {/* 📥 Download Button for Employee when APPROVED */}
-                  {isApproved && (isDoc || !isDoc) && (
+                  {isApproved && (
                       <button 
                          onClick={() => handleDownload(req.idRequete)}
                          className="bg-gray-900 border border-gray-800 text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-800 transition shadow-md flex items-center gap-2"
@@ -411,8 +433,19 @@ export default function DemandesPage() {
                          <AlertCircle size={14} /> Répondre
                       </button>
                   )}
-                  {(!isApproved && req.statutCycleVie !== 'ATTENTE' && user?.role === "EMPLOYE") && (
-                      <span className="text-gray-300 font-bold text-[10px] uppercase">En Attente</span>
+                  
+                  {/* ❌ CANCEL BUTTON (Visible for Employees when request is still pending) */}
+                  {isCancellable && user?.role === "EMPLOYE" && (
+                      <button 
+                         onClick={() => handleCancel(req.idRequete, isDoc)}
+                         className="text-red-500 font-black text-[9px] uppercase tracking-widest hover:text-red-700 hover:underline transition-all"
+                      >
+                         Annuler la demande
+                      </button>
+                  )}
+
+                  {(!isApproved && !isCancellable && req.statutCycleVie !== 'ATTENTE' && user?.role === "EMPLOYE") && (
+                      <span className="text-gray-300 font-bold text-[10px] uppercase">Traitée</span>
                   )}
                 </td>
 

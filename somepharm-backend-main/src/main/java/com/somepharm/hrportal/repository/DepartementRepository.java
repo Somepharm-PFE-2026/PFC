@@ -4,7 +4,9 @@ import com.somepharm.hrportal.entity.Departement;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface DepartementRepository extends JpaRepository<Departement, Long> {
-    // Spring Data JPA automatically provides findAll(), save(), findById(), etc.
+    Optional<Departement> findByNomDept(String nomDept);
 }

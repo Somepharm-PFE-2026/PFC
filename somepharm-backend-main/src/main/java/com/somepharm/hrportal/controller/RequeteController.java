@@ -10,6 +10,7 @@ import com.somepharm.hrportal.repository.UtilisateurRepository;
 import com.somepharm.hrportal.service.DemandeAdministrativeService;
 import com.somepharm.hrportal.service.DemandeCongeService;
 import com.somepharm.hrportal.service.DemandeDocumentService;
+import com.somepharm.hrportal.service.WorkflowService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -38,17 +39,20 @@ public class RequeteController {
     private final DemandeAdministrativeService administrativeService;
     private final DemandeCongeService congeService;
     private final DemandeDocumentService documentService;
+    private final WorkflowService workflowService;
 
     public RequeteController(RequeteRepository requeteRepository, 
                              UtilisateurRepository utilisateurRepository,
                              DemandeAdministrativeService administrativeService,
                              DemandeCongeService congeService,
-                             DemandeDocumentService documentService) {
+                             DemandeDocumentService documentService,
+                             WorkflowService workflowService) {
         this.requeteRepository = requeteRepository;
         this.utilisateurRepository = utilisateurRepository;
         this.administrativeService = administrativeService;
         this.congeService = congeService;
         this.documentService = documentService;
+        this.workflowService = workflowService;
     }
 
     @GetMapping("/hr-queue")
@@ -82,7 +86,36 @@ public class RequeteController {
 
         return ResponseEntity.ok(filtered);
     }
+    @GetMapping("/manager-queue")
+    public ResponseEntity<List<Requete>> getManagerQueue(Authentication auth) {
+        Utilisateur currentUser = utilisateurRepository.findByMatricule(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
+        List<Requete> allRequetes = requeteRepository.findAll();
+        
+        LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+
+        List<Requete> filtered = allRequetes.stream()
+                .filter(req -> {
+                    boolean canValidate = workflowService.canUserValidate(req, currentUser);
+                    if (!canValidate) return false;
+                    
+                    // 🚀 MIDNIGHT RULE: Cancelled requests disappear for managers after today
+                    if (req.getStatutCycleVie().startsWith("ANNUL")) {
+                        return req.getDateSoumission() != null && req.getDateSoumission().isAfter(todayStart);
+                    }
+                    
+                    return true;
+                })
+                .sorted((r1, r2) -> {
+                    if (r1.getDateSoumission() == null) return 1;
+                    if (r2.getDateSoumission() == null) return -1;
+                    return r2.getDateSoumission().compareTo(r1.getDateSoumission());
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(filtered);
+    }
 
     @PutMapping("/{id}/manager-validate")
     public ResponseEntity<?> managerValidate(@PathVariable Long id, @RequestBody Map<String, String> payload, Authentication auth) {
@@ -92,15 +125,12 @@ public class RequeteController {
         String comment = payload.get("comment");
         Utilisateur manager = utilisateurRepository.findByMatricule(auth.getName()).get();
 
-        req.setStatutCycleVie("VALIDE_MANAGER");
-        req.setDateActionManager(LocalDateTime.now());
-        req.setNomManagerAction(manager.getPrenom() + " " + manager.getNom());
-        req.setCommentaireManager(comment);
-        
-        // 🚀 Set the HR Chronometer start anchor
-        req.setDateArriveeRh(LocalDateTime.now());
+        if (!workflowService.canUserValidate(req, manager)) {
+            return ResponseEntity.status(403).body("Action impossible : Vous n'êtes pas le validateur désigné pour cette étape du workflow.");
+        }
 
-        return ResponseEntity.ok(requeteRepository.save(req));
+        // 🚀 DYNAMIC WORKFLOW: Progress based on circuit
+        return ResponseEntity.ok(workflowService.processValidation(req, "APPROUVE", comment, manager.getPrenom() + " " + manager.getNom()));
     }
 
     @PutMapping("/{id}/hr-action")
@@ -126,33 +156,25 @@ public class RequeteController {
         Requete req = requeteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Requete introuvable"));
 
-        // 🛡️ ENFORCE HIERARCHY
-        if (req.getDemandeur() != null && req.getDemandeur().getRole() != null) {
-            String demandeurRole = req.getDemandeur().getRole().getNomRole();
-            
-            if (demandeurRole.equals("RH_ADMIN") && !role.equals("HR_MANAGER") && !role.equals("SUPER_ADMIN")) {
-                return ResponseEntity.status(403).body("Action impossible : Seul un HR_MANAGER peut valider la demande d'un RH_ADMIN");
-            }
-            if (demandeurRole.equals("HR_MANAGER") && !role.equals("SUPER_ADMIN")) {
-                return ResponseEntity.status(403).body("Action impossible : Seul le SUPER_ADMIN peut valider la demande d'un HR_MANAGER");
-            }
+        if (!workflowService.canUserValidate(req, currentUser)) {
+            return ResponseEntity.status(403).body("Action impossible : Vous n'êtes pas le validateur désigné pour cette étape du workflow ou n'avez pas les droits RH requis.");
         }
 
         // action values: APPROUVE, REFUSE, ATTENTE
         String comment = payload != null ? payload.get("comment") : "";
 
-        if (req instanceof DemandeAdministrative) {
+        // 🚀 DYNAMIC WORKFLOW: Progress based on circuit
+        Requete updated = workflowService.processValidation(req, action, comment, currentUser.getPrenom() + " " + currentUser.getNom());
+
+        if (updated instanceof DemandeAdministrative && "APPROUVÉ".equalsIgnoreCase(updated.getStatutCycleVie())) {
             return ResponseEntity.ok(administrativeService.updateStatus(id, action, comment));
-        } else if (req instanceof DemandeConge) {
+        } else if (updated instanceof DemandeConge && "APPROUVÉ".equalsIgnoreCase(updated.getStatutCycleVie())) {
             return ResponseEntity.ok(congeService.updateStatut(id, action, comment));
-        } else if (req instanceof DemandeDocument) {
+        } else if (updated instanceof DemandeDocument && "APPROUVÉ".equalsIgnoreCase(updated.getStatutCycleVie())) {
             return ResponseEntity.ok(documentService.updateStatut(id, action, comment));
-        } else {
-            // Generic update for other types if any
-            req.setStatutCycleVie(action);
-            req.setCommentaireAction(comment);
-            return ResponseEntity.ok(requeteRepository.save(req));
         }
+        
+        return ResponseEntity.ok(updated);
     }
 
     @PostMapping("/submit-administrative")
@@ -162,8 +184,9 @@ public class RequeteController {
 
         demande.setDemandeur(currentUser);
         demande.setDateSoumission(LocalDateTime.now());
-        demande.setStatutCycleVie("EN_ATTENTE_RH"); // Direct to HR as requested
-        demande.setDateArriveeRh(LocalDateTime.now()); // Start ticking HR chronometer
+        
+        // 🚀 DYNAMIC ROUTING: Use WorkflowService
+        workflowService.initiateWorkflow(demande, demande.getTypeDemande());
 
         return ResponseEntity.ok(requeteRepository.save(demande));
     }

@@ -61,6 +61,7 @@ export default function HRSettingsPage() {
   const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
   const [selectedDeptMgrId, setSelectedDeptMgrId] = useState<number | null>(null);
   const [forceOverwriteAll, setForceOverwriteAll] = useState(false);
+  const [newHoliday, setNewHoliday] = useState({ nom: "", date: "", recurrenceType: "ANNUEL", recurrenceInterval: 1 });
 
   // --- TEMPLATES & SIGNATURES STATE ---
   const [templates, setTemplates] = useState<any[]>([]);
@@ -282,6 +283,28 @@ export default function HRSettingsPage() {
       if (res.ok) fetchConfig();
     } catch (err) { console.error(err); }
   };
+  const handleCreateHoliday = async () => {
+    if (!newHoliday.nom || !newHoliday.date) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:8080/api/config/holidays", {
+        method: "POST",
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(newHoliday)
+      });
+      if (res.ok) {
+        setNewHoliday({ nom: "", date: "", recurrenceType: "ANNUEL", recurrenceInterval: 1 });
+        fetchConfig();
+        alert("✅ Jour férié ajouté !");
+      } else {
+        const errorText = await res.text();
+        alert("❌ Erreur : " + (errorText || "Impossible d'ajouter le jour férié."));
+      }
+    } catch (err) { console.error(err); }
+  };
 
   const handleCreateDept = async () => {
     if (!newDeptName) return;
@@ -460,10 +483,13 @@ export default function HRSettingsPage() {
     { value: "DEMANDE_CONGE", label: "Demande de Congé" },
     { value: "ATTESTATION_TRAVAIL", label: "Attestation de Travail" },
     { value: "ATTESTATION_SALAIRE", label: "Attestation de Salaire" },
-    { value: "FICHE_PAIE", label: "Fiche de Paie" },
+    { value: "RELEVE_EMOLUMENTS", label: "Relève d'Émoluments" },
     { value: "TITRE_CONGE", label: "Titre de Congé" },
     { value: "BON_SORTIE", label: "Bon de Sortie" },
-    { value: "REGULARISATION", label: "Régularisation" },
+    { value: "REGULARISATION", label: "Régularisation Pointage" },
+    { value: "SITUATION_FAMILIALE", label: "Changement Situation Familiale" },
+    { value: "ADRESSE", label: "Changement d'Adresse" },
+    { value: "TELEPHONE", label: "Changement de Téléphone" },
   ];
 
   const tabs = [
@@ -720,10 +746,59 @@ export default function HRSettingsPage() {
                        )}
                     </div>
                     
-                    <div className="bg-gray-50/50 border border-gray-100 rounded-[3rem] p-8">
-                       <p className="text-xs text-gray-500 font-medium mb-8 bg-white p-4 rounded-2xl border border-gray-100">
-                         Le bouton &quot;Importer&quot; permet de charger les fêtes nationales pour que le système ne compte pas ces journées comme des absences injustifiées.
+                    <div className="bg-gray-50/50 border border-gray-100 rounded-[3rem] p-8 space-y-8">
+                       <p className="text-xs text-gray-500 font-medium mb-4 bg-white p-4 rounded-2xl border border-gray-100">
+                         Le bouton &quot;Importer&quot; permet de charger les fêtes nationales. Vous pouvez également ajouter des dates spécifiques manuellement.
                        </p>
+
+                       {!isReadOnly && (
+                         <div className="bg-white p-6 rounded-[2rem] border border-blue-100 shadow-sm space-y-4">
+                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                               <Plus size={14} /> Ajout Manuel d&apos;Exemption
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                               <input 
+                                 type="text" 
+                                 placeholder="Libellé (ex: Jour de l'An)" 
+                                 className="bg-gray-50 border border-transparent focus:border-blue-400 focus:bg-white p-4 rounded-2xl text-[10px] font-bold outline-none transition-all"
+                                 value={newHoliday.nom}
+                                 onChange={(e) => setNewHoliday({...newHoliday, nom: e.target.value})}
+                               />
+                               <input 
+                                 type="date" 
+                                 className="bg-gray-50 border border-transparent focus:border-blue-400 focus:bg-white p-4 rounded-2xl text-[10px] font-bold outline-none transition-all"
+                                 value={newHoliday.date}
+                                 onChange={(e) => setNewHoliday({...newHoliday, date: e.target.value})}
+                               />
+                               <select 
+                                 className="bg-gray-50 border border-transparent focus:border-blue-400 focus:bg-white p-4 rounded-2xl text-[10px] font-bold outline-none transition-all"
+                                 value={newHoliday.recurrenceType}
+                                 onChange={(e) => setNewHoliday({...newHoliday, recurrenceType: e.target.value})}
+                               >
+                                 <option value="ANNUEL">CHAQUE ANNÉE (FIXE)</option>
+                                 <option value="UNIQUE">DATE PRÉCISE (UNE FOIS)</option>
+                                 <option value="PERIODIQUE">TOUS LES X ANS</option>
+                               </select>
+                               <div className="flex gap-2">
+                                 {newHoliday.recurrenceType === "PERIODIQUE" && (
+                                   <input 
+                                     type="number" 
+                                     placeholder="Ans"
+                                     className="w-20 bg-gray-50 border border-transparent focus:border-blue-400 focus:bg-white p-4 rounded-2xl text-[10px] font-bold outline-none transition-all"
+                                     value={newHoliday.recurrenceInterval}
+                                     onChange={(e) => setNewHoliday({...newHoliday, recurrenceInterval: parseInt(e.target.value)})}
+                                   />
+                                 )}
+                                 <button 
+                                   onClick={handleCreateHoliday}
+                                   className="flex-1 bg-blue-600 text-white px-6 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
+                                 >
+                                    <Plus size={20} className="mx-auto" />
+                                 </button>
+                               </div>
+                            </div>
+                         </div>
+                       )}
                        
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {holidays.map((h: any) => (
@@ -731,12 +806,35 @@ export default function HRSettingsPage() {
                                <div className="flex items-center gap-4">
                                   <div className="bg-blue-50 p-3 rounded-xl text-blue-600 shadow-sm"><Calendar size={18} /></div>
                                   <div>
-                                     <p className="font-black text-gray-800 text-xs uppercase">{h.nom}</p>
-                                     <p className="text-[9px] text-gray-400 font-bold">{new Date(h.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                                  </div>
+                                      <div className="flex items-center gap-2">
+                                        <p className="font-black text-gray-800 text-xs uppercase">{h.nom}</p>
+                                        <span className={`text-[7px] font-black px-2 py-0.5 rounded-full uppercase ${
+                                          h.recurrenceType === 'ANNUEL' ? 'bg-green-100 text-green-600' :
+                                          h.recurrenceType === 'PERIODIQUE' ? 'bg-amber-100 text-amber-600' :
+                                          'bg-blue-100 text-blue-600'
+                                        }`}>
+                                          {h.recurrenceType === 'ANNUEL' ? 'Annuel' : 
+                                           h.recurrenceType === 'PERIODIQUE' ? `Tous les ${h.recurrenceInterval} ans` : 
+                                           'Unique'}
+                                        </span>
+                                      </div>
+                                      <p className="text-[9px] text-gray-400 font-bold">{new Date(h.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                   </div>
                                </div>
                                {!isReadOnly && (
-                                 <button className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={16} /></button>
+                                 <button 
+                                   onClick={async () => {
+                                     const token = localStorage.getItem("token");
+                                     await fetch(`http://localhost:8080/api/config/holidays/${h.id}`, {
+                                       method: "DELETE",
+                                       headers: { "Authorization": `Bearer ${token}` }
+                                     });
+                                     fetchConfig();
+                                   }}
+                                   className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                 >
+                                   <Trash2 size={16} />
+                                 </button>
                                )}
                             </div>
                           ))}
@@ -1100,57 +1198,63 @@ export default function HRSettingsPage() {
                                         <CheckCircle2 size={12} /> Prêt
                                      </div>
                                   </div>
-                                ) : (
-                                  <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-100">
-                                     <Upload size={12} /> Upload .docx
-                                     <input type="file" className="hidden" accept=".docx" onChange={(e) => {
-                                        if (e.target.files?.[0]) handleUploadTemplate(tmpl.id, e.target.files[0]);
-                                     }} />
-                                  </label>
+                                ) : !isReadOnly ? (
+                                   <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-100">
+                                      <Upload size={12} /> Upload .docx
+                                      <input type="file" className="hidden" accept=".docx" onChange={(e) => {
+                                         if (e.target.files?.[0]) handleUploadTemplate(tmpl.id, e.target.files[0]);
+                                      }} />
+                                   </label>
+                                 ) : (
+                                   <span className="text-[8px] font-black uppercase text-gray-400">Fichier manquant</span>
+                                 )}
+                                {!isReadOnly && (
+                                   <button onClick={() => {
+                                      const token = localStorage.getItem("token");
+                                      fetch(`http://localhost:8080/api/document-templates/${tmpl.id}`, {
+                                         method: "DELETE",
+                                         headers: { "Authorization": `Bearer ${token}` }
+                                      }).then(() => fetchTemplates());
+                                   }} className="p-3 text-gray-300 hover:text-red-500 transition-colors">
+                                      <Trash2 size={18} />
+                                   </button>
                                 )}
-                                <button onClick={() => {
-                                   const token = localStorage.getItem("token");
-                                   fetch(`http://localhost:8080/api/document-templates/${tmpl.id}`, {
-                                      method: "DELETE",
-                                      headers: { "Authorization": `Bearer ${token}` }
-                                   }).then(() => fetchTemplates());
-                                }} className="p-3 text-gray-300 hover:text-red-500 transition-colors">
-                                   <Trash2 size={18} />
-                                </button>
                              </div>
                           </div>
                        ))}
 
                        {/* ADD NEW TEMPLATE CARD */}
-                       <div className="bg-gray-50/50 border-2 border-dashed border-gray-200 p-8 rounded-[2.5rem] space-y-6">
-                          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                             <Plus size={14} /> Nouveau Modèle
-                          </h4>
-                          <div className="grid grid-cols-2 gap-4">
-                             <input 
-                               type="text" 
-                               placeholder="Nom du document (ex: Contrat CDI)" 
-                               className="col-span-2 bg-white border border-gray-200 p-4 rounded-2xl text-xs font-bold outline-none focus:border-blue-400"
-                               value={newTemplate.nom}
-                               onChange={(e) => setNewTemplate({...newTemplate, nom: e.target.value})}
-                             />
-                             <select 
-                               className="bg-white border border-gray-200 p-4 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-blue-400"
-                               value={newTemplate.categorie}
-                               onChange={(e) => setNewTemplate({...newTemplate, categorie: e.target.value})}
-                             >
-                                <option value="ADMINISTRATIF">Administratif</option>
-                                <option value="LEGAL">Légal</option>
-                                <option value="INTERNE">Interne</option>
-                             </select>
-                             <button 
-                               onClick={handleCreateTemplate}
-                               className="bg-gray-900 text-white p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-xl"
-                             >
-                                Enregistrer
-                             </button>
-                          </div>
-                       </div>
+                       {!isReadOnly && (
+                           <div className="bg-gray-50/50 border-2 border-dashed border-gray-200 p-8 rounded-[2.5rem] space-y-6">
+                              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                 <Plus size={14} /> Nouveau Modèle
+                              </h4>
+                              <div className="grid grid-cols-2 gap-4">
+                                 <input 
+                                   type="text" 
+                                   placeholder="Nom du document (ex: Contrat CDI)" 
+                                   className="col-span-2 bg-white border border-gray-200 p-4 rounded-2xl text-xs font-bold outline-none focus:border-blue-400"
+                                   value={newTemplate.nom}
+                                   onChange={(e) => setNewTemplate({...newTemplate, nom: e.target.value})}
+                                 />
+                                 <select 
+                                   className="bg-white border border-gray-200 p-4 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-blue-400"
+                                   value={newTemplate.categorie}
+                                   onChange={(e) => setNewTemplate({...newTemplate, categorie: e.target.value})}
+                                 >
+                                    <option value="ADMINISTRATIF">Administratif</option>
+                                    <option value="LEGAL">Légal</option>
+                                    <option value="INTERNE">Interne</option>
+                                 </select>
+                                 <button 
+                                   onClick={handleCreateTemplate}
+                                   className="bg-gray-900 text-white p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-xl"
+                                 >
+                                    Enregistrer
+                                 </button>
+                              </div>
+                           </div>
+                       )}
                     </div>
                  </div>
 

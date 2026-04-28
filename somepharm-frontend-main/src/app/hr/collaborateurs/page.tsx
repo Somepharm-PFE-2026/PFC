@@ -4,10 +4,11 @@ import React, { useState, useEffect } from "react";
 import { 
   Users, UserPlus, Search, List, Network, 
   MoreHorizontal, Phone, Mail, MapPin, 
-  Filter, CheckCircle, XCircle, ShieldCheck, Key, AlertTriangle, Copy, Check
+  Filter, CheckCircle, XCircle, ShieldCheck, Key, AlertTriangle, Copy, Check, Eye
 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import EmployeeTree from "../../components/EmployeeTree";
+import ProfileConsultationModal from "./components/ProfileConsultationModal";
 
 export default function CollaborateursPage() {
   const [viewMode, setViewMode] = useState<"list" | "tree">("list");
@@ -18,6 +19,10 @@ export default function CollaborateursPage() {
   const [departments, setDepartments] = useState<any[]>([]);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [consultingEmployee, setConsultingEmployee] = useState<any>(null);
+  const [showConsultModal, setShowConsultModal] = useState(false);
+  const [originalPoste, setOriginalPoste] = useState<string | null>(null);
+  const [originalDept, setOriginalDept] = useState<string | null>(null);
   const [postes, setPostes] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
   const [activationResult, setActivationResult] = useState<any>(null);
@@ -39,8 +44,8 @@ export default function CollaborateursPage() {
     roleName = roleName.replace("ROLE_", "");
   }
   const isHRManager = roleName === "HR_MANAGER" || roleName === "SUPER_ADMIN" || roleName === "RH_ADMIN";
-  const canSeeSensitiveInfo = false; // Clean layout for all HR roles
-  const isSuperAdmin = false;
+  const canSeeSensitiveInfo = false; 
+  const isSuperAdmin = roleName === "SUPER_ADMIN";
 
 
 
@@ -87,6 +92,14 @@ export default function CollaborateursPage() {
         setPostes(await response.json());
       }
     } catch (err) { console.error(err); }
+  };
+
+  const getPositionLevel = (titre: string | null) => {
+    if (!titre) return 3;
+    const t = titre.toUpperCase();
+    if (t.startsWith("RESPONSABLE DE")) return 1;
+    if (t.includes("CHEF") || t.includes("MANAGER") || t.includes("RESPONSABLE")) return 2;
+    return 3;
   };
 
   const fetchEmployees = async (token: string) => {
@@ -149,9 +162,9 @@ export default function CollaborateursPage() {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEmployeeForm, setNewEmployeeForm] = useState({
-    matricule: "", nom: "", prenom: "", email: "", roleId: 4, 
+    nom: "", prenom: "", email: "", roleId: 4, 
     departement: "", poste: "", dateEmbauche: new Date().toISOString().split('T')[0], 
-    managerId: "", siteId: ""
+    managerId: "", siteId: "", situationFamiliale: "CELIBATAIRE"
   });
 
   // Auto-assign Role based on Department
@@ -179,7 +192,6 @@ export default function CollaborateursPage() {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          matricule: newEmployeeForm.matricule,
           nom: newEmployeeForm.nom,
           prenom: newEmployeeForm.prenom,
           email: newEmployeeForm.email,
@@ -187,6 +199,7 @@ export default function CollaborateursPage() {
           departement: newEmployeeForm.departement,
           poste: newEmployeeForm.poste,
           dateEmbauche: newEmployeeForm.dateEmbauche,
+          situationFamiliale: newEmployeeForm.situationFamiliale,
           managerDirect: newEmployeeForm.managerId ? { idUser: parseInt(newEmployeeForm.managerId) } : null,
           site: newEmployeeForm.siteId ? { idSite: parseInt(newEmployeeForm.siteId) } : null
         })
@@ -195,9 +208,9 @@ export default function CollaborateursPage() {
       if (response.ok) {
         setShowAddModal(false);
         setNewEmployeeForm({
-          matricule: "", nom: "", prenom: "", email: "", roleId: 4, 
+          nom: "", prenom: "", email: "", roleId: 4, 
           departement: "", poste: "", dateEmbauche: new Date().toISOString().split('T')[0], 
-          managerId: "", siteId: ""
+          managerId: "", siteId: "", situationFamiliale: "CELIBATAIRE"
         });
         fetchEmployees(token!);
       } else {
@@ -318,16 +331,6 @@ export default function CollaborateursPage() {
               <form onSubmit={handleCreateEmployee} className="p-12">
                 <div className="grid grid-cols-2 gap-8 mb-10 text-gray-900">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Matricule</label>
-                    <input 
-                      type="text" required
-                      value={newEmployeeForm.matricule}
-                      onChange={(e) => setNewEmployeeForm({...newEmployeeForm, matricule: e.target.value})}
-                      className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-6 font-bold outline-none transition-all"
-                      placeholder="e.g. SP001"
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Email</label>
                     <input 
                       type="email" required
@@ -366,7 +369,10 @@ export default function CollaborateursPage() {
                       required
                     >
                       <option value="">{newEmployeeForm.departement ? "Sélectionner un poste..." : "Choisissez d'abord un département"}</option>
-                      {postes.filter((p: any) => p.departement?.nomDept === newEmployeeForm.departement).map((p: any) => (
+                      {postes
+                        .filter((p: any) => p.departement?.nomDept === newEmployeeForm.departement)
+                        .filter((p: any) => getPositionLevel(p.titre) === 3)
+                        .map((p: any) => (
                         <option key={p.idPoste} value={p.titre}>{p.titre}</option>
                       ))}
                     </select>
@@ -380,6 +386,20 @@ export default function CollaborateursPage() {
                       onChange={(e) => setNewEmployeeForm({...newEmployeeForm, dateEmbauche: e.target.value})}
                       className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-6 font-bold outline-none transition-all text-gray-900"
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Situation Familiale</label>
+                    <select 
+                      value={newEmployeeForm.situationFamiliale}
+                      onChange={(e) => setNewEmployeeForm({...newEmployeeForm, situationFamiliale: e.target.value})}
+                      className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-6 font-bold outline-none transition-all text-gray-900"
+                      required
+                    >
+                      <option value="CELIBATAIRE">Célibataire</option>
+                      <option value="MARIE">Marié</option>
+                      <option value="DIVORCE">Divorcé</option>
+                      <option value="VEUF">Veuf</option>
+                    </select>
                   </div>
                 </div>
 
@@ -491,17 +511,10 @@ export default function CollaborateursPage() {
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Département</label>
                     <select 
                       value={editingEmployee.departement || ""}
-                      onChange={(e) => {
-                        const newDept = e.target.value;
-                        const deptData = departments.find(d => d.nomDept === newDept);
-                        setEditingEmployee({
-                          ...editingEmployee,
-                          departement: newDept,
-                          poste: "", 
-                          managerDirectId: deptData?.managerId ? String(deptData.managerId) : "null"
-                        });
-                      }}
-                      className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-6 font-bold outline-none transition-all text-gray-900"
+                      onChange={(e) => setEditingEmployee({...editingEmployee, departement: e.target.value})}
+                      disabled={!!originalDept && originalDept !== "Général" && originalDept !== ""}
+                      className={`w-full border-2 border-transparent rounded-2xl py-4 px-6 font-bold outline-none transition-all 
+                        ${(originalDept && originalDept !== "Général" && originalDept !== "") ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-gray-50 focus:border-blue-600 focus:bg-white text-gray-900"}`}
                     >
                       <option value="">Sélectionner un service...</option>
                       {departments.map((dept: any) => (
@@ -519,9 +532,16 @@ export default function CollaborateursPage() {
                         ${!editingEmployee.departement ? "opacity-50 cursor-not-allowed bg-gray-100" : ""}`}
                     >
                       <option value="">{editingEmployee.departement ? "Sélectionner un poste..." : "Choisissez d'abord un département"}</option>
-                      {postes.filter((p: any) => p.departement?.nomDept === editingEmployee.departement).map((p: any) => (
-                        <option key={p.idPoste} value={p.titre}>{p.titre}</option>
-                      ))}
+                      {postes
+                        .filter((p: any) => p.departement?.nomDept === editingEmployee.departement)
+                        .filter((p: any) => {
+                          const originalLevel = getPositionLevel(originalPoste);
+                          const targetLevel = getPositionLevel(p.titre);
+                          return targetLevel >= originalLevel; // Higher number means lower hierarchy
+                        })
+                        .map((p: any) => (
+                          <option key={p.idPoste} value={p.titre}>{p.titre}</option>
+                        ))}
                     </select>
                   </div>
                   <div className="space-y-2">
@@ -538,10 +558,16 @@ export default function CollaborateursPage() {
                         const deptData = departments.find(d => d.nomDept === editingEmployee.departement);
                         return employees.filter(e => {
                           if (e.idUser === editingEmployee.idUser) return false;
-                          const isManager = e.role?.nomRole !== 'EMPLOYE' && e.role?.nomRole !== 'SECURITY_AGENTS';
-                          const isInDept = e.departement === editingEmployee.departement;
-                          const isHeadManager = deptData && e.idUser === deptData.managerId;
-                          return (isInDept && isManager) || isHeadManager;
+                          
+                          const currentLevel = getPositionLevel(originalPoste);
+                          const targetUserLevel = getPositionLevel(e.poste);
+                          const isInSameDept = e.departement === editingEmployee.departement;
+                          const isDesignatedDeptManager = deptData && e.idUser === deptData.managerId;
+
+                          // Only show users who are STRICTLY higher in the hierarchy
+                          const isStrictlyHigher = targetUserLevel < currentLevel;
+
+                          return (isInSameDept && isStrictlyHigher) || isDesignatedDeptManager;
                         }).map(u => (
                           <option key={u.idUser} value={u.idUser}>
                             {u.prenom} {u.nom} ({u.poste}){u.idUser === deptData?.managerId ? " [CHEF DE SERVICE]" : ""}
@@ -563,16 +589,18 @@ export default function CollaborateursPage() {
                       ))}
                     </select>
                   </div>
+
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Statut Compte</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Situation Familiale</label>
                     <select 
-                      value={editingEmployee.statutCompte}
-                      onChange={(e) => setEditingEmployee({...editingEmployee, statutCompte: e.target.value})}
+                      value={editingEmployee.situationFamiliale || "CELIBATAIRE"}
+                      onChange={(e) => setEditingEmployee({...editingEmployee, situationFamiliale: e.target.value})}
                       className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-6 font-bold outline-none transition-all text-gray-900"
                     >
-                      <option value="ACTIF">Actif</option>
-                      <option value="INACTIF">Inactif</option>
-                      <option value="EN_ATTENTE_PREMIERE_CONNEXION">En Attente</option>
+                      <option value="CELIBATAIRE">Célibataire</option>
+                      <option value="MARIE">Marié</option>
+                      <option value="DIVORCE">Divorcé</option>
+                      <option value="VEUF">Veuf</option>
                     </select>
                   </div>
                 </div>
@@ -677,8 +705,17 @@ export default function CollaborateursPage() {
                   onActivate={() => handleActivate(emp.idUser)} 
                   onReset={() => handleResetPassword(emp.idUser)}
                   onEdit={() => {
-                    setEditingEmployee(emp);
+                    setEditingEmployee({
+                      ...emp,
+                      siteId: emp.idSite ? String(emp.idSite) : ""
+                    });
+                    setOriginalPoste(emp.poste);
+                    setOriginalDept(emp.departement);
                     setShowEditModal(true);
+                  }}
+                  onConsult={() => {
+                    setConsultingEmployee(emp);
+                    setShowConsultModal(true);
                   }}
                 />
               ))}
@@ -694,11 +731,20 @@ export default function CollaborateursPage() {
             <EmployeeTree employees={employees} managerId={null} level={0} />
           </div>
         )}
+      {showConsultModal && (
+        <ProfileConsultationModal 
+          user={consultingEmployee} 
+          onClose={() => setShowConsultModal(false)} 
+        />
+      )}
     </div>
   );
 }
 
-function EmployeeRow({ employee, currentUser, isHRManager, canSeeSensitiveInfo, onActivate, onReset, onEdit }: { employee: any, currentUser: any, isHRManager: boolean, canSeeSensitiveInfo: boolean, onActivate: () => void, onReset: () => void, onEdit: () => void }) {
+function EmployeeRow({ employee, currentUser, isHRManager, canSeeSensitiveInfo, onActivate, onReset, onEdit, onConsult }: { employee: any, currentUser: any, isHRManager: boolean, canSeeSensitiveInfo: boolean, onActivate: () => void, onReset: () => void, onEdit: () => void, onConsult: () => void }) {
+  const currentRole = typeof currentUser?.role === "string" ? currentUser.role : currentUser?.role?.nomRole;
+  const isSuperAdmin = currentRole === "SUPER_ADMIN" || currentRole === "ROLE_SUPER_ADMIN";
+
   const statusColors: any = {
     "INACTIF": "bg-red-50 text-red-600 border-red-100",
     "EN_ATTENTE_PREMIERE_CONNEXION": "bg-amber-50 text-amber-600 border-amber-100",
@@ -769,40 +815,53 @@ function EmployeeRow({ employee, currentUser, isHRManager, canSeeSensitiveInfo, 
       )}
 
       <div className="col-span-3 flex justify-end gap-2 pr-4">
-        {canSeeSensitiveInfo && (
-          <>
-            {employee.statutCompte === "INACTIF" && (
-              <button 
-                onClick={onActivate}
-                className="p-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all shadow-lg shadow-green-200 group/btn relative"
-                title="Activer & Générer les accès"
-              >
-                <CheckCircle size={16} />
-              </button>
-            )}
-            {(employee.statutCompte === "ACTIF" || employee.statutCompte === "EN_ATTENTE_PREMIERE_CONNEXION") && (
-              <button 
-                onClick={onReset}
-                className={`p-3 rounded-xl transition-all shadow-lg group/btn relative
-                  ${employee.passwordResetRequested ? "bg-amber-500 text-white shadow-amber-200" : "bg-blue-600 text-white shadow-blue-200 hover:bg-blue-700"}`}
-                title="Réinitialiser le mot de passe"
-              >
-                <Key size={16} />
-                {employee.passwordResetRequested && (
-                  <span className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+        {/* 🛡️ PROTECTION: SUPER_ADMIN profiles can only be modified by other SUPER_ADMINs */}
+        {(isHRManager && (isSuperAdmin || employee.role !== "SUPER_ADMIN")) && (
+          <div className="flex gap-2">
+            {canSeeSensitiveInfo && (
+              <>
+                {employee.statutCompte === "INACTIF" && (
+                  <button 
+                    onClick={onActivate}
+                    className="p-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all shadow-lg shadow-green-200 group/btn relative"
+                    title="Activer & Générer les accès"
+                  >
+                    <CheckCircle size={16} />
+                  </button>
                 )}
-              </button>
+                {(employee.statutCompte === "ACTIF" || employee.statutCompte === "EN_ATTENTE_PREMIERE_CONNEXION") && (
+                  <button 
+                    onClick={onReset}
+                    className={`p-3 rounded-xl transition-all shadow-lg group/btn relative
+                      ${employee.passwordResetRequested ? "bg-amber-500 text-white shadow-amber-200" : "bg-blue-600 text-white shadow-blue-200 hover:bg-blue-700"}`}
+                    title="Réinitialiser le mot de passe"
+                  >
+                    <Key size={16} />
+                    {employee.passwordResetRequested && (
+                      <span className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+                    )}
+                  </button>
+                )}
+              </>
             )}
-          </>
-        )}
 
-        <button 
-          onClick={onEdit}
-          className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:bg-white hover:text-blue-600 transition-all border border-transparent hover:border-gray-100"
-          title="Modifier le profil"
-        >
-          <MoreHorizontal size={16} />
-        </button>
+            <button 
+              onClick={onConsult}
+              className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:bg-white hover:text-blue-600 transition-all border border-transparent hover:border-gray-100"
+              title="Consulter le profil"
+            >
+              <Eye size={16} />
+            </button>
+
+            <button 
+              onClick={onEdit}
+              className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:bg-white hover:text-blue-600 transition-all border border-transparent hover:border-gray-100"
+              title="Modifier le profil"
+            >
+              <MoreHorizontal size={16} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -19,6 +19,7 @@ export default function ValidationRHPage() {
   
   const [activeTab, setActiveTab] = useState<"A_TRAITER" | "EN_COURS" | "ARCHIVES">("A_TRAITER");
   const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("ALL");
 
   const { setActiveHRRequest } = useUI();
 
@@ -92,21 +93,28 @@ export default function ValidationRHPage() {
     }
   };
 
-  const filteredRequests = requests.filter(req => {
-    if (searchTerm && !req.demandeur?.matricule?.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+  const filteredRequests = requests
+    .filter(req => {
+      // Search by Matricule
+      if (searchTerm && !req.demandeur?.matricule?.toLowerCase().includes(searchTerm.toLowerCase())) return false;
 
-    const status = req.statutCycleVie?.toUpperCase()?.trim();
-    if (activeTab === "A_TRAITER") {
-      return status === "VALIDE_MANAGER" || status === "EN_ATTENTE_RH";
-    }
-    if (activeTab === "EN_COURS") {
-      return status === "EN_ATTENTE_MANAGER" || status === "ATTENTE";
-    }
-    if (activeTab === "ARCHIVES") {
-      return ["APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "ANNULE", "ANNULÉ"].includes(status);
-    }
-    return true;
-  });
+      // Filter by Type
+      if (typeFilter !== "ALL" && req.type !== typeFilter) return false;
+
+      // Filter by Tab/Status
+      const status = req.statutCycleVie?.toUpperCase()?.trim();
+      if (activeTab === "A_TRAITER") {
+        return status === "VALIDE_MANAGER" || status === "EN_ATTENTE_RH";
+      }
+      if (activeTab === "EN_COURS") {
+        return status === "EN_ATTENTE_MANAGER" || status === "ATTENTE";
+      }
+      if (activeTab === "ARCHIVES") {
+        return ["APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "ANNULE", "ANNULÉ"].includes(status);
+      }
+      return true;
+    })
+    .sort((a, b) => new Date(b.dateSoumission).getTime() - new Date(a.dateSoumission).getTime());
 
   return (
     <div className="p-10 bg-gray-50 min-h-screen relative">
@@ -119,11 +127,24 @@ export default function ValidationRHPage() {
            <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mt-2">Suivi global et validation finale des dossiers</p>
         </div>
         <div className="flex items-center gap-4">
-            <div className="relative w-80">
+            <div className="flex items-center gap-2 bg-white border shadow-sm rounded-2xl px-4 py-1.5">
+               <Filter className="text-gray-400" size={16} />
+               <select 
+                 value={typeFilter}
+                 onChange={(e) => setTypeFilter(e.target.value)}
+                 className="bg-transparent outline-none font-black text-[10px] uppercase tracking-widest text-gray-700 py-2.5 cursor-pointer"
+               >
+                 <option value="ALL">Tous les Types</option>
+                 <option value="CONGE">Congés</option>
+                 <option value="DOCUMENT">Documents</option>
+                 <option value="NUDGE">Rappels (Nudge)</option>
+               </select>
+            </div>
+            <div className="relative w-64">
                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                <input 
                  type="text" 
-                 placeholder="Rechercher par Matricule..."
+                 placeholder="Rechercher Matricule..."
                  value={searchTerm}
                  onChange={(e) => setSearchTerm(e.target.value)}
                  className="w-full pl-12 pr-6 py-4 bg-white border shadow-sm rounded-2xl outline-none focus:border-blue-500 transition-all font-bold text-sm text-gray-700"

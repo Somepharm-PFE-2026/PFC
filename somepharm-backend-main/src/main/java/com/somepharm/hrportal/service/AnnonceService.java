@@ -39,23 +39,55 @@ public class AnnonceService {
     }
 
     private boolean isTargeted(Annonce a, Utilisateur user) {
-        if ("GENERAL".equals(a.getTargetType())) return true;
-        if (a.getTargetType() == null) return true; // Default to general if not specified
+        if ("GENERAL".equals(a.getTargetType()) || a.getTargetType() == null) return true;
+
+        String targetValue = a.getTargetValue() != null ? a.getTargetValue().trim() : "";
+        if (targetValue.isEmpty() && !"GENERAL".equals(a.getTargetType())) return false;
 
         if ("DEPARTMENT".equals(a.getTargetType())) {
-            return user.getDepartement() != null && user.getDepartement().equalsIgnoreCase(a.getTargetValue());
+            return user.getDepartement() != null && user.getDepartement().equalsIgnoreCase(targetValue);
         }
+
         if ("ROLE".equals(a.getTargetType())) {
-            return user.getRole() != null && user.getRole().getNomRole().equalsIgnoreCase(a.getTargetValue());
+            if (user.getRole() == null) return false;
+            String userRole = user.getRole().getNomRole();
+            
+            if (isRoleMatch(userRole, targetValue)) return true;
+            
+            // Special Case: RH_ADMIN includes HR_MANAGER
+            if (isRoleMatch(targetValue, "RH_ADMIN") && isRoleMatch(userRole, "HR_MANAGER")) return true;
+            
+            // Special Case: SECURITY_AGENTS targeting also includes anyone in the SECURITE department
+            if (isRoleMatch(targetValue, "SECURITY_AGENTS") && "SECURITE".equalsIgnoreCase(user.getDepartement())) return true;
+            
+            return false;
         }
+
         if ("SITE".equals(a.getTargetType())) {
-            return user.getSite() != null && String.valueOf(user.getSite().getIdSite()).equals(a.getTargetValue());
+            if (user.getSite() == null) return false;
+            return String.valueOf(user.getSite().getIdSite()).equals(targetValue);
         }
+
         if ("SELECTIVE".equals(a.getTargetType())) {
-            if (a.getTargetValue() == null) return false;
-            return List.of(a.getTargetValue().split(",")).contains(String.valueOf(user.getIdUser()));
+            if (targetValue.isEmpty()) return false;
+            String[] userIds = targetValue.split("\\s*,\\s*");
+            String currentId = String.valueOf(user.getIdUser());
+            for (String id : userIds) {
+                if (id.equals(currentId)) return true;
+            }
+            return false;
         }
+
         return false;
+    }
+
+    private boolean isRoleMatch(String roleA, String roleB) {
+        if (roleA == null || roleB == null) return false;
+        String a = roleA.toUpperCase().trim();
+        String b = roleB.toUpperCase().trim();
+        if (a.startsWith("ROLE_")) a = a.substring(5);
+        if (b.startsWith("ROLE_")) b = b.substring(5);
+        return a.equals(b);
     }
 
     public boolean isRead(Long annonceId, Long userId) {
@@ -85,8 +117,41 @@ public class AnnonceService {
 
     public Map<String, Object> getReadStats(Long annonceId) {
         Annonce a = annonceRepository.findById(annonceId).orElseThrow();
-        long count = annonceLectureRepository.countByAnnonce(a);
-        return Map.of("count", count);
+        long readCount = annonceLectureRepository.countByAnnonce(a);
+        long totalTarget = calculateTargetSize(a);
+        return Map.of(
+            "count", readCount,
+            "totalTarget", totalTarget,
+            "engagementRate", totalTarget > 0 ? (double) readCount / totalTarget * 100 : 0
+        );
+    }
+
+    public long calculateTargetSize(Annonce a) {
+        if ("GENERAL".equals(a.getTargetType()) || a.getTargetType() == null) {
+            return utilisateurRepository.count();
+        }
+        if ("DEPARTMENT".equals(a.getTargetType())) {
+            return utilisateurRepository.countByDepartement(a.getTargetValue());
+        }
+        if ("ROLE".equals(a.getTargetType())) {
+            // Using the isTargeted logic directly on the user list to avoid double counting
+            // (e.g., users who match both the role and a special department fallback)
+            return utilisateurRepository.findAll().stream()
+                    .filter(u -> isTargeted(a, u))
+                    .count();
+        }
+        if ("SITE".equals(a.getTargetType())) {
+            try {
+                return utilisateurRepository.countBySite_IdSite(Long.parseLong(a.getTargetValue()));
+            } catch (Exception e) {
+                return 0;
+            }
+        }
+        if ("SELECTIVE".equals(a.getTargetType())) {
+            if (a.getTargetValue() == null || a.getTargetValue().isEmpty()) return 0;
+            return a.getTargetValue().split(",").length;
+        }
+        return 0;
     }
 
     public Annonce saveAnnonce(Annonce annonce) {

@@ -63,8 +63,8 @@ public class DemandeDocumentService {
             throw new RuntimeException("Vous n'êtes pas autorisé à annuler cette demande.");
         }
         
-        if (!"EN_ATTENTE_RH".equals(demande.getStatutCycleVie())) {
-            throw new RuntimeException("Seules les demandes en attente peuvent être annulées.");
+        if (demande.getStatutCycleVie() != null && (demande.getStatutCycleVie().startsWith("APPROUV") || demande.getStatutCycleVie().startsWith("REFUS"))) {
+            throw new RuntimeException("Les demandes déjà traitées ne peuvent pas être annulées.");
         }
         
         demande.setStatutCycleVie("ANNULÉ");

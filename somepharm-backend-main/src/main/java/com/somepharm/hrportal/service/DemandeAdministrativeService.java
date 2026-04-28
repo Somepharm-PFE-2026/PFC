@@ -48,7 +48,9 @@ public class DemandeAdministrativeService {
         DemandeAdministrative dm = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Demande Administrative introuvable"));
 
+        System.out.println("[DEBUG] updateStatus called for ID: " + id + " with status: " + status);
         boolean isApproving = "APPROUVE".equalsIgnoreCase(status) || "APPROUVÉ".equalsIgnoreCase(status);
+        System.out.println("[DEBUG] isApproving: " + isApproving);
         
         if (isApproving) {
             // AUTOMATIC DATA SYNC
@@ -71,24 +73,30 @@ public class DemandeAdministrativeService {
     }
 
     private void applyChangesToUser(DemandeAdministrative dm) {
-        Utilisateur user = dm.getDemandeur();
-        if (user == null) return;
+        if (dm.getDemandeur() == null) return;
+        
+        // Refetch to ensure we are working with a managed entity from the current session
+        Utilisateur user = utilisateurRepository.findById(dm.getDemandeur().getIdUser())
+                .orElse(dm.getDemandeur());
 
         if (dm.getNouveauStatutMarital() != null && !dm.getNouveauStatutMarital().isEmpty()) {
-            // We might need a maritalStatus field in Utilisateur. 
-            // For now, if it's not there, we'll store in a generic way or assume future extension.
-            // Let's assume user might want it in detailsSupplementaires or specific fields.
-        }
-
-        if (dm.getNouvelleAdresse() != null && !dm.getNouvelleAdresse().isEmpty()) {
-            // If Adresse field exists in Utilisateur, update it.
-            // Since it's NOT in the current entity view I saw, I'll log that we are ready to sync it.
+            try {
+                // Ensure case-insensitive matching and handle potential extra spaces
+                String status = dm.getNouveauStatutMarital().trim().toUpperCase();
+                com.somepharm.hrportal.entity.SituationFamiliale sf = com.somepharm.hrportal.entity.SituationFamiliale.valueOf(status);
+                user.setSituationFamiliale(sf);
+                System.out.println("[SYNC SUCCESS] Updated family situation for user " + user.getMatricule() + " to " + sf);
+            } catch (Exception e) {
+                System.err.println("[SYNC ERROR] Failed to parse marital status: " + dm.getNouveauStatutMarital());
+            }
         }
 
         if (dm.getNouveauTelephone() != null && !dm.getNouveauTelephone().isEmpty()) {
             user.setTelephone(dm.getNouveauTelephone());
         }
 
+        // The save here is important as it's within a Transactional method
         utilisateurRepository.save(user);
+        utilisateurRepository.flush(); // Force immediate database sync
     }
 }

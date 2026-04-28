@@ -141,13 +141,13 @@ export default function ProfilPage() {
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ancienneté Somepharm</p>
                  </div>
               </div>
-              <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center gap-6 group hover:border-blue-100 transition-colors">
-                 <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center">
-                    <Clock size={28} />
+              <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center gap-6">
+                 <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center">
+                    <Heart size={28} />
                  </div>
                  <div>
-                    <p className="text-2xl font-black text-gray-800">{profil.soldeConges?.toFixed(1) || "0.0"}</p>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Solde de Congés</p>
+                    <p className="text-2xl font-black text-gray-800 uppercase tracking-tighter">{profil.situationFamiliale || "NON RENSEIGNÉE"}</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Situation Familiale</p>
                  </div>
               </div>
            </div>
