@@ -15,20 +15,26 @@ export default function UrgentAnnouncementPopup() {
   const fetchUrgentAnnonces = async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
-      // 1. Fetch user profile to get activationDate
-      const profileRes = await fetch("http://localhost:8080/api/utilisateurs/me", {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
+      // 1. Fetch user profile to get activationDate (Safely)
       let activationDate: Date | null = null;
-      if (profileRes.ok) {
-        const profile = await profileRes.json();
-        if (profile.activationDate) {
-          activationDate = new Date(profile.activationDate);
-          // Set to start of day for comparison
-          activationDate.setHours(0, 0, 0, 0);
+      try {
+        const profileRes = await fetch("http://localhost:8080/api/utilisateurs/me", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (profileRes.ok) {
+          const profile = await profileRes.json();
+          if (profile.activationDate) {
+            activationDate = new Date(profile.activationDate);
+            activationDate.setHours(0, 0, 0, 0);
+          }
         }
+      } catch (err) {
+        console.warn("Could not fetch user profile for activation date check", err);
       }
 
       // 2. Fetch announcements
@@ -38,21 +44,20 @@ export default function UrgentAnnouncementPopup() {
       if (res.ok) {
         const data = await res.json();
         const urgent = data.find((a: any) => {
-          // Base conditions
           if (a.priority !== "URGENT" || a.isRead) return false;
           
-          // Activation date check: Only show if published on or after activation
           if (activationDate) {
             const pubDate = new Date(a.datePublication);
             if (pubDate < activationDate) return false;
           }
-          
           return true;
         });
         setUrgentAnnonce(urgent);
+      } else {
+        console.error("Failed to fetch targeted annonces", res.status);
       }
     } catch (err) {
-      console.error("Failed to fetch urgent annonces", err);
+      console.error("Critical error fetching urgent annonces", err);
     } finally {
       setLoading(false);
     }

@@ -1443,10 +1443,21 @@ export default function HRSettingsPage() {
                                       <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Plus size={12} /> Ajouter une étape</h5>
                                       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                                          <select className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-[10px] font-black uppercase outline-none" value={newEtape.roleValidateur} onChange={(e) => setNewEtape({...newEtape, roleValidateur: e.target.value})}>
-                                            <option value="MANAGER">Manager (N+1)</option>
-                                            <option value="CHEF_DEPARTEMENT">Chef Département</option>
-                                            <option value="HR_MANAGER">RH</option>
-                                         </select>
+                                             <option value="">Rôle...</option>
+                                             {(() => {
+                                                const ROLE_WEIGHTS = { "MANAGER": 1, "CHEF_DEPARTEMENT": 2, "RH_ADMIN": 3, "HR_MANAGER": 4 };
+                                                const lastStep = circuit.etapes?.[circuit.etapes.length - 1];
+                                                const minWeight = lastStep ? ROLE_WEIGHTS[lastStep.roleValidateur] : 0;
+                                                return [
+                                                   { val: "MANAGER", label: "Manager (N+1)" },
+                                                   { val: "CHEF_DEPARTEMENT", label: "Chef Département" },
+                                                   { val: "RH_ADMIN", label: "Ressources Humaines" },
+                                                   { val: "HR_MANAGER", label: "Directeur RH" }
+                                                ].filter(opt => ROLE_WEIGHTS[opt.val] > minWeight).map(opt => (
+                                                   <option key={opt.val} value={opt.val}>{opt.label}</option>
+                                                ));
+                                             })()}
+                                          </select>
                                          <input type="text" placeholder="Label" className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-[10px] font-bold outline-none" value={newEtape.label} onChange={(e) => setNewEtape({...newEtape, label: e.target.value})} />
                                          <input type="number" placeholder="Délai (h)" className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-[10px] font-bold outline-none" value={newEtape.delaiHeures} onChange={(e) => setNewEtape({...newEtape, delaiHeures: parseInt(e.target.value) || 72})} />
                                          <select className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-[10px] font-black uppercase outline-none" value={newEtape.actionExpiration} onChange={(e) => setNewEtape({...newEtape, actionExpiration: e.target.value})}>

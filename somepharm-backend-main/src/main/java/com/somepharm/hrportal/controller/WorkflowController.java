@@ -2,8 +2,10 @@ package com.somepharm.hrportal.controller;
 
 import com.somepharm.hrportal.entity.*;
 import com.somepharm.hrportal.repository.*;
+import com.somepharm.hrportal.service.WorkflowService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,23 +18,29 @@ public class WorkflowController {
 
     private final WorkflowCircuitRepository circuitRepository;
     private final WorkflowEtapeRepository etapeRepository;
+    private final RequeteRepository requeteRepository;
     private final WorkflowMappingRepository mappingRepository;
     private final WorkflowBypassRuleRepository bypassRuleRepository;
     private final WorkflowDelegationRepository delegationRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final WorkflowService workflowService;
 
     public WorkflowController(WorkflowCircuitRepository circuitRepository,
                               WorkflowEtapeRepository etapeRepository,
+                              RequeteRepository requeteRepository,
                               WorkflowMappingRepository mappingRepository,
                               WorkflowBypassRuleRepository bypassRuleRepository,
                               WorkflowDelegationRepository delegationRepository,
-                              UtilisateurRepository utilisateurRepository) {
+                              UtilisateurRepository utilisateurRepository,
+                              WorkflowService workflowService) {
         this.circuitRepository = circuitRepository;
         this.etapeRepository = etapeRepository;
+        this.requeteRepository = requeteRepository;
         this.mappingRepository = mappingRepository;
         this.bypassRuleRepository = bypassRuleRepository;
         this.delegationRepository = delegationRepository;
         this.utilisateurRepository = utilisateurRepository;
+        this.workflowService = workflowService;
     }
 
     // ===================== CIRCUITS =====================
@@ -50,7 +58,25 @@ public class WorkflowController {
 
     @DeleteMapping("/circuits/{id}")
     @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @Transactional
     public ResponseEntity<Void> deleteCircuit(@PathVariable Long id) {
+        // 1. Clear mappings associated with this circuit
+        List<WorkflowMapping> mappings = mappingRepository.findByCircuit_IdCircuit(id);
+        mappingRepository.deleteAll(mappings);
+
+        // 2. Clear requests currently using this circuit
+        List<Requete> requests = requeteRepository.findByCurrentCircuit_IdCircuit(id);
+        for (Requete req : requests) {
+            req.setCurrentCircuit(null);
+            req.setCurrentEtapeOrdre(0);
+            // Optionally reset status if it was step-specific
+            if (req.getStatutCycleVie().startsWith("EN_ATTENTE_") && !req.getStatutCycleVie().equals("EN_ATTENTE_RH")) {
+                req.setStatutCycleVie("EN_ATTENTE_RH");
+            }
+        }
+        requeteRepository.saveAll(requests);
+
+        // 3. Delete the circuit itself
         circuitRepository.deleteById(id);
         return ResponseEntity.ok().build();
     }
@@ -64,15 +90,19 @@ public class WorkflowController {
 
     @PostMapping("/circuits/{id}/etapes")
     @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @Transactional
     public ResponseEntity<WorkflowEtape> addEtape(@PathVariable Long id, @RequestBody WorkflowEtape etape) {
         WorkflowCircuit circuit = circuitRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Circuit introuvable"));
         etape.setCircuit(circuit);
-        return ResponseEntity.ok(etapeRepository.save(etape));
+        WorkflowEtape saved = etapeRepository.save(etape);
+        workflowService.syncRequestsForCircuit(id);
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/etapes/{id}")
     @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @Transactional
     public ResponseEntity<WorkflowEtape> updateEtape(@PathVariable Long id, @RequestBody WorkflowEtape updated) {
         WorkflowEtape etape = etapeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Étape introuvable"));
@@ -82,13 +112,21 @@ public class WorkflowController {
         etape.setOptionnel(updated.isOptionnel());
         etape.setDelaiHeures(updated.getDelaiHeures());
         etape.setActionExpiration(updated.getActionExpiration());
-        return ResponseEntity.ok(etapeRepository.save(etape));
+        
+        WorkflowEtape saved = etapeRepository.save(etape);
+        workflowService.syncRequestsForCircuit(etape.getCircuit().getIdCircuit());
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/etapes/{id}")
     @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @Transactional
     public ResponseEntity<Void> deleteEtape(@PathVariable Long id) {
+        WorkflowEtape etape = etapeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Étape introuvable"));
+        Long circuitId = etape.getCircuit().getIdCircuit();
         etapeRepository.deleteById(id);
+        workflowService.syncRequestsForCircuit(circuitId);
         return ResponseEntity.ok().build();
     }
 

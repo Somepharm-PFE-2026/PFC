@@ -107,7 +107,7 @@ export default function ValidationRHPage() {
         return status === "VALIDE_MANAGER" || status === "EN_ATTENTE_RH";
       }
       if (activeTab === "EN_COURS") {
-        return status === "EN_ATTENTE_MANAGER" || status === "ATTENTE";
+        return status === "EN_ATTENTE_MANAGER" || status === "EN_ATTENTE_CHEF_DEPT" || status === "ATTENTE";
       }
       if (activeTab === "ARCHIVES") {
         return ["APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "ANNULE", "ANNULÉ"].includes(status);
@@ -162,7 +162,7 @@ export default function ValidationRHPage() {
       <div className="flex gap-2 mb-10 bg-white p-2 rounded-3xl w-fit shadow-sm border">
         {[
           { id: "A_TRAITER", label: "À Traiter", icon: <Check size={16}/>, count: requests.filter(r => ["VALIDE_MANAGER", "EN_ATTENTE_RH"].includes(r.statutCycleVie?.toUpperCase()?.trim())).length, color: "text-blue-600", activeBg: "bg-blue-600 text-white" },
-          { id: "EN_COURS", label: "En cours (Suivi)", icon: <Clock size={16}/>, count: requests.filter(r => ["EN_ATTENTE_MANAGER", "ATTENTE"].includes(r.statutCycleVie?.toUpperCase()?.trim())).length, color: "text-amber-600", activeBg: "bg-amber-600 text-white" },
+          { id: "EN_COURS", label: "En cours (Suivi)", icon: <Clock size={16}/>, count: requests.filter(r => ["EN_ATTENTE_MANAGER", "EN_ATTENTE_CHEF_DEPT", "ATTENTE"].includes(r.statutCycleVie?.toUpperCase()?.trim())).length, color: "text-amber-600", activeBg: "bg-amber-600 text-white" },
           { id: "ARCHIVES", label: "Historique", icon: <AlertCircle size={16}/>, count: requests.filter(r => ["APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "ANNULE", "ANNULÉ"].includes(r.statutCycleVie?.toUpperCase()?.trim())).length, color: "text-gray-500", activeBg: "bg-gray-800 text-white" }
         ].map(tab => (
           <button

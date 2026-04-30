@@ -33,26 +33,49 @@ public class AnnonceController {
 
     @GetMapping("/targeted")
     public ResponseEntity<List<Map<String, Object>>> getTargeted(Authentication auth) {
-        Utilisateur user = utilisateurRepository.findByMatricule(auth.getName()).orElseThrow();
-        List<Annonce> targeted = annonceService.getAnnoncesForUser(user.getIdUser());
+        if (auth == null) {
+            System.err.println("[AnnonceController] Unauthenticated access attempt to /targeted");
+            return ResponseEntity.status(401).build();
+        }
         
-        List<Map<String, Object>> result = targeted.stream().map(a -> {
-            Map<String, Object> map = new java.util.HashMap<>();
-            map.put("idAnnonce", a.getIdAnnonce());
-            map.put("titre", a.getTitre());
-            map.put("contenu", a.getContenu());
-            map.put("typeAnnonce", a.getTypeAnnonce());
-            map.put("datePublication", a.getDatePublication());
-            map.put("priority", a.getPriority());
-            map.put("isPinned", a.isPinned());
-            map.put("imageUrl", a.getImageUrl());
-            map.put("auteur", a.getAuteur());
-            map.put("attachmentUrl", a.getAttachmentUrl());
-            map.put("isRead", annonceService.isRead(a.getIdAnnonce(), user.getIdUser()));
-            return map;
-        }).collect(Collectors.toList());
-        
-        return ResponseEntity.ok(result);
+        try {
+            Utilisateur user = utilisateurRepository.findByMatricule(auth.getName()).orElseThrow();
+            List<Annonce> targeted = annonceService.getAnnoncesForUser(user.getIdUser());
+            
+            System.out.println("[AnnonceController] Fetching targeted annonces for: " + auth.getName() + " (Found: " + targeted.size() + ")");
+
+            List<Map<String, Object>> result = targeted.stream().map(a -> {
+                Map<String, Object> map = new java.util.HashMap<>();
+                map.put("idAnnonce", a.getIdAnnonce());
+                map.put("titre", a.getTitre());
+                map.put("contenu", a.getContenu());
+                map.put("typeAnnonce", a.getTypeAnnonce());
+                map.put("datePublication", a.getDatePublication());
+                map.put("priority", a.getPriority());
+                map.put("isPinned", a.isPinned());
+                map.put("imageUrl", a.getImageUrl());
+                map.put("attachmentUrl", a.getAttachmentUrl());
+                map.put("isRead", annonceService.isRead(a.getIdAnnonce(), user.getIdUser()));
+                
+                // Safe author serialization (avoid circular refs)
+                if (a.getAuteur() != null) {
+                    Map<String, Object> authorMap = new java.util.HashMap<>();
+                    authorMap.put("idUser", a.getAuteur().getIdUser());
+                    authorMap.put("matricule", a.getAuteur().getMatricule());
+                    authorMap.put("nom", a.getAuteur().getNom());
+                    authorMap.put("prenom", a.getAuteur().getPrenom());
+                    map.put("auteur", authorMap);
+                }
+                
+                return map;
+            }).collect(Collectors.toList());
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.err.println("[AnnonceController] Error in getTargeted: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
     }
 
     @PostMapping("/{id}/read")

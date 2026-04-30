@@ -117,7 +117,8 @@ public class WorkflowService {
 
         if (req.getCurrentCircuit() == null) {
             // Fallback: HR can validate everything if no circuit
-            return "HR_MANAGER".equals(user.getRole().getNomRole()) || "SUPER_ADMIN".equals(user.getRole().getNomRole());
+            String role = user.getRole().getNomRole();
+            return "RH_ADMIN".equals(role) || "HR_MANAGER".equals(role) || "SUPER_ADMIN".equals(role);
         }
 
         List<WorkflowEtape> etapes = etapeRepository.findByCircuit_IdCircuitOrderByOrdreAsc(req.getCurrentCircuit().getIdCircuit());
@@ -129,8 +130,8 @@ public class WorkflowService {
             WorkflowEtape step = currentStepOpt.get();
             switch (step.getRoleValidateur()) {
                 case "MANAGER":
-                    return req.getDemandeur().getManagerDirect() != null && 
-                           req.getDemandeur().getManagerDirect().getIdUser().equals(user.getIdUser());
+                    if (req.getDemandeur() == null || req.getDemandeur().getManagerDirect() == null) return false;
+                    return req.getDemandeur().getManagerDirect().getIdUser().equals(user.getIdUser());
                 case "CHEF_DEPARTEMENT":
                     String deptName = req.getDemandeur().getDepartement();
                     if (deptName == null) return false;
@@ -138,10 +139,12 @@ public class WorkflowService {
                     return deptOpt.isPresent() && 
                            deptOpt.get().getManager() != null &&
                            deptOpt.get().getManager().getIdUser().equals(user.getIdUser());
+                case "RH_ADMIN":
+                    String roleA = user.getRole().getNomRole();
+                    return "RH_ADMIN".equals(roleA) || "HR_MANAGER".equals(roleA) || "SUPER_ADMIN".equals(roleA);
                 case "HR_MANAGER":
-                    return "HR_MANAGER".equals(user.getRole().getNomRole()) || 
-                           "SUPER_ADMIN".equals(user.getRole().getNomRole()) ||
-                           "RH_ADMIN".equals(user.getRole().getNomRole());
+                    String roleM = user.getRole().getNomRole();
+                    return "HR_MANAGER".equals(roleM) || "SUPER_ADMIN".equals(roleM);
                 default:
                     return false;
             }
@@ -159,12 +162,55 @@ public class WorkflowService {
                status.equals("ATTENTE");
     }
 
+    @Transactional
+    public void syncRequestsForCircuit(Long idCircuit) {
+        List<Requete> requests = requeteRepository.findByCurrentCircuit_IdCircuit(idCircuit);
+        List<WorkflowEtape> etapes = etapeRepository.findByCircuit_IdCircuitOrderByOrdreAsc(idCircuit);
+        
+        for (Requete req : requests) {
+            // Only sync pending requests
+            if (!isPendingStatus(req.getStatutCycleVie())) continue;
+            
+            // Find if current step order still exists
+            Optional<WorkflowEtape> currentStepOpt = etapes.stream()
+                    .filter(e -> req.getCurrentEtapeOrdre() != null && e.getOrdre() == req.getCurrentEtapeOrdre())
+                    .findFirst();
+            
+            if (currentStepOpt.isPresent()) {
+                // Update status to match validator role of the step (in case it changed)
+                req.setStatutCycleVie(mapRoleToStatus(currentStepOpt.get().getRoleValidateur()));
+            } else {
+                // If the current step order no longer exists, move to the nearest higher order or reset
+                Optional<WorkflowEtape> nextBestStep = etapes.stream()
+                        .filter(e -> req.getCurrentEtapeOrdre() != null && e.getOrdre() >= req.getCurrentEtapeOrdre())
+                        .findFirst();
+                
+                if (nextBestStep.isPresent()) {
+                    req.setCurrentEtapeOrdre(nextBestStep.get().getOrdre());
+                    req.setStatutCycleVie(mapRoleToStatus(nextBestStep.get().getRoleValidateur()));
+                } else if (!etapes.isEmpty()) {
+                    // Fallback to first step if completely lost
+                    WorkflowEtape first = etapes.get(0);
+                    req.setCurrentEtapeOrdre(first.getOrdre());
+                    req.setStatutCycleVie(mapRoleToStatus(first.getRoleValidateur()));
+                } else {
+                    // No steps left in circuit -> Fallback to RH
+                    req.setCurrentCircuit(null);
+                    req.setCurrentEtapeOrdre(0);
+                    req.setStatutCycleVie("EN_ATTENTE_RH");
+                }
+            }
+        }
+        requeteRepository.saveAll(requests);
+    }
+
     private String mapRoleToStatus(String role) {
         switch (role) {
             case "MANAGER":
                 return "EN_ATTENTE_MANAGER";
             case "CHEF_DEPARTEMENT":
                 return "EN_ATTENTE_CHEF_DEPT";
+            case "RH_ADMIN":
             case "HR_MANAGER":
                 return "EN_ATTENTE_RH";
             default:

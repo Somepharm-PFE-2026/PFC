@@ -63,7 +63,7 @@ public class RequeteController {
         boolean isRhAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_RH_ADMIN") || a.getAuthority().equals("RH_ADMIN"));
 
         List<Requete> queue = requeteRepository.findByStatutCycleVieIn(
-            List.of("EN_ATTENTE_RH", "ATTENTE", "VALIDE_MANAGER", "EN_ATTENTE_MANAGER", "APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "EN_ATTENTE", "VALIDÉ_MANAGER", "ANNULE", "ANNULÉ")
+            List.of("EN_ATTENTE_RH", "ATTENTE", "VALIDE_MANAGER", "EN_ATTENTE_MANAGER", "EN_ATTENTE_CHEF_DEPT", "APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "EN_ATTENTE", "VALIDÉ_MANAGER", "ANNULE", "ANNULÉ")
         );
 
         List<Requete> filtered = queue.stream().filter(r -> {
@@ -91,20 +91,24 @@ public class RequeteController {
         Utilisateur currentUser = utilisateurRepository.findByMatricule(auth.getName())
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-        List<Requete> allRequetes = requeteRepository.findAll();
+        List<Requete> allRequetes = requeteRepository.findAllPendingWithDetails();
         
         LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
 
         List<Requete> filtered = allRequetes.stream()
                 .filter(req -> {
                     boolean canValidate = workflowService.canUserValidate(req, currentUser);
-                    if (!canValidate) return false;
+                    if (!canValidate) {
+                        System.out.println("[DEBUG] Manager Queue: User " + currentUser.getMatricule() + " CANNOT validate request " + req.getIdRequete() + " (Status: " + req.getStatutCycleVie() + ")");
+                        return false;
+                    }
                     
                     // 🚀 MIDNIGHT RULE: Cancelled requests disappear for managers after today
-                    if (req.getStatutCycleVie().startsWith("ANNUL")) {
+                    if (req.getStatutCycleVie() != null && req.getStatutCycleVie().startsWith("ANNUL")) {
                         return req.getDateSoumission() != null && req.getDateSoumission().isAfter(todayStart);
                     }
                     
+                    System.out.println("[DEBUG] Manager Queue: User " + currentUser.getMatricule() + " CAN validate request " + req.getIdRequete());
                     return true;
                 })
                 .sorted((r1, r2) -> {

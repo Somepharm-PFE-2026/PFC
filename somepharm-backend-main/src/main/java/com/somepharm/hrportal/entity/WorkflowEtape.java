@@ -26,7 +26,7 @@ public class WorkflowEtape {
 
     /** 
      * The role responsible for validation at this step.
-     * Values: "MANAGER", "CHEF_DEPARTEMENT", "HR_MANAGER"
+     * Values: "MANAGER", "CHEF_DEPARTEMENT", "RH_ADMIN", "HR_MANAGER"
      */
     @Column(nullable = false, length = 50)
     private String roleValidateur;

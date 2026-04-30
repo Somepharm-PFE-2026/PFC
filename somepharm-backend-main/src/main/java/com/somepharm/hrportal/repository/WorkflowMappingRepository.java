@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface WorkflowMappingRepository extends JpaRepository<WorkflowMapping, Long> {
     Optional<WorkflowMapping> findByTypeRequete(String typeRequete);
+    java.util.List<WorkflowMapping> findByCircuit_IdCircuit(Long idCircuit);
 }

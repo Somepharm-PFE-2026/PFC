@@ -39,13 +39,20 @@ public class AnnonceService {
     }
 
     private boolean isTargeted(Annonce a, Utilisateur user) {
-        if ("GENERAL".equals(a.getTargetType()) || a.getTargetType() == null) return true;
+        if ("GENERAL".equals(a.getTargetType()) || a.getTargetType() == null) {
+            return true;
+        }
 
         String targetValue = a.getTargetValue() != null ? a.getTargetValue().trim() : "";
-        if (targetValue.isEmpty() && !"GENERAL".equals(a.getTargetType())) return false;
+        if (targetValue.isEmpty() && !"GENERAL".equals(a.getTargetType())) {
+            System.out.println("[AnnonceService] Filtering out " + a.getIdAnnonce() + " because targetValue is empty for type " + a.getTargetType());
+            return false;
+        }
 
         if ("DEPARTMENT".equals(a.getTargetType())) {
-            return user.getDepartement() != null && user.getDepartement().equalsIgnoreCase(targetValue);
+            boolean match = user.getDepartement() != null && user.getDepartement().equalsIgnoreCase(targetValue);
+            if (!match) System.out.println("[AnnonceService] Dept mismatch for " + a.getIdAnnonce() + ": user=" + user.getDepartement() + ", target=" + targetValue);
+            return match;
         }
 
         if ("ROLE".equals(a.getTargetType())) {
@@ -60,12 +67,15 @@ public class AnnonceService {
             // Special Case: SECURITY_AGENTS targeting also includes anyone in the SECURITE department
             if (isRoleMatch(targetValue, "SECURITY_AGENTS") && "SECURITE".equalsIgnoreCase(user.getDepartement())) return true;
             
+            System.out.println("[AnnonceService] Role mismatch for " + a.getIdAnnonce() + ": userRole=" + userRole + ", target=" + targetValue);
             return false;
         }
 
         if ("SITE".equals(a.getTargetType())) {
             if (user.getSite() == null) return false;
-            return String.valueOf(user.getSite().getIdSite()).equals(targetValue);
+            boolean match = String.valueOf(user.getSite().getIdSite()).equals(targetValue);
+            if (!match) System.out.println("[AnnonceService] Site mismatch for " + a.getIdAnnonce() + ": userSite=" + user.getSite().getIdSite() + ", target=" + targetValue);
+            return match;
         }
 
         if ("SELECTIVE".equals(a.getTargetType())) {
@@ -75,6 +85,7 @@ public class AnnonceService {
             for (String id : userIds) {
                 if (id.equals(currentId)) return true;
             }
+            System.out.println("[AnnonceService] User not in selective list for " + a.getIdAnnonce());
             return false;
         }
 
