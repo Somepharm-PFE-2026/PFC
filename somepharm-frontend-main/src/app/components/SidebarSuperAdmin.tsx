@@ -19,7 +19,6 @@ export default function SidebarSuperAdmin() {
             items: [
                 { name: "1.1 Activation des Profils", path: "/admin/activation", icon: UserCheck, color: "text-red-500" },
                 { name: "1.2 Monitoring des Passwords", path: "/admin/monitoring", icon: Key, color: "text-orange-500" },
-                { name: "1.3 Gestion des Terminaux", path: "/admin/terminals", icon: Smartphone, color: "text-blue-500" },
             ]
         },
         {

@@ -163,7 +163,7 @@ export default function AdminCockpit() {
                     
                     {/* Widget 1.1: Activations en Attente */}
                     <div 
-                        onClick={() => window.location.href = "/admin/collaborateurs"}
+                        onClick={() => window.location.href = "/admin/activation"}
                         className="bg-white rounded-[3rem] p-10 border border-gray-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group overflow-hidden relative"
                     >
                         <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform duration-500">

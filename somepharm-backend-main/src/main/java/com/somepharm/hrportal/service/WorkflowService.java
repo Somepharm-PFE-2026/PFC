@@ -19,15 +19,24 @@ public class WorkflowService {
     private final WorkflowEtapeRepository etapeRepository;
     private final RequeteRepository requeteRepository;
     private final DepartementRepository departementRepository;
+    private final DemandeCongeService congeService;
+    private final DemandeAdministrativeService administrativeService;
+    private final DemandeDocumentService documentService;
 
     public WorkflowService(WorkflowMappingRepository mappingRepository,
                            WorkflowEtapeRepository etapeRepository,
                            RequeteRepository requeteRepository,
-                           DepartementRepository departementRepository) {
+                           DepartementRepository departementRepository,
+                           @org.springframework.context.annotation.Lazy DemandeCongeService congeService,
+                           @org.springframework.context.annotation.Lazy DemandeAdministrativeService administrativeService,
+                           @org.springframework.context.annotation.Lazy DemandeDocumentService documentService) {
         this.mappingRepository = mappingRepository;
         this.etapeRepository = etapeRepository;
         this.requeteRepository = requeteRepository;
         this.departementRepository = departementRepository;
+        this.congeService = congeService;
+        this.administrativeService = administrativeService;
+        this.documentService = documentService;
     }
 
     @Transactional
@@ -63,7 +72,8 @@ public class WorkflowService {
             // Fallback for requests without dynamic workflow
             req.setStatutCycleVie("APPROUVÉ");
             req.setCommentaireAction(comment);
-            return requeteRepository.save(req);
+            Requete saved = requeteRepository.save(req);
+            return triggerTerminalActions(saved);
         }
 
         List<WorkflowEtape> etapes = etapeRepository.findByCircuit_IdCircuitOrderByOrdreAsc(req.getCurrentCircuit().getIdCircuit());
@@ -107,7 +117,30 @@ public class WorkflowService {
             req.setStatutCycleVie("APPROUVÉ");
         }
 
-        return requeteRepository.save(req);
+        Requete saved = requeteRepository.save(req);
+
+        // 🚀 TRIGGER TERMINAL SIDE EFFECTS: If the request is now fully approved,
+        // we must ensure balance deduction, data sync, and notifications happen.
+        if ("APPROUVÉ".equalsIgnoreCase(saved.getStatutCycleVie())) {
+            return triggerTerminalActions(saved);
+        }
+
+        return saved;
+    }
+
+    private Requete triggerTerminalActions(Requete req) {
+        String action = "APPROUVE";
+        String comment = req.getCommentaireAction();
+        Long id = req.getIdRequete();
+
+        if (req instanceof DemandeConge) {
+            return congeService.updateStatut(id, action, comment);
+        } else if (req instanceof DemandeAdministrative) {
+            return administrativeService.updateStatus(id, action, comment);
+        } else if (req instanceof DemandeDocument) {
+            return documentService.updateStatut(id, action, comment);
+        }
+        return req;
     }
 
     public boolean canUserValidate(Requete req, Utilisateur user) {

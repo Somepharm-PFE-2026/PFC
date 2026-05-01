@@ -434,8 +434,8 @@ export default function DemandesPage() {
                       </button>
                   )}
                   
-                  {/* ❌ CANCEL BUTTON (Visible for Employees when request is still pending) */}
-                  {isCancellable && user?.role === "EMPLOYE" && (
+                  {/* ❌ CANCEL BUTTON (Visible for anyone when their own request is still pending) */}
+                  {isCancellable && (user?.role === "EMPLOYE" || user?.role === "MANAGER" || user?.role === "RH_ADMIN" || user?.role === "HR_MANAGER" || user?.role === "SUPER_ADMIN") && (
                       <button 
                          onClick={() => handleCancel(req.idRequete, isDoc)}
                          className="text-red-500 font-black text-[9px] uppercase tracking-widest hover:text-red-700 hover:underline transition-all"

@@ -169,14 +169,6 @@ public class RequeteController {
 
         // 🚀 DYNAMIC WORKFLOW: Progress based on circuit
         Requete updated = workflowService.processValidation(req, action, comment, currentUser.getPrenom() + " " + currentUser.getNom());
-
-        if (updated instanceof DemandeAdministrative && "APPROUVÉ".equalsIgnoreCase(updated.getStatutCycleVie())) {
-            return ResponseEntity.ok(administrativeService.updateStatus(id, action, comment));
-        } else if (updated instanceof DemandeConge && "APPROUVÉ".equalsIgnoreCase(updated.getStatutCycleVie())) {
-            return ResponseEntity.ok(congeService.updateStatut(id, action, comment));
-        } else if (updated instanceof DemandeDocument && "APPROUVÉ".equalsIgnoreCase(updated.getStatutCycleVie())) {
-            return ResponseEntity.ok(documentService.updateStatut(id, action, comment));
-        }
         
         return ResponseEntity.ok(updated);
     }

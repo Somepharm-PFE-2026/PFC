@@ -99,6 +99,23 @@ export default function DemandesPage() {
       return sortOrder === "NEWEST" ? dateB - dateA : dateA - dateB;
     });
 
+  const handleCancel = async (id: number, isDoc: boolean) => {
+    if (!confirm("Voulez-vous vraiment annuler cette demande ?")) return;
+    try {
+      const baseUrl = isDoc ? "http://localhost:8080/api/demandes-documents" : "http://localhost:8080/api/demandes";
+      const res = await fetch(`${baseUrl}/${id}/annuler`, {
+        method: "PUT",
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (res.ok) {
+        fetchData(token, user?.role);
+      } else {
+        const err = await res.text();
+        alert("Erreur: " + err);
+      }
+    } catch (err) { console.error(err); }
+  };
+
   const handleUpdateStatus = async (id: number, newStatus: string, commentaire: string = "", isDoc: boolean) => {
     try {
       const baseUrl = isDoc ? "http://localhost:8080/api/demandes-documents" : "http://localhost:8080/api/demandes";
@@ -267,6 +284,7 @@ export default function DemandesPage() {
             {filteredAndSortedRequests.map((req: any) => {
               const isApproved = req.statutCycleVie === 'APPROUVE' || req.statutCycleVie === 'APPROUVÉ';
               const isDoc = req._group === 'DOCUMENT';
+              const isCancellable = !isApproved && !req.statutCycleVie.includes("REFUSE") && req.statutCycleVie !== "ANNULE" && req.statutCycleVie !== "ANNULÉ";
 
               return (
               <tr key={`${req._group}-${req.idRequete}`} className="hover:bg-blue-50/30 transition-colors">
@@ -339,7 +357,18 @@ export default function DemandesPage() {
                          <Download size={14} className="text-blue-400" /> Générer
                       </button>
                   )}
-                  {(!isApproved && user?.role === "EMPLOYE") && (
+
+                  {/* ❌ CANCEL BUTTON (Visible for anyone when their own request is still pending) */}
+                  {isCancellable && (user?.role === "EMPLOYE" || user?.role === "MANAGER" || user?.role === "RH_ADMIN" || user?.role === "HR_MANAGER" || user?.role === "SUPER_ADMIN") && (
+                      <button 
+                         onClick={() => handleCancel(req.idRequete, isDoc)}
+                         className="text-red-500 font-black text-[9px] uppercase tracking-widest hover:text-red-700 hover:underline transition-all mt-2"
+                      >
+                         Annuler la demande
+                      </button>
+                  )}
+
+                  {(!isApproved && !isCancellable && user?.role === "EMPLOYE") && (
                       <span className="text-gray-300 font-bold text-[10px] uppercase">En Attente</span>
                   )}
                 </td>

@@ -25,4 +25,7 @@ public class DemandeConge extends Requete {
     @ManyToOne
     @JoinColumn(name = "id_type_conge")
     private TypeConge typeConge;
+
+    @Column(name = "balance_deducted", nullable = false)
+    private boolean balanceDeducted = false;
 }

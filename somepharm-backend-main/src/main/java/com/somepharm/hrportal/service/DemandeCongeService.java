@@ -16,18 +16,52 @@ import java.util.stream.Collectors;
 public class DemandeCongeService {
 
     private final DemandeCongeRepository demandeCongeRepository;
+    private final com.somepharm.hrportal.repository.UtilisateurRepository utilisateurRepository;
+    private final com.somepharm.hrportal.repository.TypeCongeRepository typeCongeRepository;
     private final AuditService auditService;
     private final NotificationService notificationService;
     private final HolidayService holidayService;
 
-    public DemandeCongeService(DemandeCongeRepository demandeCongeRepository, AuditService auditService, NotificationService notificationService, HolidayService holidayService) {
+    public DemandeCongeService(DemandeCongeRepository demandeCongeRepository, 
+                               com.somepharm.hrportal.repository.UtilisateurRepository utilisateurRepository,
+                               com.somepharm.hrportal.repository.TypeCongeRepository typeCongeRepository,
+                               AuditService auditService, 
+                               NotificationService notificationService, 
+                               HolidayService holidayService) {
         this.demandeCongeRepository = demandeCongeRepository;
+        this.utilisateurRepository = utilisateurRepository;
+        this.typeCongeRepository = typeCongeRepository;
         this.auditService = auditService;
         this.notificationService = notificationService;
         this.holidayService = holidayService;
     }
 
     public DemandeConge createDemande(DemandeConge demande) {
+        // 🚀 OVERLAP PREVENTION: Check if user already has a leave for these dates
+        List<DemandeConge> existing = demandeCongeRepository.findByDemandeur_Matricule(demande.getDemandeur().getMatricule());
+        
+        boolean hasOverlap = existing.stream()
+            .filter(d -> {
+                String status = d.getStatutCycleVie() != null ? d.getStatutCycleVie().toUpperCase() : "";
+                return !status.equals("ANNULÉ") && 
+                       !status.equals("ANNULE") && 
+                       !status.contains("REFUSE") && 
+                       !status.contains("REFUSÉ");
+            })
+            .anyMatch(d -> {
+                LocalDate startA = d.getDateDebut();
+                LocalDate endA = d.getDateFin();
+                LocalDate startB = demande.getDateDebut();
+                LocalDate endB = demande.getDateFin();
+                
+                // Logic: (StartA <= EndB) and (EndA >= StartB)
+                return !startA.isAfter(endB) && !endB.isBefore(startA) && !endA.isBefore(startB);
+            });
+        
+        if (hasOverlap) {
+            throw new RuntimeException("Vous avez déjà une demande de congé (active ou validée) sur cette période. Veuillez choisir d'autres dates ou annuler la précédente.");
+        }
+
         return demandeCongeRepository.save(demande);
     }
 
@@ -69,18 +103,40 @@ public class DemandeCongeService {
 
         // 🚀 ACCENT-PROOF CHECK: Accepts "APPROUVE", "approuvé", etc.
         boolean isApproving = "APPROUVE".equalsIgnoreCase(nouveauStatut) || "APPROUVÉ".equalsIgnoreCase(nouveauStatut);
-        boolean wasNotApproved = !"APPROUVE".equalsIgnoreCase(demande.getStatutCycleVie()) && !"APPROUVÉ".equalsIgnoreCase(demande.getStatutCycleVie());
 
-        if (isApproving && wasNotApproved) {
-            Utilisateur demandeur = demande.getDemandeur();
-
-            // 🚀 Use the new Smart Math instead of ChronoUnit
-            long jours = calculerJoursOuvrables(demande.getDateDebut(), demande.getDateFin());
-
-            if (demandeur.getSoldeConges() < (int) jours) {
-                throw new RuntimeException("Solde insuffisant (" + demandeur.getSoldeConges() + " jours restants, demande exige: " + jours + " jours).");
+        if (isApproving && !demande.isBalanceDeducted()) {
+            // 🚀 FETCH FULL TYPE: Ensure we have the name even if only ID was sent
+            com.somepharm.hrportal.entity.TypeConge fullType = null;
+            if (demande.getTypeConge() != null && demande.getTypeConge().getIdTypeConge() != null) {
+                fullType = typeCongeRepository.findById(demande.getTypeConge().getIdTypeConge()).orElse(null);
             }
-            demandeur.setSoldeConges(demandeur.getSoldeConges() - (int) jours);
+
+            // 🚀 STRAT: Only deduct for "Congé Annuel". Other leaves are free.
+            boolean isAnnualLeave = fullType != null && "Congé Annuel".equalsIgnoreCase(fullType.getNom());
+
+            if (isAnnualLeave) {
+                Utilisateur demandeur = demande.getDemandeur();
+                long jours = calculerJoursOuvrables(demande.getDateDebut(), demande.getDateFin());
+
+                System.out.println("--- BALANCE DEDUCTION TRIGGERED ---");
+                System.out.println("Employee: " + demandeur.getMatricule() + " (Role: " + demandeur.getRole().getNomRole() + ")");
+                System.out.println("Current Balance: " + demandeur.getSoldeConges());
+                System.out.println("Deducting: " + jours + " days");
+
+                if (demandeur.getSoldeConges() < (int) jours) {
+                    throw new RuntimeException("Solde insuffisant (" + demandeur.getSoldeConges() + " jours restants, demande exige: " + jours + " jours).");
+                }
+                
+                demandeur.setSoldeConges(demandeur.getSoldeConges() - (int) jours);
+                utilisateurRepository.save(demandeur); // 🚀 CRITICAL: Explicitly save the user entity!
+                demande.setBalanceDeducted(true);
+                
+                System.out.println("New Balance: " + demandeur.getSoldeConges());
+                System.out.println("------------------------------------");
+            } else {
+                System.out.println("Approval: Leave type [" + (fullType != null ? fullType.getNom() : "NULL") + "] does not require balance deduction.");
+                demande.setBalanceDeducted(true); // Mark as "processed" even if no deduction needed
+            }
         }
 
         // Normalize the status string to ensure it's always saved correctly in the DB

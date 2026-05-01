@@ -1445,15 +1445,15 @@ export default function HRSettingsPage() {
                                          <select className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-[10px] font-black uppercase outline-none" value={newEtape.roleValidateur} onChange={(e) => setNewEtape({...newEtape, roleValidateur: e.target.value})}>
                                              <option value="">Rôle...</option>
                                              {(() => {
-                                                const ROLE_WEIGHTS = { "MANAGER": 1, "CHEF_DEPARTEMENT": 2, "RH_ADMIN": 3, "HR_MANAGER": 4 };
+                                                const ROLE_WEIGHTS: Record<string, number> = { "MANAGER": 1, "CHEF_DEPARTEMENT": 2, "RH_ADMIN": 3, "HR_MANAGER": 4 };
                                                 const lastStep = circuit.etapes?.[circuit.etapes.length - 1];
-                                                const minWeight = lastStep ? ROLE_WEIGHTS[lastStep.roleValidateur] : 0;
+                                                const minWeight = lastStep ? (ROLE_WEIGHTS[lastStep.roleValidateur] || 0) : 0;
                                                 return [
                                                    { val: "MANAGER", label: "Manager (N+1)" },
                                                    { val: "CHEF_DEPARTEMENT", label: "Chef Département" },
                                                    { val: "RH_ADMIN", label: "Ressources Humaines" },
                                                    { val: "HR_MANAGER", label: "Directeur RH" }
-                                                ].filter(opt => ROLE_WEIGHTS[opt.val] > minWeight).map(opt => (
+                                                ].filter(opt => (ROLE_WEIGHTS[opt.val] || 0) > minWeight).map(opt => (
                                                    <option key={opt.val} value={opt.val}>{opt.label}</option>
                                                 ));
                                              })()}

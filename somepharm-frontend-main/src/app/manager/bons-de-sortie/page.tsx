@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, Clock, ArrowRight, CheckCircle2, QrCode as qrIcon, Download, Info } from "lucide-react";
+import { Shield, Clock, ArrowRight, CheckCircle2, QrCode as qrIcon, Download, Info, XCircle, AlertCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 export default function BonDeSortiePage() {
@@ -19,6 +19,7 @@ export default function BonDeSortiePage() {
   const [sorties, setSorties] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -62,6 +63,7 @@ export default function BonDeSortiePage() {
   const demanderSortie = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     const token = localStorage.getItem("token");
     
     try {
@@ -84,11 +86,31 @@ export default function BonDeSortiePage() {
       if (res.ok) {
         fetchMesSorties(token || "");
         setFormData({ ...formData, motif: "" });
+      } else {
+        const errData = await res.json();
+        setError(errData.message || "Une erreur est survenue.");
       }
     } catch (err) {
       console.error("Erreur demande:", err);
+      setError("Erreur réseau ou serveur.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const annulerSortie = async (id: number) => {
+    if (!confirm("Êtes-vous sûr de vouloir annuler cette demande ?")) return;
+    const token = localStorage.getItem("token");
+    try {
+        const res = await fetch(`http://localhost:8080/api/demandes-documents/${id}/annuler`, {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+            fetchMesSorties(token || "");
+        }
+    } catch (err) {
+        console.error("Erreur annulation:", err);
     }
   };
 
@@ -137,6 +159,13 @@ export default function BonDeSortiePage() {
               </div>
               <h2 className="text-xl font-black text-gray-800 uppercase">Nouvelle Sortie</h2>
             </div>
+
+            {error && (
+                <div className="mb-6 bg-red-50 border-2 border-red-100 p-4 rounded-2xl flex items-start gap-3 text-red-600 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <AlertCircle className="shrink-0 mt-0.5" size={18} />
+                    <p className="text-xs font-bold leading-relaxed">{error}</p>
+                </div>
+            )}
 
             <form onSubmit={demanderSortie} className="space-y-6">
               
@@ -235,6 +264,8 @@ export default function BonDeSortiePage() {
           ) : (
             sorties.map((sortie, index) => {
               const isApproved = sortie.statutCycleVie === 'APPROUVE' || sortie.statutCycleVie === 'APPROUVÉ';
+              const isCancelled = sortie.statutCycleVie === 'ANNULÉ';
+              const isCancellable = !isApproved && !isCancelled && !sortie.statutCycleVie.includes('REFUSE');
               const qrData = `BON_SORTIE|${user?.sub || 'EMP'}|${new Date(sortie.dateSoumission).toLocaleDateString()}|${sortie.heureDebut}-${sortie.heureFin}|VALIDATED_SOMEPHARM`;
               
               return (
@@ -263,6 +294,15 @@ export default function BonDeSortiePage() {
                   <p className="text-sm font-medium text-gray-500 bg-gray-50 p-4 rounded-xl border-l-4 border-gray-200">
                     {sortie.description || "Aucun motif précisé."}
                   </p>
+
+                  {isCancellable && (
+                      <button 
+                        onClick={() => annulerSortie(sortie.idRequete)}
+                        className="flex items-center gap-2 text-[10px] font-black text-red-400 uppercase hover:text-red-600 transition-colors mt-2"
+                      >
+                        <XCircle size={14} className="lucide lucide-x-circle" /> Annuler la demande
+                      </button>
+                  )}
                 </div>
 
                 {/* --- QR CODE SECTION (APPROUVÉ) --- */}
@@ -283,6 +323,11 @@ export default function BonDeSortiePage() {
                                     onClick={() => handleDownload(sortie.idRequete)}
                                 />
                             </div>
+                        </div>
+                    ) : isCancelled ? (
+                        <div className="w-[152px] h-[152px] bg-gray-50 border-2 border-gray-100 rounded-[2rem] flex flex-col items-center justify-center text-gray-200 p-6 text-center">
+                            <XCircle size={32} className="mb-2 opacity-10 lucide lucide-x-circle" />
+                            <p className="text-[9px] font-black uppercase leading-tight">Demande Annulée</p>
                         </div>
                     ) : (
                         <div className="w-[152px] h-[152px] bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2rem] flex flex-col items-center justify-center text-gray-300 p-6 text-center">

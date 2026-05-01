@@ -442,10 +442,12 @@ export default function CollaborateursPage() {
                       {(() => {
                         const deptData = departments.find(d => d.nomDept === newEmployeeForm.departement);
                         return employees.filter(e => {
-                          const isManager = e.role?.nomRole !== 'EMPLOYE' && e.role?.nomRole !== 'SECURITY_AGENTS';
+                          // 🚀 Role Check: Use string comparison since backend sends role as string
+                          const role = typeof e.role === 'string' ? e.role : e.role?.nomRole;
+                          const isManager = role !== 'EMPLOYE' && role !== 'SECURITY_AGENTS';
                           const isInDept = e.departement === newEmployeeForm.departement;
                           const isHeadManager = deptData && e.idUser === deptData.managerId;
-                          return (isInDept && isManager) || isHeadManager;
+                          return isInDept && (isManager || isHeadManager);
                         }).map(u => (
                           <option key={u.idUser} value={u.idUser}>
                             {u.prenom} {u.nom} ({u.poste}){u.idUser === deptData?.managerId ? " [CHEF DE SERVICE]" : ""}
@@ -559,15 +561,17 @@ export default function CollaborateursPage() {
                         return employees.filter(e => {
                           if (e.idUser === editingEmployee.idUser) return false;
                           
-                          const currentLevel = getPositionLevel(originalPoste);
-                          const targetUserLevel = getPositionLevel(e.poste);
+                          const role = typeof e.role === 'string' ? e.role : e.role?.nomRole;
+                          const isManager = role !== 'EMPLOYE' && role !== 'SECURITY_AGENTS';
                           const isInSameDept = e.departement === editingEmployee.departement;
                           const isDesignatedDeptManager = deptData && e.idUser === deptData.managerId;
 
-                          // Only show users who are STRICTLY higher in the hierarchy
+                          // 🛡️ Hierarchy Guard: Only show users who are strictly higher in the hierarchy
+                          const currentLevel = getPositionLevel(originalPoste);
+                          const targetUserLevel = getPositionLevel(e.poste);
                           const isStrictlyHigher = targetUserLevel < currentLevel;
 
-                          return (isInSameDept && isStrictlyHigher) || isDesignatedDeptManager;
+                          return isInSameDept && (isManager || isDesignatedDeptManager) && (isStrictlyHigher || isDesignatedDeptManager);
                         }).map(u => (
                           <option key={u.idUser} value={u.idUser}>
                             {u.prenom} {u.nom} ({u.poste}){u.idUser === deptData?.managerId ? " [CHEF DE SERVICE]" : ""}

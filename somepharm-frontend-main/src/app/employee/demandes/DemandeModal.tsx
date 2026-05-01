@@ -27,7 +27,7 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
   }, [initialCategory]);
 
   const [formDataConge, setFormDataConge] = useState({
-    typeConge: "CONGE_ANNUEL",
+    typeConge: "Congé Annuel",
     dateDebut: "",
     dateFin: "",
     motif: "",
@@ -38,16 +38,19 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
     motif: "",
   });
 
-  const [loading, setLoading] = useState(false);
-  const [leaveTypes, setLeaveTypes] = useState<any[]>([]);
-  const [userBalance, setUserBalance] = useState<number | null>(null);
+   const [leaveTypes, setLeaveTypes] = useState<any[]>([]);
+   const [userBalance, setUserBalance] = useState<number | null>(null);
+   const [holidays, setHolidays] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchLeaveTypes();
-      fetchUserBalance();
-    }
-  }, [isOpen]);
+   useEffect(() => {
+     if (isOpen) {
+       fetchLeaveTypes();
+       fetchUserBalance();
+       fetchHolidays();
+     }
+   }, [isOpen]);
+
+  const [loading, setLoading] = useState(false);
 
   const fetchUserBalance = async () => {
     try {
@@ -63,16 +66,61 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
     }
   };
 
+  const fetchHolidays = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/api/config/holidays", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setHolidays(data);
+      }
+    } catch (err) {
+      console.error("Error fetching holidays:", err);
+    }
+  };
+
+  const checkIsHoliday = (date: Date) => {
+    if (!date || isNaN(date.getTime())) return false;
+    
+    // Normalize to YYYY-MM-DD for comparison
+    const y = date.getFullYear();
+    const m = date.getMonth();
+    const d = date.getDate();
+
+    return holidays.some(h => {
+      const hDate = new Date(h.date);
+      if (isNaN(hDate.getTime())) return false;
+      
+      const hy = hDate.getFullYear();
+      const hm = hDate.getMonth();
+      const hd = hDate.getDate();
+
+      if (h.recurrenceType === "ANNUEL") {
+        return hm === m && hd === d;
+      } else if (h.recurrenceType === "PERIODIQUE") {
+        const yearsDiff = y - hy;
+        const interval = h.recurrenceInterval || 1;
+        return yearsDiff >= 0 && yearsDiff % interval === 0 && hm === m && hd === d;
+      } else { // UNIQUE
+        return hy === y && hm === m && hd === d;
+      }
+    });
+  };
+
   const calculateWorkingDays = (start: string, end: string) => {
     if (!start || !end) return 0;
     let count = 0;
     let cur = new Date(start);
     const last = new Date(end);
-    // Safety break
+    
+    if (isNaN(cur.getTime()) || isNaN(last.getTime())) return 0;
+    
     let loopLimit = 0;
     while (cur <= last && loopLimit < 500) {
       const day = cur.getDay();
-      if (day !== 5 && day !== 6) { // 5 = Friday, 6 = Saturday
+      // En Algérie, le week-end = Vendredi (5) et Samedi (6)
+      if (day !== 5 && day !== 6 && !checkIsHoliday(new Date(cur))) {
         count++;
       }
       cur.setDate(cur.getDate() + 1);
@@ -85,11 +133,12 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
     if (!start || balance <= 0) return "";
     let count = 0;
     let cur = new Date(start);
-    // Safety break
+    if (isNaN(cur.getTime())) return "";
+
     let loopLimit = 0;
-    while (count < balance && loopLimit < 500) {
+    while (count < balance && loopLimit < 1000) {
       const day = cur.getDay();
-      if (day !== 5 && day !== 6) {
+      if (day !== 5 && day !== 6 && !checkIsHoliday(new Date(cur))) {
         count++;
       }
       if (count < balance) {
@@ -101,30 +150,43 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
   };
 
   const requestedDays = calculateWorkingDays(formDataConge.dateDebut, formDataConge.dateFin);
-  const maxEndDate = userBalance ? calculateMaxEndDate(formDataConge.dateDebut, userBalance) : "";
-  const isBalanceExceeded = userBalance !== null && requestedDays > userBalance;
-  const today = new Date().toISOString().split('T')[0];
+  
+  // 🛡️ Only restrict balance for Annual Leave
+  const isAnnualLeave = formDataConge.typeConge === "Congé Annuel";
+  const maxEndDate = (isAnnualLeave && userBalance && userBalance > 0) ? calculateMaxEndDate(formDataConge.dateDebut, userBalance) : "";
+  const isBalanceExceeded = isAnnualLeave && userBalance !== null && requestedDays > userBalance;
+  
+  // 🕒 Tomorrow calculation
+  const minDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  })();
 
-  // 🛡️ STRICT ENFORCEMENT: Snap dateFin back to max if exceeded
+  // 🛡️ STRICT ENFORCEMENT: Snap dateFin back to max ONLY if balance is critical
   useEffect(() => {
-    if (formDataConge.dateFin && maxEndDate && formDataConge.dateFin > maxEndDate) {
-      setFormDataConge(prev => ({ ...prev, dateFin: maxEndDate }));
+    if (isAnnualLeave && formDataConge.dateFin && maxEndDate && formDataConge.dateFin > maxEndDate) {
+      if (userBalance !== null && userBalance > 0) {
+         setFormDataConge(prev => ({ ...prev, dateFin: maxEndDate }));
+      }
     }
-  }, [formDataConge.dateFin, maxEndDate]);
-
-
+  }, [formDataConge.dateFin, maxEndDate, userBalance, isAnnualLeave]);
 
 
   const fetchLeaveTypes = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/demandes/types", {
+      const res = await fetch("http://localhost:8080/api/config/leave-types", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
         setLeaveTypes(data);
-        if (data.length > 0 && !formDataConge.typeConge) {
-            setFormDataConge(prev => ({ ...prev, typeConge: data[0].nom }));
+        // If "Congé Annuel" is not in the list, default to first available
+        if (data.length > 0) {
+            const hasAnnual = data.some((t: any) => t.nom === "Congé Annuel");
+            if (!hasAnnual) {
+                setFormDataConge(prev => ({ ...prev, typeConge: data[0].nom }));
+            }
         }
       }
     } catch (err) {
@@ -260,7 +322,7 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
                     <input
                       type="date"
                       required
-                      min={today}
+                      min={minDate}
                       className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-bold text-gray-700 outline-none focus:border-blue-500"
                       value={formDataConge.dateDebut}
                       onChange={(e) => setFormDataConge({ ...formDataConge, dateDebut: e.target.value, dateFin: "" })}
@@ -273,7 +335,7 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
                       type="date"
                       required
                       disabled={!formDataConge.dateDebut}
-                      max={maxEndDate}
+                      max={maxEndDate || undefined}
                       className={`w-full bg-gray-50 border-2 ${isBalanceExceeded ? 'border-red-500 bg-red-50' : 'border-gray-100'} rounded-2xl p-4 font-bold text-gray-700 outline-none focus:border-blue-500 disabled:opacity-50`}
                       value={formDataConge.dateFin}
                       onChange={(e) => setFormDataConge({ ...formDataConge, dateFin: e.target.value })}
