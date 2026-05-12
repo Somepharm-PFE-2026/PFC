@@ -92,7 +92,7 @@ export default function SidebarManager() {
   ];
 
   if (isSecurityManager) {
-    teamItems.push({ name: "Contrôle d'Accès", path: "/employee/security-scanner", icon: QrCode, badge: 0 });
+    teamItems.push({ name: "Contrôle d'Accès", path: "/manager/security-scanner", icon: QrCode, badge: 0 });
   }
 
   const personalItems = [

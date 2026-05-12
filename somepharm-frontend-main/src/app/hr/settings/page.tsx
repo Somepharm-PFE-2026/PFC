@@ -81,14 +81,16 @@ export default function HRSettingsPage() {
   const [newBypass, setNewBypass] = useState({ nom: "", conditionType: "DEMANDEUR_EST_CHEF", etapeIgnoree: "MANAGER", seuilHeures: 48 });
   const [newDelegation, setNewDelegation] = useState({ titulaireId: "", delegueId: "", dateDebut: "", dateFin: "" });
   const [expandedCircuit, setExpandedCircuit] = useState<number | null>(null);
-  const [newEtape, setNewEtape] = useState({ roleValidateur: "MANAGER", label: "", delaiHeures: 72, actionExpiration: "RELANCE", optionnel: false });
+  const [newEtape, setNewEtape] = useState({ roleValidateur: "", label: "", delaiHeures: 72, actionExpiration: "RELANCE", optionnel: false });
 
   let roleName = typeof currentUser?.role === "string" ? currentUser.role : currentUser?.role?.nomRole;
   if (roleName && roleName.startsWith("ROLE_")) {
     roleName = roleName.replace("ROLE_", "");
   }
-  const isHRManager = roleName === "HR_MANAGER" || roleName === "SUPER_ADMIN";
-  const isReadOnly = !currentUser || !isHRManager;
+  const isHRManager = roleName === "HR_MANAGER";
+  const canManage = isHRManager;
+  const canView = isHRManager || roleName === "RH_ADMIN";
+  const isReadOnly = !canManage;
 
   useEffect(() => {
     fetchUserData();
@@ -98,13 +100,17 @@ export default function HRSettingsPage() {
     fetchWorkflowData();
   }, []);
 
+  useEffect(() => {
+    setNewEtape({ roleValidateur: "", label: "", delaiHeures: 72, actionExpiration: "RELANCE", optionnel: false });
+  }, [expandedCircuit]);
+
 
   const fetchOrgData = async () => {
     try {
       const token = localStorage.getItem("token");
       const [deptRes, userRes] = await Promise.all([
         fetch("http://localhost:8080/api/departements", { headers: { "Authorization": `Bearer ${token}` } }),
-        fetch("http://localhost:8080/api/utilisateurs/all", { headers: { "Authorization": `Bearer ${token}` } }),
+        fetch("http://localhost:8080/api/utilisateurs/directory", { headers: { "Authorization": `Bearer ${token}` } }),
       ]);
       if (deptRes.ok) setDepartments(await deptRes.json());
       if (userRes.ok) setAllUsers(await userRes.json());
@@ -269,6 +275,7 @@ export default function HRSettingsPage() {
       if (res.ok) {
         setNewSite({ nomSite: "", ville: "", adresse: "" });
         fetchConfig();
+        fetchWorkflowData();
       }
     } catch (err) { console.error(err); }
   };
@@ -280,9 +287,18 @@ export default function HRSettingsPage() {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
       });
-      if (res.ok) fetchConfig();
+      if (res.ok) {
+        fetchConfig();
+        fetchWorkflowData();
+      }
     } catch (err) { console.error(err); }
   };
+
+  const handleDeleteMapping = async (id: number) => {
+    const ok = await wfDel(`/mappings/${id}`);
+    if (ok) fetchWorkflowData();
+  };
+
   const handleCreateHoliday = async () => {
     if (!newHoliday.nom || !newHoliday.date) return;
     try {
@@ -345,7 +361,11 @@ export default function HRSettingsPage() {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ ...dept, manager: { idUser: selectedDeptMgrId } })
+        body: JSON.stringify({ 
+          idDept: dept.idDept,
+          nomDept: dept.nomDept,
+          manager: { idUser: selectedDeptMgrId } 
+        })
       });
 
       if (res.ok) {
@@ -447,36 +467,131 @@ export default function HRSettingsPage() {
   const authH = () => ({ "Authorization": `Bearer ${localStorage.getItem("token")}` });
 
   const fetchWorkflowData = async () => {
+    const h = authH();
+    const safeJson = (r: Response) => r.ok ? r.json().catch(() => []) : [];
+    const [c, m, b, d] = await Promise.all([
+      fetch(`${API}/circuits`, { headers: h }).then(safeJson).catch(() => []),
+      fetch(`${API}/mappings`, { headers: h }).then(safeJson).catch(() => []),
+      fetch(`${API}/bypass-rules`, { headers: h }).then(safeJson).catch(() => []),
+      fetch(`${API}/delegations`, { headers: h }).then(safeJson).catch(() => []),
+    ]);
+    setCircuits(Array.isArray(c) ? c : []);
+    setMappings(Array.isArray(m) ? m : []);
+    setBypassRules(Array.isArray(b) ? b : []);
+    setDelegations(Array.isArray(d) ? d : []);
+  };
+
+  const wfPost = async (path: string, body: any): Promise<boolean> => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("⚠️ Session expirée. Veuillez vous reconnecter.");
+      router.push("/login");
+      return false;
+    }
     try {
-      const h = authH();
-      const [c, m, b, d] = await Promise.all([
-        fetch(`${API}/circuits`, { headers: h }).then(r => r.json()),
-        fetch(`${API}/mappings`, { headers: h }).then(r => r.json()),
-        fetch(`${API}/bypass-rules`, { headers: h }).then(r => r.json()),
-        fetch(`${API}/delegations`, { headers: h }).then(r => r.json()),
-      ]);
-      setCircuits(c); setMappings(m); setBypassRules(b); setDelegations(d);
-    } catch (err) { console.error(err); }
+      const res = await fetch(`${API}${path}`, { method: "POST", headers: { ...authH(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (res.status === 401) {
+        alert("⚠️ Session expirée. Veuillez vous reconnecter.");
+        localStorage.removeItem("token");
+        router.push("/login");
+        return false;
+      }
+      if (!res.ok) {
+        const msg = await res.text().catch(() => res.statusText);
+        alert(`❌ Erreur ${res.status} : ${msg || "Action impossible."}`);
+        return false;
+      }
+      await fetchWorkflowData();
+      return true;
+    } catch (err: any) {
+      alert(`❌ Erreur réseau : ${err?.message || "Connexion impossible. Vérifiez que le serveur est démarré."}`);
+      return false;
+    }
+  };
+  const wfPut = async (path: string, body: any): Promise<boolean> => {
+    const token = localStorage.getItem("token");
+    if (!token) { router.push("/login"); return false; }
+    try {
+      const res = await fetch(`${API}${path}`, { method: "PUT", headers: { ...authH(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (res.status === 401) { localStorage.removeItem("token"); router.push("/login"); return false; }
+      if (!res.ok) {
+        const msg = await res.text().catch(() => res.statusText);
+        alert(`❌ Erreur ${res.status} : ${msg || "Action impossible."}`);
+        return false;
+      }
+      await fetchWorkflowData();
+      return true;
+    } catch (err: any) {
+      alert(`❌ Erreur réseau : ${err?.message || "Connexion impossible."}`);
+      return false;
+    }
+  };
+  const wfDel = async (path: string): Promise<boolean> => {
+    const token = localStorage.getItem("token");
+    if (!token) { router.push("/login"); return false; }
+    try {
+      const res = await fetch(`${API}${path}`, { method: "DELETE", headers: authH() });
+      if (res.status === 401) { localStorage.removeItem("token"); router.push("/login"); return false; }
+      if (!res.ok) {
+        const msg = await res.text().catch(() => res.statusText);
+        alert(`❌ Erreur ${res.status} : ${msg || "Suppression impossible."}`);
+        return false;
+      }
+      await fetchWorkflowData();
+      return true;
+    } catch (err: any) {
+      alert(`❌ Erreur réseau : ${err?.message || "Connexion impossible."}`);
+      return false;
+    }
   };
 
-  const wfPost = async (path: string, body: any) => {
-    await fetch(`${API}${path}`, { method: "POST", headers: { ...authH(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    fetchWorkflowData();
-  };
-  const wfPut = async (path: string, body: any) => {
-    await fetch(`${API}${path}`, { method: "PUT", headers: { ...authH(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    fetchWorkflowData();
-  };
-  const wfDel = async (path: string) => {
-    await fetch(`${API}${path}`, { method: "DELETE", headers: authH() });
-    fetchWorkflowData();
+  const handleCreateCircuit = async () => {
+    if (!newCircuit.nom) {
+      alert("⚠️ Le nom du circuit est requis.");
+      return;
+    }
+    const ok = await wfPost("/circuits", newCircuit);
+    if (ok) {
+      setNewCircuit({ nom: "", description: "" });
+      fetchWorkflowData();
+    }
   };
 
-  const handleCreateCircuit = () => { if (!newCircuit.nom) return; wfPost("/circuits", newCircuit); setNewCircuit({ nom: "", description: "" }); };
-  const handleAddEtape = (circuitId: number) => { wfPost(`/circuits/${circuitId}/etapes`, { ...newEtape, ordre: (circuits.find((c: any) => c.idCircuit === circuitId)?.etapes?.length || 0) + 1 }); setNewEtape({ roleValidateur: "MANAGER", label: "", delaiHeures: 72, actionExpiration: "RELANCE", optionnel: false }); };
-  const handleCreateMapping = () => { if (!newMapping.typeRequete || !newMapping.circuitId) return; wfPost("/mappings", newMapping); setNewMapping({ typeRequete: "", circuitId: "" }); };
-  const handleCreateBypass = () => { if (!newBypass.nom) return; wfPost("/bypass-rules", newBypass); setNewBypass({ nom: "", conditionType: "DEMANDEUR_EST_CHEF", etapeIgnoree: "MANAGER", seuilHeures: 48 }); };
-  const handleCreateDelegation = () => { if (!newDelegation.titulaireId || !newDelegation.delegueId) return; wfPost("/delegations", newDelegation); setNewDelegation({ titulaireId: "", delegueId: "", dateDebut: "", dateFin: "" }); };
+  const handleDeleteCircuit = async (id: number) => {
+    if (confirm("Supprimer ce circuit ?")) {
+      const ok = await wfDel(`/circuits/${id}`);
+      if (ok) fetchWorkflowData();
+    }
+  };
+
+  const handleAddEtape = async (circuitId: number) => {
+    if (!newEtape.roleValidateur) {
+      alert("⚠️ Veuillez sélectionner un rôle validateur.");
+      return;
+    }
+    const circuit = circuits.find((c: any) => c.idCircuit === circuitId);
+    const nextOrdre = (circuit?.etapes?.length || 0) + 1;
+    const ok = await wfPost(`/circuits/${circuitId}/etapes`, { ...newEtape, ordre: nextOrdre });
+    if (ok) setNewEtape({ roleValidateur: "", label: "", delaiHeures: 72, actionExpiration: "RELANCE", optionnel: false });
+  };
+  const handleCreateMapping = async () => {
+    if (!newMapping.typeRequete || !newMapping.circuitId) return;
+    const ok = await wfPost("/mappings", newMapping);
+    if (ok) {
+      setNewMapping({ typeRequete: "", circuitId: "" });
+      fetchWorkflowData();
+    }
+  };
+  const handleCreateBypass = async () => {
+    if (!newBypass.nom) return;
+    const ok = await wfPost("/bypass-rules", newBypass);
+    if (ok) setNewBypass({ nom: "", conditionType: "DEMANDEUR_EST_CHEF", etapeIgnoree: "MANAGER", seuilHeures: 48 });
+  };
+  const handleCreateDelegation = async () => {
+    if (!newDelegation.titulaireId || !newDelegation.delegueId) return;
+    const ok = await wfPost("/delegations", newDelegation);
+    if (ok) setNewDelegation({ titulaireId: "", delegueId: "", dateDebut: "", dateFin: "" });
+  };
   const toggleBypass = (rule: any) => { wfPut(`/bypass-rules/${rule.idRule}`, { ...rule, actif: !rule.actif }); };
 
   const REQUEST_TYPES = [
@@ -1439,33 +1554,65 @@ export default function HRSettingsPage() {
 
                                 {/* Add Step Form */}
                                 {!isReadOnly && (
-                                   <div className="bg-white border-2 border-dashed border-gray-200 p-6 rounded-2xl">
+                                   <div className="bg-white border-2 border-dashed border-gray-200 p-6 rounded-2xl space-y-4">
                                       <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Plus size={12} /> Ajouter une étape</h5>
-                                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                         <select className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-[10px] font-black uppercase outline-none" value={newEtape.roleValidateur} onChange={(e) => setNewEtape({...newEtape, roleValidateur: e.target.value})}>
-                                             <option value="">Rôle...</option>
-                                             {(() => {
-                                                const ROLE_WEIGHTS: Record<string, number> = { "MANAGER": 1, "CHEF_DEPARTEMENT": 2, "RH_ADMIN": 3, "HR_MANAGER": 4 };
-                                                const lastStep = circuit.etapes?.[circuit.etapes.length - 1];
-                                                const minWeight = lastStep ? (ROLE_WEIGHTS[lastStep.roleValidateur] || 0) : 0;
-                                                return [
-                                                   { val: "MANAGER", label: "Manager (N+1)" },
-                                                   { val: "CHEF_DEPARTEMENT", label: "Chef Département" },
-                                                   { val: "RH_ADMIN", label: "Ressources Humaines" },
-                                                   { val: "HR_MANAGER", label: "Directeur RH" }
-                                                ].filter(opt => (ROLE_WEIGHTS[opt.val] || 0) > minWeight).map(opt => (
-                                                   <option key={opt.val} value={opt.val}>{opt.label}</option>
-                                                ));
-                                             })()}
-                                          </select>
-                                         <input type="text" placeholder="Label" className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-[10px] font-bold outline-none" value={newEtape.label} onChange={(e) => setNewEtape({...newEtape, label: e.target.value})} />
-                                         <input type="number" placeholder="Délai (h)" className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-[10px] font-bold outline-none" value={newEtape.delaiHeures} onChange={(e) => setNewEtape({...newEtape, delaiHeures: parseInt(e.target.value) || 72})} />
-                                         <select className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-[10px] font-black uppercase outline-none" value={newEtape.actionExpiration} onChange={(e) => setNewEtape({...newEtape, actionExpiration: e.target.value})}>
-                                            <option value="RELANCE">Relance</option>
-                                            <option value="ESCALADE">Escalade</option>
-                                            <option value="AUTO_VALIDATION">Auto-Validation</option>
-                                         </select>
-                                         <button onClick={() => handleAddEtape(circuit.idCircuit)} className="bg-blue-600 text-white p-3 rounded-xl text-[10px] font-black uppercase hover:bg-blue-700 transition-all">Ajouter</button>
+                                      <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-black text-gray-400 uppercase pl-1">Rôle</label>
+                                            <select className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-[10px] font-black uppercase outline-none focus:border-blue-400" value={newEtape.roleValidateur} onChange={(e) => setNewEtape({...newEtape, roleValidateur: e.target.value})}>
+                                                <option value="">Sélectionner...</option>
+                                                {(() => {
+                                                    const ROLE_WEIGHTS: Record<string, number> = { "MANAGER": 1, "CHEF_DEPARTEMENT": 2, "RH_ADMIN": 3, "HR_MANAGER": 4 };
+                                                    const lastStep = circuit.etapes?.[circuit.etapes.length - 1];
+                                                    const minWeight = lastStep ? (ROLE_WEIGHTS[lastStep.roleValidateur] || 0) : 0;
+                                                    return [
+                                                        { val: "MANAGER", label: "Manager (N+1)" },
+                                                        { val: "CHEF_DEPARTEMENT", label: "Chef Département" },
+                                                        { val: "RH_ADMIN", label: "Ressources Humaines" },
+                                                        { val: "HR_MANAGER", label: "Directeur RH" }
+                                                    ].filter(opt => (ROLE_WEIGHTS[opt.val] || 0) > minWeight).map(opt => (
+                                                        <option key={opt.val} value={opt.val}>{opt.label}</option>
+                                                    ));
+                                                })()}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-black text-gray-400 uppercase pl-1">Label affiché</label>
+                                            <input type="text" placeholder="Ex: Validation Manager" className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-[10px] font-bold outline-none focus:border-blue-400" value={newEtape.label} onChange={(e) => setNewEtape({...newEtape, label: e.target.value})} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-black text-gray-400 uppercase pl-1">SLA (heures)</label>
+                                            <input type="number" placeholder="72" className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-[10px] font-bold outline-none focus:border-blue-400" value={newEtape.delaiHeures} onChange={(e) => setNewEtape({...newEtape, delaiHeures: parseInt(e.target.value) || 72})} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[8px] font-black text-gray-400 uppercase pl-1">Si délai dépassé</label>
+                                            <select className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-[10px] font-black uppercase outline-none focus:border-blue-400" value={newEtape.actionExpiration} onChange={(e) => setNewEtape({...newEtape, actionExpiration: e.target.value})}>
+                                                <option value="RELANCE">Relance auto</option>
+                                                <option value="ESCALADE">Escalade N+2</option>
+                                                <option value="AUTO_VALIDATION">Auto-Validation</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex items-center gap-3 bg-amber-50 p-3 rounded-xl border border-amber-100">
+                                            <input
+                                                type="checkbox"
+                                                id={`optionnel-${circuit.idCircuit}`}
+                                                checked={newEtape.optionnel}
+                                                onChange={(e) => setNewEtape({...newEtape, optionnel: e.target.checked})}
+                                                className="w-4 h-4 text-amber-500 rounded"
+                                            />
+                                            <label htmlFor={`optionnel-${circuit.idCircuit}`} className="text-[9px] font-black text-amber-700 uppercase cursor-pointer">Optionnel</label>
+                                        </div>
+                                        <button
+                                            onClick={() => handleAddEtape(circuit.idCircuit)}
+                                            disabled={!newEtape.roleValidateur}
+                                            className={`p-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                                newEtape.roleValidateur
+                                                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-100'
+                                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                            }`}
+                                        >
+                                            + Ajouter
+                                        </button>
                                       </div>
                                    </div>
                                 )}
@@ -1500,18 +1647,30 @@ export default function HRSettingsPage() {
                           <div className="flex items-center gap-4">
                              <span className="font-black text-sm">{REQUEST_TYPES.find(t => t.value === m.typeRequete)?.label || m.typeRequete}</span>
                              <ArrowRight size={16} className="text-blue-200" />
-                             <span className="bg-white/20 px-3 py-1 rounded-lg text-[10px] font-black uppercase">{m.circuit?.nom}</span>
+                             {!isReadOnly ? (
+                               <select
+                                 className="bg-white/20 border border-white/20 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase text-white outline-none cursor-pointer hover:bg-white/30 transition-colors"
+                                 value={m.circuit?.idCircuit ?? ""}
+                                 onChange={(e) => { if (e.target.value) wfPost("/mappings", { typeRequete: m.typeRequete, circuitId: e.target.value }); }}
+                               >
+                                 {circuits.map((c: any) => (
+                                   <option key={c.idCircuit} value={c.idCircuit} className="text-gray-900">{c.nom}</option>
+                                 ))}
+                               </select>
+                             ) : (
+                               <span className="bg-white/20 px-3 py-1 rounded-lg text-[10px] font-black uppercase">{m.circuit?.nom}</span>
+                             )}
                           </div>
                           {!isReadOnly && <button onClick={() => wfDel(`/mappings/${m.idMapping}`)} className="text-white/40 hover:text-red-300 transition-colors"><Trash2 size={16} /></button>}
                        </div>
                     ))}
                  </div>
 
-                 {!isReadOnly && (
+                 {!isReadOnly && REQUEST_TYPES.filter(t => !mappings.some((m: any) => m.typeRequete === t.value)).length > 0 && (
                     <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/10">
                        <select className="bg-white/10 border border-white/10 p-4 rounded-2xl text-[10px] font-black uppercase outline-none text-white" value={newMapping.typeRequete} onChange={(e) => setNewMapping({...newMapping, typeRequete: e.target.value})}>
                           <option value="" className="text-gray-900">Type de demande...</option>
-                          {REQUEST_TYPES.map(t => <option key={t.value} value={t.value} className="text-gray-900">{t.label}</option>)}
+                          {REQUEST_TYPES.filter(t => !mappings.some((m: any) => m.typeRequete === t.value)).map(t => <option key={t.value} value={t.value} className="text-gray-900">{t.label}</option>)}
                        </select>
                        <select className="bg-white/10 border border-white/10 p-4 rounded-2xl text-[10px] font-black uppercase outline-none text-white" value={newMapping.circuitId} onChange={(e) => setNewMapping({...newMapping, circuitId: e.target.value})}>
                           <option value="" className="text-gray-900">Circuit...</option>

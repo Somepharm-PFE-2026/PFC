@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, Clock, ArrowRight, CheckCircle2, QrCode as qrIcon, Download, Info, XCircle, AlertCircle } from "lucide-react";
+import { Shield, Clock, ArrowRight, CheckCircle2, QrCode as qrIcon, Download, Info, XCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 export default function BonDeSortiePage() {
@@ -123,23 +123,54 @@ export default function BonDeSortiePage() {
     }
   };
 
-  const annulerSortie = async (id: number) => {
-    if (!confirm("Êtes-vous sûr de vouloir annuler cette demande ?")) return;
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const annulerSortie = async (e: React.MouseEvent, id: string) => {
+    console.log("!!! ANNULER BUTTON CLICKED !!! ID:", id);
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!id) {
+        console.error("ID is missing in annulerSortie");
+        return;
+    }
+
+    // Temporarily bypass confirm to see if it's the dialog blocker
+    setCancellingId(id);
     const token = localStorage.getItem("token");
+    console.log("Token present:", !!token);
+
     try {
-        const res = await fetch(`http://localhost:8080/api/demandes-documents/${id}/annuler`, {
+        const url = `http://localhost:8080/api/demandes-documents/${id}/annuler`;
+        console.log("Fetching PUT:", url);
+
+        const res = await fetch(url, {
             method: "PUT",
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { 
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
         });
+        
+        console.log("Response status:", res.status);
+
         if (res.ok) {
-            fetchMesSorties(token || "");
+            console.log("SUCCESS: refreshing list...");
+            await fetchMesSorties(token || "");
+        } else {
+            const errData = await res.json().catch(() => ({ message: "Erreur serveur (JSON)" }));
+            console.error("Server returned error:", errData);
+            alert(errData.message || "Impossible d'annuler cette demande.");
         }
     } catch (err) {
-        console.error("Erreur annulation:", err);
+        console.error("FETCH ERROR:", err);
+        alert("Erreur réseau. Le serveur est-il actif ? Check console.");
+    } finally {
+        setCancellingId(null);
     }
   };
 
-  const handleDownload = async (id: number) => {
+  const handleDownload = async (id: string) => {
     const token = localStorage.getItem("token");
     try {
         const res = await fetch(`http://localhost:8080/api/documents/download/${id}`, {
@@ -188,7 +219,7 @@ export default function BonDeSortiePage() {
       <div className="max-w-[1400px] mx-auto">
         <div className="flex justify-between items-center mb-10">
         <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-black text-gray-800 italic uppercase tracking-tighter">Bons de Sortie</h1>
+            <h1 className="text-3xl font-black text-gray-800 italic uppercase tracking-tighter">Bons de Sortie <span className="text-blue-500">[v3]</span></h1>
             <span className="bg-blue-600 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest animate-pulse">Live QR</span>
         </div>
         <div className="bg-white shadow-sm border px-6 py-2 rounded-2xl font-bold text-blue-600 flex items-center gap-2">
@@ -315,7 +346,8 @@ export default function BonDeSortiePage() {
             sorties.map((sortie) => {
               const isApproved = sortie.statutCycleVie === 'APPROUVE' || sortie.statutCycleVie === 'APPROUVÉ';
               const isCancelled = sortie.statutCycleVie === 'ANNULÉ';
-              const isCancellable = !isApproved && !isCancelled && !sortie.statutCycleVie.includes('REFUSE');
+              const isRefused = sortie.statutCycleVie?.includes('REFUSE') || sortie.statutCycleVie?.includes('REFUSÉ');
+              const isCancellable = !isApproved && !isCancelled && !isRefused;
               const qrData = `BON_SORTIE|${user?.sub || 'EMP'}|${new Date(sortie.dateSoumission).toLocaleDateString()}|${sortie.heureDebut}-${sortie.heureFin}|VALIDATED_SOMEPHARM`;
               
               return (
@@ -326,7 +358,7 @@ export default function BonDeSortiePage() {
                     <span className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-xl border flex items-center gap-1 ${
                       isApproved ? 'bg-green-50 text-green-600 border-green-100 shadow-sm shadow-green-50' :
                       isCancelled ? 'bg-gray-50 text-gray-400 border-gray-200' :
-                      sortie.statutCycleVie.includes('REFUSE') ? 'bg-red-50 text-red-600 border-red-100' :
+                      isRefused ? 'bg-red-50 text-red-600 border-red-100' :
                       'bg-amber-50 text-amber-600 border-amber-100 animate-pulse'
                     }`}>
                       {isApproved && <CheckCircle2 size={12}/>}
@@ -345,17 +377,26 @@ export default function BonDeSortiePage() {
                       </h3>
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Période du {new Date(sortie.dateSoumission).toLocaleDateString()}</p>
                   </div>
- 
+  
                   <p className="text-sm font-medium text-gray-500 bg-gray-50 p-4 rounded-xl border-l-4 border-gray-200">
                     {sortie.description || "Aucun motif précisé."}
                   </p>
- 
+  
                   {isCancellable && (
                       <button 
-                        onClick={() => annulerSortie(sortie.idRequete)}
-                        className="flex items-center gap-2 text-[10px] font-black text-red-400 uppercase hover:text-red-600 transition-colors mt-2"
+                        type="button"
+                        onClick={(e) => annulerSortie(e, sortie.idRequete)}
+                        disabled={cancellingId === sortie.idRequete}
+                        className={`flex items-center gap-2 text-[10px] font-black uppercase transition-colors mt-2 cursor-pointer ${
+                            cancellingId === sortie.idRequete ? 'text-gray-400' : 'text-red-400 hover:text-red-600'
+                        }`}
                       >
-                        <XCircle size={14} /> Annuler la demande
+                        {cancellingId === sortie.idRequete ? (
+                            <RefreshCw className="animate-spin" size={14} />
+                        ) : (
+                            <XCircle size={14} />
+                        )}
+                        {cancellingId === sortie.idRequete ? "Traitement..." : "ANNULER MAINTENANT"}
                       </button>
                   )}
                 </div>

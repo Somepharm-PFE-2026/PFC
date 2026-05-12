@@ -23,7 +23,7 @@ public class DepartementController {
 
     // POST: Create a new Department
     @PostMapping
-    @PreAuthorize("hasAnyRole('RH_ADMIN', 'HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<Departement> createDepartement(@RequestBody Departement departement) {
         Departement savedDept = departementService.createDepartement(departement);
         return new ResponseEntity<>(savedDept, HttpStatus.CREATED);
@@ -37,7 +37,7 @@ public class DepartementController {
 
     // PUT: Update a Department (e.g. Assign Manager)
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('RH_ADMIN', 'HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<Departement> updateDepartement(
             @PathVariable Long id, 
             @RequestBody Departement updatedDept,
@@ -46,7 +46,7 @@ public class DepartementController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('RH_ADMIN', 'HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<Void> deleteDepartement(@PathVariable Long id) {
         departementService.deleteDepartement(id);
         return ResponseEntity.ok().build();

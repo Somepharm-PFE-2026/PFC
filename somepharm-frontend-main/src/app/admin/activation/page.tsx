@@ -4,10 +4,10 @@ import { UserCheck, ShieldPlus, Key, Copy, CheckCircle2, Loader2, Search, AlertC
 
 
 export default function ActivationPage() {
-    const [users, setUsers] = useState<any[]>([]);
+    const [users, setUsers] = useState<unknown[]>([]);
     const [loading, setLoading] = useState(true);
     const [activatingId, setActivatingId] = useState<number | null>(null);
-    const [successData, setSuccessData] = useState<any>(null);
+    const [successData, setSuccessData] = useState<Record<string, string> | null>(null);
     const [search, setSearch] = useState("");
 
     useEffect(() => {
@@ -21,7 +21,7 @@ export default function ActivationPage() {
                 headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
             });
             const data = await res.json();
-            setUsers(data.filter((u: any) => u.statutCompte === "INACTIF"));
+            setUsers(data.filter((u: { statutCompte: string }) => u.statutCompte === "INACTIF"));
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
     };
@@ -42,7 +42,7 @@ export default function ActivationPage() {
         finally { setActivatingId(null); }
     };
 
-    const filteredUsers = users.filter(u => 
+    const filteredUsers = (users as any[]).filter(u => 
         u.nom?.toLowerCase().includes(search.toLowerCase()) || 
         u.prenom?.toLowerCase().includes(search.toLowerCase())
     );
@@ -110,8 +110,8 @@ export default function ActivationPage() {
                                                 {user.nom} {user.prenom}
                                             </h3>
                                             <div className="flex items-center gap-4">
-                                                <span className="px-4 py-1 bg-red-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg">{user.poste}</span>
-                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">{user.departement}</span>
+                                                <span className="px-4 py-1 bg-red-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg">{(typeof user.poste === 'object' ? user.poste?.titre : user.poste) || 'NON DÉFINI'}</span>
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">{(typeof user.departement === 'object' ? user.departement?.nomDept : user.departement) || 'NON DÉFINI'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -165,7 +165,7 @@ export default function ActivationPage() {
                                 <CheckCircle2 size={48} />
                             </div>
                             <h2 className="text-5xl font-black text-gray-900 uppercase italic mb-4 tracking-tighter">Accès <span className="text-green-600">Générés</span></h2>
-                            <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.5em] italic">Transmettez ces informations à l'employé immédiatement</p>
+                            <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.5em] italic">Transmettez ces informations à l&apos;employé immédiatement</p>
                         </div>
 
                         <div className="space-y-8 relative z-10">
@@ -207,7 +207,7 @@ export default function ActivationPage() {
                                 onClick={() => setSuccessData(null)}
                                 className="w-full py-8 bg-gray-950 text-white rounded-[2.5rem] font-black uppercase text-xs tracking-[0.4em] shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:scale-[1.02] transition-all active:scale-95"
                             >
-                                J'ai sécurisé les identifiants
+                                J&apos;ai sécurisé les identifiants
                             </button>
                         </div>
                     </div>

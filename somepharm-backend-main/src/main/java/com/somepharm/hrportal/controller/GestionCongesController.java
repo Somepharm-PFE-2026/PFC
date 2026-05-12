@@ -49,7 +49,7 @@ public class GestionCongesController {
             map.put("id", leaf.getIdRequete());
             map.put("employee", leaf.getDemandeur().getPrenom() + " " + leaf.getDemandeur().getNom());
             map.put("matricule", leaf.getDemandeur().getMatricule());
-            map.put("departement", leaf.getDemandeur().getDepartement());
+            map.put("departement", leaf.getDemandeur().getDepartement() != null ? leaf.getDemandeur().getDepartement().getNomDept() : "");
             map.put("start", leaf.getDateDebut());
             map.put("end", leaf.getDateFin());
             map.put("type", leaf.getTypeConge() != null ? leaf.getTypeConge().getNom() : "Autre");
@@ -81,7 +81,7 @@ public class GestionCongesController {
             map.put("id", u.getIdUser());
             map.put("matricule", u.getMatricule());
             map.put("nomComplet", u.getPrenom() + " " + u.getNom());
-            map.put("departement", u.getDepartement());
+            map.put("departement", u.getDepartement() != null ? u.getDepartement().getNomDept() : "");
             map.put("soldeRestant", u.getSoldeConges());
             return map;
         }).collect(Collectors.toList());

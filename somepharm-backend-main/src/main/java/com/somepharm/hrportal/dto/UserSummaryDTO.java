@@ -21,6 +21,15 @@ public class UserSummaryDTO {
     private Long idSite;
     private String temporaryPassword;
     private String situationFamiliale;
+    private ManagerDTO managerDirect;
+
+    @Data
+    @Builder
+    public static class ManagerDTO {
+        private Long idUser;
+        private String nom;
+        private String prenom;
+    }
 }
 
 

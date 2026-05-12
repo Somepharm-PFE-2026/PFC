@@ -43,7 +43,7 @@ export default function AdminLayout({
 
   // Bridge for handleAction - this will be provided by the page soon
   // For now we keep it extensible
-  const handleGlobalAction = (id: number, action: string, comment: string) => {
+  const handleGlobalAction = (id: string, action: string, comment: string) => {
     // Page will handle the actual fetch through its shared state or we move it all to Context
     console.log("Global Action triggered:", action);
   };

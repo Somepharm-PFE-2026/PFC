@@ -1,0 +1,623 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="hI-ntoSeVgD7i8TJ2kpw" name="Page-1">
+    <mxGraphModel dx="3073" dy="2620" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="3508" pageHeight="2480" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Role" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="Role" vertex="1">
+          <mxGeometry height="30" width="210" x="-660" y="-720" as="geometry" />
+        </mxCell>
+        <mxCell id="SituationFamiliale" parent="1" style="swimlane;fontStyle=1;align=center;startSize=40;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;" value="«enumeration»&#xa;SituationFamiliale" vertex="1">
+          <mxGeometry height="44" width="230" x="-420" y="-780" as="geometry" />
+        </mxCell>
+        <mxCell id="Utilisateur" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="USER" vertex="1">
+          <mxGeometry height="30" width="320" x="230" y="-900" as="geometry" />
+        </mxCell>
+        <mxCell id="e_user_self" edge="1" parent="Utilisateur" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" value="managerDirect">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-200" y="40" />
+              <mxPoint x="-200" y="120" />
+              <mxPoint x="-110" y="120" />
+              <mxPoint x="-110" y="70" />
+            </Array>
+            <mxPoint x="-10" y="40" as="sourcePoint" />
+            <mxPoint x="-10" y="70" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_self_s" connectable="0" parent="e_user_self" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_self_t" connectable="0" parent="e_user_self" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="0..1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Departement" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="Departement" vertex="1">
+          <mxGeometry height="30" width="250" x="-90" y="-1380" as="geometry" />
+        </mxCell>
+        <mxCell id="Poste" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="Poste" vertex="1">
+          <mxGeometry height="30" width="220" x="-700" y="-120" as="geometry" />
+        </mxCell>
+        <mxCell id="Site" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="Site" vertex="1">
+          <mxGeometry height="30" width="210" x="-170" y="-1060" as="geometry" />
+        </mxCell>
+        <mxCell id="WorkflowCircuit" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" value="WorkflowCircuit" vertex="1">
+          <mxGeometry height="30" width="280" x="-260" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="WorkflowEtape" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" value="WorkflowEtape" vertex="1">
+          <mxGeometry height="30" width="270" x="-90" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="WorkflowMapping" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" value="WorkflowMapping" vertex="1">
+          <mxGeometry height="30" width="250" x="210" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="WorkflowDelegation" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" value="WorkflowDelegation" vertex="1">
+          <mxGeometry height="30" width="250" x="210" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="WorkflowBypassRule" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;" value="WorkflowBypassRule" vertex="1">
+          <mxGeometry height="30" width="260" x="-530" y="-1080" as="geometry" />
+        </mxCell>
+        <mxCell id="Requete" parent="1" style="swimlane;fontStyle=3;align=center;startSize=40;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;" value="«abstract»&#xa;Requete" vertex="1">
+          <mxGeometry height="44" width="330" x="510" y="439" as="geometry" />
+        </mxCell>
+        <mxCell id="TypeConge" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="TypeConge" vertex="1">
+          <mxGeometry height="30" width="270" x="960" y="-400" as="geometry" />
+        </mxCell>
+        <mxCell id="DemandeConge" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;" value="DemandeConge" vertex="1">
+          <mxGeometry height="30" width="270" x="940" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="DemandeDocument" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;" value="DemandeDocument" vertex="1">
+          <mxGeometry height="30" width="250" x="-580" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="DemandeAdministrative" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;" value="DemandeAdministrative" vertex="1">
+          <mxGeometry height="30" width="250" x="-880" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="DemandeRegularisation" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;" value="DemandeRegularisation" vertex="1">
+          <mxGeometry height="30" width="275" x="550" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="Pointage" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="Pointage" vertex="1">
+          <mxGeometry height="30" width="260" x="610" y="-394" as="geometry" />
+        </mxCell>
+        <mxCell id="BulletinPaie" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="BulletinPaie" vertex="1">
+          <mxGeometry height="30" width="280" x="830" y="-1240" as="geometry" />
+        </mxCell>
+        <mxCell id="BonDeSortie" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="BonDeSortie" vertex="1">
+          <mxGeometry height="30" width="280" x="-390" y="-290" as="geometry" />
+        </mxCell>
+        <mxCell id="UtilisateurHistory" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="UtilisateurHistory" vertex="1">
+          <mxGeometry height="30" width="270" x="-160" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Annonce" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="Annonce" vertex="1">
+          <mxGeometry height="30" width="280" x="690" y="-840" as="geometry" />
+        </mxCell>
+        <mxCell id="AnnonceLecture" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="AnnonceLecture" vertex="1">
+          <mxGeometry height="30" width="240" x="620" y="-1065" as="geometry" />
+        </mxCell>
+        <mxCell id="DocumentEntreprise" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="DocumentEntreprise" vertex="1">
+          <mxGeometry height="30" width="250" x="370" y="-1510" as="geometry" />
+        </mxCell>
+        <mxCell id="PasswordResetTicket" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="PasswordResetTicket" vertex="1">
+          <mxGeometry height="30" width="240" x="90" y="-1520" as="geometry" />
+        </mxCell>
+        <mxCell id="Terminal" parent="1" style="swimlane;fontStyle=1;align=center;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="Terminal" vertex="1">
+          <mxGeometry height="30" width="250" x="-330" y="-530" as="geometry" />
+        </mxCell>
+        <mxCell id="e_dconge_req" edge="1" parent="1" source="DemandeConge" style="endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Requete">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1075" y="650" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ddoc_req" edge="1" parent="1" source="DemandeDocument" style="endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Requete">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-455" y="740" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_dadmin_req" edge="1" parent="1" source="DemandeAdministrative" style="endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Requete">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-755" y="760" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_dreg_req" edge="1" parent="1" source="DemandeRegularisation" style="endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Requete">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="640" y="360" />
+              <mxPoint x="640" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_role" edge="1" parent="1" source="Utilisateur" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Role" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-290" y="-660" />
+              <mxPoint x="-290" y="-660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_role_s" connectable="0" parent="e_user_role" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_role_t" connectable="0" parent="e_user_role" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_dept" edge="1" parent="1" source="Utilisateur" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Departement" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="260" y="-1020" />
+              <mxPoint x="110" y="-1020" />
+              <mxPoint x="110" y="-1140" />
+              <mxPoint y="-1140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_dept_s" connectable="0" parent="e_user_dept" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_dept_t" connectable="0" parent="e_user_dept" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_poste" edge="1" parent="1" source="Utilisateur" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Poste" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-655" y="-600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_poste_s" connectable="0" parent="e_user_poste" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_poste_t" connectable="0" parent="e_user_poste" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_site" edge="1" parent="1" source="Utilisateur" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Site" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-25" y="-730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_site_s" connectable="0" parent="e_user_site" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_site_t" connectable="0" parent="e_user_site" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_dept_mgr" edge="1" parent="1" source="Departement" style="endArrow=open;endSize=8;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Utilisateur" value=" ">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="35" y="-1170" />
+              <mxPoint x="330" y="-1170" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_dept_mgr_s" connectable="0" parent="e_dept_mgr" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_dept_mgr_t" connectable="0" parent="e_dept_mgr" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="0..1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_poste_dept" edge="1" parent="1" source="Poste" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" target="Departement" value="****">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-750" y="-105" />
+              <mxPoint x="-750" y="-1300" />
+              <mxPoint x="-27" y="-1300" />
+            </Array>
+            <mxPoint x="-50" y="-1340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_poste_dept_s" connectable="0" parent="e_poste_dept" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_poste_dept_t" connectable="0" parent="e_poste_dept" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_req_user" edge="1" parent="1" source="Requete" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Utilisateur" value=" ">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="880" y="490" />
+              <mxPoint x="880" y="-500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_req_user_s" connectable="0" parent="e_req_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_req_user_t" connectable="0" parent="e_req_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_req_circuit" edge="1" parent="1" source="Requete" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="WorkflowCircuit" value="currentCircuit">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-150" y="700" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_req_circ_s" connectable="0" parent="e_req_circuit" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_req_circ_t" connectable="0" parent="e_req_circuit" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="0..1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_dconge_type" edge="1" parent="1" source="DemandeConge" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="TypeConge" value="typeConge">
+          <mxGeometry relative="1" x="-1" y="-10" as="geometry">
+            <mxPoint x="-10" y="10" as="offset" />
+            <Array as="points">
+              <mxPoint x="1060" y="90" />
+              <mxPoint x="1060" y="90" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_dconge_type_s" connectable="0" parent="e_dconge_type" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_dconge_type_t" connectable="0" parent="e_dconge_type" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_dreg_ptg" edge="1" parent="1" source="DemandeRegularisation" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Pointage" value="pointageConcerne">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="688" y="-60" />
+              <mxPoint x="688" y="-60" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_dreg_ptg_s" connectable="0" parent="e_dreg_ptg" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_dreg_ptg_t" connectable="0" parent="e_dreg_ptg" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ptg_user" edge="1" parent="1" source="Pointage" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Utilisateur" value="employe">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="710" y="-450" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ptg_user_s" connectable="0" parent="e_ptg_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ptg_user_t" connectable="0" parent="e_ptg_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_bp_user" edge="1" parent="1" source="BulletinPaie" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Utilisateur" value="employe">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="470" y="-1230" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_bp_user_s" connectable="0" parent="e_bp_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_bp_user_t" connectable="0" parent="e_bp_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_bds_user" edge="1" parent="1" source="BonDeSortie" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Utilisateur" value="demandeur">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-10" y="-163" />
+              <mxPoint x="-10" y="-430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_bds_user_s" connectable="0" parent="e_bds_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_bds_user_t" connectable="0" parent="e_bds_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wc_etape" edge="1" parent="1" source="WorkflowCircuit" style="startArrow=diamondThin;startFill=1;endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="WorkflowEtape" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-150" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wc_etape_s" connectable="0" parent="e_wc_etape" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wc_etape_t" connectable="0" parent="e_wc_etape" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wm_circ" edge="1" parent="1" source="WorkflowMapping" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="WorkflowCircuit" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="110" y="595" />
+              <mxPoint x="110" y="595" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wm_circ_s" connectable="0" parent="e_wm_circ" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wm_circ_t" connectable="0" parent="e_wm_circ" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wd_tit" edge="1" parent="1" source="WorkflowDelegation" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Utilisateur" value="titulaire">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_wd_tit_s" connectable="0" parent="e_wd_tit" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wd_tit_t" connectable="0" parent="e_wd_tit" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wd_del" edge="1" parent="1" source="WorkflowDelegation" style="endArrow=open;endSize=8;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Utilisateur" value="delegue">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="340" y="10" />
+              <mxPoint x="340" y="10" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wd_del_s" connectable="0" parent="e_wd_del" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wd_del_t" connectable="0" parent="e_wd_del" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wbr_role" edge="1" parent="1" source="WorkflowBypassRule" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Role" value="roleIgnore">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-410" y="-870" />
+              <mxPoint x="-540" y="-870" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wbr_role_s" connectable="0" parent="e_wbr_role" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_wbr_role_t" connectable="0" parent="e_wbr_role" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ann_user" edge="1" parent="1" source="Annonce" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Utilisateur" value="auteur">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="860" y="-600" />
+              <mxPoint x="860" y="-540" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ann_user_s" connectable="0" parent="e_ann_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ann_user_t" connectable="0" parent="e_ann_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_al_ann" edge="1" parent="1" source="AnnonceLecture" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Annonce" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="690" y="-960" />
+              <mxPoint x="690" y="-960" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_al_ann_s" connectable="0" parent="e_al_ann" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_al_ann_t" connectable="0" parent="e_al_ann" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_al_user" edge="1" parent="1" source="AnnonceLecture" style="endArrow=open;endSize=8;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Utilisateur" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="650" y="-830" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_al_user_s" connectable="0" parent="e_al_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_al_user_t" connectable="0" parent="e_al_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_prt_user" edge="1" parent="1" source="PasswordResetTicket" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;fontSize=16;" target="Utilisateur" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="210" y="-1200" />
+              <mxPoint x="390" y="-1200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_prt_user_s" connectable="0" parent="e_prt_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value=" " vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_prt_user_t" connectable="0" parent="e_prt_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_term_user" edge="1" parent="1" source="Terminal" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Utilisateur" value="assignedUser">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-440" y="-580" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_term_user_s" connectable="0" parent="e_term_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_term_user_t" connectable="0" parent="e_term_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="0..1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_uh_user" edge="1" parent="1" source="UtilisateurHistory" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Utilisateur" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="120" y="140" />
+              <mxPoint x="120" y="-637" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_uh_user_s" connectable="0" parent="e_uh_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_uh_user_t" connectable="0" parent="e_uh_user" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_uh_dp" edge="1" parent="1" source="UtilisateurHistory" style="endArrow=open;endSize=8;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Departement" value="deptPrecedent">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-130" y="250" />
+              <mxPoint x="-820" y="250" />
+              <mxPoint x="-820" y="-1410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_uh_dn" edge="1" parent="1" source="UtilisateurHistory" style="endArrow=open;endSize=8;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Departement" value="deptNouveau">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-31" y="290" />
+              <mxPoint x="-890" y="290" />
+              <mxPoint x="-890" y="-1530" />
+              <mxPoint x="60" y="-1530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_uh_pp" edge="1" parent="1" source="UtilisateurHistory" style="endArrow=open;endSize=8;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Poste" value="postePrecedent">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-660" y="110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_uh_pn" edge="1" parent="1" source="UtilisateurHistory" style="endArrow=open;endSize=8;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="Poste" value="posteNouveau">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-45" y="60" />
+              <mxPoint x="-610" y="60" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_sf" edge="1" parent="1" source="Utilisateur" style="endArrow=open;endSize=8;dashed=1;edgeStyle=orthogonalEdgeStyle;fontSize=16;" target="SituationFamiliale" value="uses">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-150" y="-700" />
+              <mxPoint x="-150" y="-700" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0s-S23m_I94lnP1PTaeT-10" edge="1" parent="1" source="DocumentEntreprise" style="endArrow=open;endSize=8;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontSize=16;" target="Utilisateur" value=" ">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="620" y="-1370" />
+              <mxPoint x="420" y="-1370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0s-S23m_I94lnP1PTaeT-11" connectable="0" parent="0s-S23m_I94lnP1PTaeT-10" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0s-S23m_I94lnP1PTaeT-12" connectable="0" parent="0s-S23m_I94lnP1PTaeT-10" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=16;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

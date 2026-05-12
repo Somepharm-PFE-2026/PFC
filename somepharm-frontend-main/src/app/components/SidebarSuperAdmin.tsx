@@ -3,9 +3,9 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
-    ShieldCheck, UserCheck, Key, Smartphone, 
-    Ticket, UserSearch, FileText, LogIn, 
-    Mail, QrCode, FileType, Activity, 
+    ShieldCheck, UserCheck, Key, Smartphone,
+    Ticket, UserSearch, FileText, LogIn,
+    Mail, QrCode, FileType, Activity,
     Database, LogOut, LayoutDashboard,
     Hexagon, Zap, Cpu, Terminal, Users
 } from "lucide-react";
@@ -142,7 +142,7 @@ export default function SidebarSuperAdmin() {
             {/* --- FOOTER LOGOUT --- */}
             <div className="p-8 mt-auto bg-gradient-to-t from-black/60 to-transparent">
                 <div className="p-6 bg-red-600/5 border border-red-600/10 rounded-3xl group hover:bg-red-600/10 transition-all">
-                    <button 
+                    <button
                         onClick={() => { localStorage.clear(); window.location.href = "/login"; }}
                         className="w-full flex items-center gap-4 text-gray-500 group-hover:text-red-500 transition-all"
                     >

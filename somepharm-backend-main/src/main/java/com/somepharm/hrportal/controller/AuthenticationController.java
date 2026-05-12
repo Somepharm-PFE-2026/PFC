@@ -6,7 +6,9 @@ import com.somepharm.hrportal.dto.AuthenticationResponse;
 import com.somepharm.hrportal.dto.RegisterRequest;
 import com.somepharm.hrportal.entity.Utilisateur;
 import com.somepharm.hrportal.repository.UtilisateurRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,8 +48,14 @@ public class AuthenticationController {
     }
 
     // --- 1. THE REGISTER ENDPOINT ---
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) {
+        // Handle existing matricule check
+        if (repository.findByMatricule(request.getMatricule()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+
         Utilisateur user = new Utilisateur();
         user.setMatricule(request.getMatricule());
         user.setEmail(request.getEmail());

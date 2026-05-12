@@ -1,5 +1,7 @@
 package com.somepharm.hrportal.dto;
 
+import java.util.UUID;
+
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -7,7 +9,7 @@ import java.time.LocalDateTime;
 @Data
 public class DemandeCongeDTO {
     // Fields from Requete (Parent)
-    private Long idRequete;
+    private UUID idRequete;
     private LocalDateTime dateSoumission;
     private String description;
     private String statutCycleVie;

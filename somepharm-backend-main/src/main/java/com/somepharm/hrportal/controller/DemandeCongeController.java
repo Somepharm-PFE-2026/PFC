@@ -1,5 +1,7 @@
 package com.somepharm.hrportal.controller;
 
+import java.util.UUID;
+
 import com.somepharm.hrportal.dto.DemandeCongeDTO;
 import com.somepharm.hrportal.entity.DemandeConge;
 import com.somepharm.hrportal.entity.Utilisateur;
@@ -9,6 +11,7 @@ import com.somepharm.hrportal.service.DemandeCongeService;
 import com.somepharm.hrportal.service.WorkflowService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -129,17 +132,30 @@ public class DemandeCongeController {
         return ResponseEntity.ok(filteredList);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'CHEF_DEPARTEMENT', 'RH_ADMIN', 'HR_MANAGER', 'SUPER_ADMIN')")
     @PutMapping("/{id}/statut")
     public ResponseEntity<DemandeCongeDTO> update(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @RequestParam String statut,
-            @RequestParam(required = false) String commentaire) {
+            @RequestParam(required = false) String commentaire,
+            Authentication auth) {
+
+        DemandeConge demande = demandeCongeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
+        
+        Utilisateur currentUser = utilisateurRepository.findByMatricule(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        // 🛡️ SECURITY: Verify if the user is authorized to validate this specific request
+        if (!workflowService.canUserValidate(demande, currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         DemandeConge updated = demandeCongeService.updateStatut(id, statut, commentaire);
         return ResponseEntity.ok(demandeCongeService.convertToDTO(updated));
     }
     @PutMapping("/{id}/annuler")
-    public ResponseEntity<DemandeCongeDTO> annulerDemande(@PathVariable Long id, Authentication auth) {
+    public ResponseEntity<DemandeCongeDTO> annulerDemande(@PathVariable UUID id, Authentication auth) {
         DemandeConge updated = demandeCongeService.annulerDemande(id, auth.getName());
         return ResponseEntity.ok(demandeCongeService.convertToDTO(updated));
     }

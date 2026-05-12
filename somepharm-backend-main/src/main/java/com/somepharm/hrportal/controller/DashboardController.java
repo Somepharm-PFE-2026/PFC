@@ -53,7 +53,7 @@ public class DashboardController {
 
             if ("EMPLOYE".equals(role) || "SECURITY_AGENTS".equals(role)) {
                 response.put("employeeData", dashboardService.getEmployeeData(user));
-            } else if ("MANAGER".equals(role)) {
+            } else if ("MANAGER".equals(role) || "CHEF_DEPARTEMENT".equals(role)) {
                 response.put("managerData", dashboardService.getManagerData(user));
             } else if ("RH_ADMIN".equals(role) || "HR_MANAGER".equals(role)) {
                 response.put("hrAdminData", dashboardService.getHRAdminData());
@@ -111,6 +111,13 @@ public class DashboardController {
     @PutMapping("/email-config")
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<?> updateEmailConfig(@RequestBody com.somepharm.hrportal.entity.EmailConfig config, Authentication auth) {
+        // 🛡️ SINGLETON ENFORCEMENT: Ensure we only ever have ONE configuration record
+        var allConfigs = emailConfigRepository.findAll();
+        if (!allConfigs.isEmpty()) {
+            // Use the ID of the first existing record to ensure an UPDATE instead of an INSERT
+            config.setId(allConfigs.get(0).getId());
+        }
+        
         emailConfigRepository.save(config);
         auditService.logSuccess("EMAIL_CONFIG_UPDATE", "Configuration email mise à jour", auth.getName(), "SUPER_ADMIN", "CONFIG");
         return ResponseEntity.ok(config);

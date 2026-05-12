@@ -9,19 +9,37 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.Check;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @Entity
-@Table(name = "UTILISATEUR")
+@Table(name = "UTILISATEUR", indexes = {
+    @Index(name = "idx_user_email", columnList = "email"),
+    @Index(name = "idx_user_matricule", columnList = "matricule")
+})
+@SQLDelete(sql = "UPDATE UTILISATEUR SET deleted = true WHERE id_user = ? AND version = ?")
+@SQLRestriction("deleted = false")
+@Check(constraints = "solde_conges >= 0")
 @Data
 @NoArgsConstructor
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+@lombok.EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@lombok.ToString(onlyExplicitlyIncluded = true)
 public class Utilisateur implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_user")
+    @lombok.EqualsAndHashCode.Include
+    @lombok.ToString.Include
     private Long idUser;
 
     @Column(unique = true, length = 20)
@@ -71,11 +89,25 @@ public class Utilisateur implements UserDetails {
     private String photoUrl;
 
     // --- Professional Context ---
-    @Column(name = "departement")
-    private String departement = "Général";
+    @ManyToOne
+    @JoinColumn(name = "id_dept")
+    @JsonIgnoreProperties({"manager", "hibernateLazyInitializer", "handler"})
+    private Departement departement;
 
-    @Column(name = "poste")
-    private String poste;
+    @ManyToOne
+    @JoinColumn(name = "id_poste")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Poste poste;
+
+    @Version
+    private Long version;
+
+    @Column(nullable = false)
+    private boolean deleted = false;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> customAttributes = new HashMap<>();
 
     @ManyToOne
     @JoinColumn(name = "id_site")
@@ -168,9 +200,6 @@ public class Utilisateur implements UserDetails {
                                                   .replace("fr??re", "frère")
                                                   .replace("Fr??re", "Frère")
                                                   .replace("??", "è"); 
-        }
-        if (this.poste != null) {
-            this.poste = this.poste.replace("??", "é");
         }
     }
 

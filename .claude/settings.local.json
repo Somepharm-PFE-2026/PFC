@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\loulo\\\\Downloads\\\\PFC\" -Directory)",
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\loulo\\\\Downloads\\\\PFC\\\\somepharm-frontend-main\\\\src\\\\app\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "Bash(git -C \"C:\\\\Users\\\\loulo\\\\Downloads\\\\PFC\" status --short)",
+      "Bash(git *)",
+      "Bash(Remove-Item *)",
+      "Bash(dir C:\\\\Users\\\\loulo\\\\Downloads\\\\PFC\\\\somepharm-frontend-main\\\\src\\\\app *)",
+      "Bash(psql *)",
+      "PowerShell(& \"C:\\\\Program Files\\\\PostgreSQL\\\\17\\\\bin\\\\psql.exe\" -U postgres -d somepharm_hr_db -c \"UPDATE utilisateur SET deleted = true WHERE matricule = 'EMP-9536' RETURNING id_user, matricule, nom, prenom;\" 2>&1)"
+    ]
+  }
+}

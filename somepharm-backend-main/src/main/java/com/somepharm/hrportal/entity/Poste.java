@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "POSTE")
 @Data
 @NoArgsConstructor
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 public class Poste {
 
     @Id
@@ -21,9 +22,6 @@ public class Poste {
     @Column(name = "description", length = 500)
     private String description;
 
-    // Legacy fields to satisfy database NOT NULL constraints
-    @Column(name = "titre_poste")
-    private String titrePoste = "legacy_value";
 
     @Column(name = "effectif_minimum")
     private Integer effectifMinimum = 1;

@@ -16,7 +16,7 @@ import LiveChronometer from "./LiveChronometer";
 interface ValidationDetailWorkspaceProps {
   request: any;
   onClose: () => void;
-  onAction: (id: number, action: string, comment: string) => void;
+  onAction: (id: string, action: string, comment: string) => void;
   isOwnRequest?: boolean;
 }
 
@@ -106,7 +106,7 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction, 
                  <div className="space-y-4">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-gray-400 font-bold uppercase tracking-tighter">Département</span>
-                      <span className="font-black text-gray-700">{request.demandeur?.departement || "Général"}</span>
+                      <span className="font-black text-gray-700">{request.demandeur?.departement?.nomDept || "Général"}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-gray-400 font-bold uppercase tracking-tighter">Matricule</span>
@@ -191,8 +191,11 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction, 
                   )}
 
                  <div className="relative pt-4">
-                    <div className="absolute -left-[30px] top-4 w-6 h-6 bg-red-600 rounded-full border-4 border-white shadow-lg animate-pulse"></div>
-                    <LiveChronometer startTime={request.dateArriveeRh || request.dateActionManager || request.dateSoumission} />
+                    <div className={`absolute -left-[30px] top-4 w-6 h-6 rounded-full border-4 border-white shadow-lg ${["APPROUVE", "APPROUVÉ", "REFUSE"].includes(request.statutCycleVie) ? 'bg-gray-300' : 'bg-red-600 animate-pulse'}`}></div>
+                    <LiveChronometer 
+                      startTime={request.dateArriveeRh || request.dateActionManager || request.dateSoumission} 
+                      isStopped={["APPROUVE", "APPROUVÉ", "REFUSE"].includes(request.statutCycleVie)} 
+                    />
                  </div>
 
                </div>

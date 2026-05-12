@@ -27,10 +27,18 @@ export default function AdminCollaborateursPage() {
   const [postes, setPostes] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
   const [newEmployeeForm, setNewEmployeeForm] = useState({
-    matricule: "", nom: "", prenom: "", email: "", roleId: 4, 
+    matricule: "", nom: "", prenom: "", email: "", roleId: 3, 
     departement: "", poste: "", dateEmbauche: new Date().toISOString().split('T')[0], 
     managerId: "null", siteId: ""
   });
+
+  const getPositionLevel = (titre: string | null) => {
+    if (!titre) return 3;
+    const t = titre.toUpperCase();
+    if (t.startsWith("RESPONSABLE DE")) return 1;
+    if (t.includes("CHEF") || t.includes("MANAGER") || t.includes("RESPONSABLE")) return 2;
+    return 3;
+  };
 
   const filteredEmployees = employees.filter(emp => {
     const fullName = `${emp.nom || ""} ${emp.prenom || ""}`.toLowerCase();
@@ -90,7 +98,7 @@ export default function AdminCollaborateursPage() {
       });
       if (response.ok) {
         const data = await response.json();
-        setEmployees(data);
+        setEmployees(Array.isArray(data) ? data : []);
       }
     } catch (err) {
       console.error("Failed to fetch employees", err);
@@ -115,8 +123,8 @@ export default function AdminCollaborateursPage() {
           prenom: newEmployeeForm.prenom,
           email: newEmployeeForm.email,
           role: { idRole: newEmployeeForm.roleId },
-          departement: newEmployeeForm.departement,
-          poste: newEmployeeForm.poste,
+          departement: departments.find(d => d.nomDept === newEmployeeForm.departement) ? { idDept: departments.find(d => d.nomDept === newEmployeeForm.departement).idDept } : null,
+          poste: postes.find(p => p.titre === newEmployeeForm.poste) ? { idPoste: postes.find(p => p.titre === newEmployeeForm.poste).idPoste } : null,
           dateEmbauche: newEmployeeForm.dateEmbauche,
           managerDirect: newEmployeeForm.managerId === "null" ? null : { idUser: parseInt(newEmployeeForm.managerId) },
           site: newEmployeeForm.siteId ? { idSite: parseInt(newEmployeeForm.siteId) } : null
@@ -150,6 +158,8 @@ export default function AdminCollaborateursPage() {
         },
         body: JSON.stringify({
           ...editingEmployee,
+          departement: departments.find(d => d.nomDept === editingEmployee.departement) ? { idDept: departments.find(d => d.nomDept === editingEmployee.departement).idDept } : null,
+          poste: postes.find(p => p.titre === editingEmployee.poste) ? { idPoste: postes.find(p => p.titre === editingEmployee.poste).idPoste } : null,
           role: editingEmployee.roleId ? { idRole: editingEmployee.roleId } : (typeof editingEmployee.role === 'object' ? editingEmployee.role : { idRole: parseInt(editingEmployee.role || 1) }),
           managerDirect: editingEmployee.managerDirectId === "null" ? null : (editingEmployee.managerDirectId ? { idUser: parseInt(editingEmployee.managerDirectId) } : editingEmployee.managerDirect),
           site: editingEmployee.siteId ? { idSite: parseInt(editingEmployee.siteId) } : editingEmployee.site
@@ -370,11 +380,13 @@ export default function AdminCollaborateursPage() {
                     {(() => {
                       const deptData = departments.find(d => d.nomDept === newEmployeeForm.departement);
                       return employees.filter(e => {
-                        const roleName = typeof e.role === 'string' ? e.role : e.role?.nomRole;
-                        const isManager = roleName && !['EMPLOYE', 'SECURITY_AGENTS'].includes(roleName);
                         const isInDept = e.departement === newEmployeeForm.departement;
                         const isHeadManager = deptData && e.idUser === deptData.managerId;
-                        return (isInDept && isManager) || isHeadManager;
+                        const newLevel = getPositionLevel(newEmployeeForm.poste);
+                        const targetLevel = getPositionLevel(e.poste);
+                        const isManager = targetLevel < 3;
+                        const isStrictlyHigher = targetLevel < newLevel;
+                        return isInDept && (isManager || isHeadManager) && (isStrictlyHigher || isHeadManager);
                       }).map(u => (
                         <option key={u.idUser} value={u.idUser}>
                           {u.nom} {u.prenom} ({u.poste}){u.idUser === deptData?.managerId ? " [CHEF DE SERVICE]" : ""}
@@ -531,11 +543,16 @@ export default function AdminCollaborateursPage() {
                       const deptData = departments.find(d => d.nomDept === editingEmployee.departement);
                       return employees.filter(e => {
                         if (e.idUser === editingEmployee.idUser) return false;
-                        const roleName = typeof e.role === 'string' ? e.role : e.role?.nomRole;
-                        const isManager = roleName && !['EMPLOYE', 'SECURITY_AGENTS'].includes(roleName);
                         const isInDept = e.departement === editingEmployee.departement;
                         const isHeadManager = deptData && e.idUser === deptData.managerId;
-                        return (isInDept && isManager) || isHeadManager;
+                        
+                        const originalPoste = editingEmployee.poste;
+                        const currentLevel = getPositionLevel(originalPoste);
+                        const targetLevel = getPositionLevel(e.poste);
+                        const isManager = targetLevel < 3;
+                        const isStrictlyHigher = targetLevel < currentLevel;
+
+                        return isInDept && (isManager || isHeadManager) && (isStrictlyHigher || isHeadManager);
                       }).map(u => (
                         <option key={u.idUser} value={u.idUser}>
                           {u.nom} {u.prenom} ({u.poste}){u.idUser === deptData?.managerId ? " [CHEF DE SERVICE]" : ""}

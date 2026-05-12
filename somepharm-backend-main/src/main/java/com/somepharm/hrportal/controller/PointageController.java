@@ -114,18 +114,14 @@ public class PointageController {
     }
 
     @GetMapping("/search")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('RH_ADMIN', 'HR_MANAGER')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('RH_ADMIN', 'HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<List<Pointage>> search(
             @RequestParam(required = false) String matricule,
             @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
         
         if (matricule != null && !matricule.isEmpty()) {
-            Optional<Utilisateur> user = utilisateurRepository.findByMatricule(matricule);
-            if (user.isPresent()) {
-                return ResponseEntity.ok(pointageRepository.findByEmploye_IdUserAndHorodatageBetween(user.get().getIdUser(), start, end));
-            }
-            return ResponseEntity.ok(List.of());
+            return ResponseEntity.ok(pointageRepository.searchByTermAndDateRange(matricule, start, end));
         }
         return ResponseEntity.ok(pointageRepository.findByHorodatageBetween(start, end));
     }

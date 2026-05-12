@@ -41,6 +41,7 @@ export default function CommunicationPage() {
    const [uploading, setUploading] = useState(false);
    const [uploadedFile, setUploadedFile] = useState<any>(null);
    const [users, setUsers] = useState([]);
+   const [success, setSuccess] = useState(false);
    const [depts, setDepts] = useState([]);
    const [sites, setSites] = useState([]);
    const [searchUser, setSearchUser] = useState("");
@@ -67,6 +68,7 @@ export default function CommunicationPage() {
    }, []);
 
    const fetchAnnonces = async () => {
+      setLoading(true);
       try {
          const res = await fetch("http://localhost:8080/api/annonces", {
             headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
@@ -127,8 +129,14 @@ export default function CommunicationPage() {
          if (res.ok) {
             const url = await res.text();
             setNewPost({ ...newPost, attachmentUrl: url });
+            window.alert("Fichier importé avec succès !");
+         } else {
+            window.alert("Erreur lors de l'import du fichier.");
          }
-      } catch (err) { console.error(err); } finally { setUploading(false); }
+      } catch (err) { 
+         console.error(err);
+         window.alert("Une erreur est survenue lors de l'import.");
+      } finally { setUploading(false); }
    };
 
    const handleCreate = async () => {
@@ -148,11 +156,21 @@ export default function CommunicationPage() {
             body: JSON.stringify(payload)
          });
          if (res.ok) {
-            setShowModal(false);
-            resetForm();
+            setSuccess(true);
+            window.alert("Annonce publiée avec succès !");
             fetchAnnonces();
+            setTimeout(() => {
+               setShowModal(false);
+               setSuccess(false);
+               resetForm();
+            }, 3500);
+         } else {
+            window.alert("Erreur lors de la publication de l'annonce.");
          }
-      } catch (err) { console.error(err); }
+      } catch (err) { 
+         console.error(err);
+         window.alert("Une erreur est survenue lors de la publication.");
+      }
    };
 
    const resetForm = () => {
@@ -352,19 +370,41 @@ export default function CommunicationPage() {
                   <div className="p-10 border-b flex items-center justify-between bg-gray-50/30">
                      <div className="flex items-center gap-5">
                         <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-blue-100">
-                           <Plus size={32} />
+                           {success ? <CheckCircle2 size={32} /> : <Plus size={32} />}
                         </div>
                         <div>
-                           <h3 className="text-3xl font-black text-gray-900 uppercase italic tracking-tighter leading-none">Nouvelle Publication</h3>
-                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Diffusez votre message à l'entreprise</p>
+                           <h3 className="text-3xl font-black text-gray-900 uppercase italic tracking-tighter leading-none">
+                              {success ? "Publication Réussie" : "Nouvelle Publication"}
+                           </h3>
+                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">
+                              {success ? "Votre annonce est maintenant en ligne" : "Diffusez votre message à l'entreprise"}
+                           </p>
                         </div>
                      </div>
-                     <button onClick={() => { setShowModal(false); resetForm(); }} className="p-5 bg-gray-100 text-gray-400 hover:text-gray-600 rounded-3xl transition-all hover:rotate-90">
+                     <button onClick={() => { setShowModal(false); resetForm(); setSuccess(false); }} className="p-5 bg-gray-100 text-gray-400 hover:text-gray-600 rounded-3xl transition-all hover:rotate-90">
                         <X size={28} />
                      </button>
                   </div>
 
-                  <div className="p-12 space-y-12 overflow-y-auto custom-scrollbar">
+                  {success ? (
+                     <div className="p-20 text-center space-y-8 animate-in zoom-in-95 duration-500">
+                        <div className="w-32 h-32 bg-emerald-50 text-emerald-500 rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl shadow-emerald-100 border-4 border-white">
+                           <Send size={48} className="translate-x-1" />
+                        </div>
+                        <div className="space-y-4">
+                           <h3 className="text-4xl font-black text-gray-900 uppercase italic tracking-tighter">Félicitations !</h3>
+                           <p className="text-gray-500 font-bold text-sm max-w-md mx-auto leading-relaxed">
+                              Votre annonce <span className="text-blue-600 italic">"{newPost.titre}"</span> a été diffusée avec succès. 
+                              L'historique se rafraîchit automatiquement...
+                           </p>
+                        </div>
+                        <div className="flex items-center justify-center gap-3 text-emerald-500 font-black text-[10px] uppercase tracking-[0.3em]">
+                           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
+                           Envoi terminé
+                        </div>
+                     </div>
+                  ) : (
+                     <div className="p-12 space-y-12 overflow-y-auto custom-scrollbar">
                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                         <div className="lg:col-span-2 space-y-10">
                            <div className="space-y-4">
@@ -604,6 +644,7 @@ export default function CommunicationPage() {
                         </button>
                      </div>
                   </div>
+                  )}
                </div>
             </div>
          )}

@@ -11,6 +11,7 @@ import java.util.List;
 @Table(name = "workflow_circuit")
 @Data
 @NoArgsConstructor
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 public class WorkflowCircuit {
 
     @Id
@@ -26,7 +27,10 @@ public class WorkflowCircuit {
     @Column(nullable = false)
     private boolean actif = true;
 
-    @OneToMany(mappedBy = "circuit", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "circuit", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("ordre ASC")
+    @com.fasterxml.jackson.annotation.JsonManagedReference
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private List<WorkflowEtape> etapes = new ArrayList<>();
 }

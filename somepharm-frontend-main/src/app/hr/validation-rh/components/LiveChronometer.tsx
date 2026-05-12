@@ -4,14 +4,20 @@ import { Clock } from "lucide-react";
 
 interface LiveChronometerProps {
     startTime: string | null;
+    isStopped?: boolean;
 }
 
-export default function LiveChronometer({ startTime }: LiveChronometerProps) {
+export default function LiveChronometer({ startTime, isStopped }: LiveChronometerProps) {
     const [elapsed, setElapsed] = useState<string>("00:00:00");
 
     useEffect(() => {
         if (!startTime) {
             setElapsed("Non commencé");
+            return;
+        }
+
+        if (isStopped) {
+            setElapsed("Clôturé");
             return;
         }
 

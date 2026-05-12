@@ -62,7 +62,7 @@ public class ConfigController {
     }
 
     @PostMapping("/system")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN', 'RH_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<SystemConfig> updateSystemConfig(@RequestBody SystemConfig config) {
         return ResponseEntity.ok(systemConfigRepository.save(config));
     }
@@ -73,7 +73,7 @@ public class ConfigController {
     }
 
     @PostMapping("/leave-types")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN', 'RH_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<TypeConge> saveLeaveType(@RequestBody TypeConge type) {
         return ResponseEntity.ok(typeCongeRepository.save(type));
     }
@@ -84,7 +84,7 @@ public class ConfigController {
     }
 
     @PostMapping("/holidays")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN', 'RH_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<?> saveHoliday(@RequestBody JourFerie ferie) {
         if (holidayService.isHoliday(ferie.getDate())) {
             return ResponseEntity.badRequest().body("Un jour férié existe déjà à cette date.");
@@ -93,14 +93,14 @@ public class ConfigController {
     }
 
     @DeleteMapping("/holidays/{id}")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN', 'RH_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<Void> deleteHoliday(@PathVariable Long id) {
         jourFerieRepository.deleteById(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/holidays/import")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN', 'RH_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<List<JourFerie>> importNationalHolidays() {
         int year = java.time.LocalDate.now().getYear();
         List<JourFerie> nationalHolidays = List.of(
@@ -137,18 +137,18 @@ public class ConfigController {
     }
 
     @PostMapping("/postes")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN', 'RH_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<Poste> savePoste(@RequestBody Poste poste) {
         return ResponseEntity.ok(posteRepository.save(poste));
     }
 
     @DeleteMapping("/postes/{id}")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN', 'RH_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<?> deletePoste(@PathVariable Long id) {
         Poste poste = posteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Poste introuvable"));
         
-        long count = utilisateurRepository.countByPoste(poste.getTitre());
+        long count = utilisateurRepository.countByPoste_Titre(poste.getTitre());
         if (count > 0) {
             return ResponseEntity.badRequest()
                     .body("Action impossible : " + count + " employés occupent actuellement ce poste. Veuillez réassigner ces collaborateurs avant de supprimer l'intitulé.");
@@ -166,13 +166,13 @@ public class ConfigController {
     }
 
     @PostMapping("/sites")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN', 'RH_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<Site> saveSite(@RequestBody Site site) {
         return ResponseEntity.ok(siteRepository.save(site));
     }
 
     @DeleteMapping("/sites/{id}")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN', 'RH_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<Void> deleteSite(@PathVariable Long id) {
         siteRepository.deleteById(id);
         return ResponseEntity.ok().build();
@@ -182,7 +182,7 @@ public class ConfigController {
     private final String uploadDir = "uploads/config/";
 
     @PostMapping("/system/signature")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN', 'RH_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<SystemConfig> uploadSignature(@RequestParam("file") MultipartFile file) throws IOException {
         SystemConfig config = systemConfigRepository.findAll().stream().findFirst().orElse(new SystemConfig());
         Files.createDirectories(Paths.get(uploadDir));
@@ -196,7 +196,7 @@ public class ConfigController {
     }
 
     @PostMapping("/system/stamp")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN', 'RH_ADMIN')")
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
     public ResponseEntity<SystemConfig> uploadStamp(@RequestParam("file") MultipartFile file) throws IOException {
         SystemConfig config = systemConfigRepository.findAll().stream().findFirst().orElse(new SystemConfig());
         Files.createDirectories(Paths.get(uploadDir));

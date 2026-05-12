@@ -53,7 +53,7 @@ public class AttendanceStatsService {
 
         return retards.stream()
                 .collect(Collectors.groupingBy(
-                        p -> p.getEmploye().getDepartement(),
+                        p -> p.getEmploye().getDepartement() != null ? p.getEmploye().getDepartement().getNomDept() : "Inconnu",
                         Collectors.counting()
                 ))
                 .entrySet().stream()
@@ -75,7 +75,7 @@ public class AttendanceStatsService {
         return utilisateurRepository.findAll().stream()
                 .sorted(Comparator.comparing(Utilisateur::getSoldeConges).reversed())
                 .limit(5)
-                .map(u -> new UtilisateurSummaryDTO(u.getMatricule(), u.getPrenom() + " " + u.getNom(), u.getDepartement(), u.getSoldeConges()))
+                .map(u -> new UtilisateurSummaryDTO(u.getMatricule(), u.getPrenom() + " " + u.getNom(), u.getDepartement() != null ? u.getDepartement().getNomDept() : "", u.getSoldeConges()))
                 .collect(Collectors.toList());
     }
 }

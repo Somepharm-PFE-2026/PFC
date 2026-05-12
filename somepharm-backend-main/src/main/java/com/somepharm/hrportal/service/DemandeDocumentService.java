@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class DemandeDocumentService {
@@ -55,7 +56,7 @@ public class DemandeDocumentService {
     }
 
     @Transactional
-    public DemandeDocument annulerDemande(Long id, String matricule) {
+    public DemandeDocument annulerDemande(UUID id, String matricule) {
         DemandeDocument demande = demandeDocumentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
         
@@ -63,14 +64,13 @@ public class DemandeDocumentService {
             throw new RuntimeException("Vous n'êtes pas autorisé à annuler cette demande.");
         }
         
-        if (demande.getStatutCycleVie() != null && (demande.getStatutCycleVie().startsWith("APPROUV") || demande.getStatutCycleVie().startsWith("REFUS"))) {
-            throw new RuntimeException("Les demandes déjà traitées ne peuvent pas être annulées.");
+        String currentStatut = demande.getStatutCycleVie() != null ? demande.getStatutCycleVie().toUpperCase() : "";
+        if (currentStatut.contains("APPROUV") || currentStatut.contains("REFUS")) {
+            throw new RuntimeException("Les demandes déjà traitées (Approuvées ou Refusées) ne peuvent pas être annulées.");
         }
         
         demande.setStatutCycleVie("ANNULÉ");
-        
-        String author = SecurityContextHolder.getContext().getAuthentication().getName();
-        auditService.logAction("MUTATION", "Annulation de la demande de doc #" + id, author);
+        auditService.logAction("MUTATION", "Annulation de la demande de doc #" + id, matricule);
         
         return demandeDocumentRepository.save(demande);
     }
@@ -87,7 +87,7 @@ public class DemandeDocumentService {
     }
 
     @Transactional
-    public DemandeDocument updateStatut(Long id, String nouveauStatut, String commentaire) {
+    public DemandeDocument updateStatut(UUID id, String nouveauStatut, String commentaire) {
         DemandeDocument demande = demandeDocumentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Demande de document non trouvée"));
 

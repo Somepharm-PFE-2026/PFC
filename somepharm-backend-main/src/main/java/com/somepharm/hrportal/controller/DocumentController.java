@@ -64,7 +64,7 @@ public class DocumentController {
     }
 
     @GetMapping("/download/{idRequete}")
-    public ResponseEntity<byte[]> downloadDocument(@PathVariable Long idRequete) {
+    public ResponseEntity<byte[]> downloadDocument(@PathVariable java.util.UUID idRequete) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Utilisateur employe = utilisateurRepository.findByMatricule(auth.getName())
                 .orElseThrow(() -> new RuntimeException("Employé introuvable"));

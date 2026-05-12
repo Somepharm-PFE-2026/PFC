@@ -1,12 +1,14 @@
 package com.somepharm.hrportal.dto;
 
+import java.util.UUID;
+
 import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
 public class DemandeDocumentDTO {
     // Fields from Requete
-    private Long idRequete;
+    private UUID idRequete;
     private LocalDateTime dateSoumission;
     private String description;
     private String statutCycleVie;

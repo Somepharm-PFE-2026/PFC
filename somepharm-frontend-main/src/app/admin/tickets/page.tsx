@@ -29,7 +29,7 @@ export default function TicketsResetPage() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000); // Auto-refresh every 30s
+    const interval = setInterval(fetchData, 10000); // Auto-refresh every 10s (Reduced for better sync)
     return () => clearInterval(interval);
   }, []);
 
@@ -260,7 +260,7 @@ export default function TicketsResetPage() {
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2 text-gray-900">
                         <Building2 size={12} className="text-purple-600" />
-                        <span className="text-[11px] font-bold uppercase">{t.utilisateur.departement || "Dép. Inconnu"}</span>
+                        <span className="text-[11px] font-bold uppercase">{t.utilisateur.departement?.nomDept || "Dép. Inconnu"}</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-400">
                         <MapPin size={12} />
@@ -294,7 +294,7 @@ export default function TicketsResetPage() {
                         >
                           <Activity size={16} /> Gérer
                         </button>
-                      ) : (t.status === "ENVOYÉ" || t.status === "EN_ATTENTE_EMPLOYÉ") && (
+                      ) : (t.status === "ENVOYÉ" || t.status === "EN_ATTENTE_EMPLOYÉ" || t.status === "SÉCURISÉ") && (
                         <button 
                           onClick={() => { setSelectedTicket(t); setTempPassword(t.temporaryPassword); }}
                           className="h-12 px-6 bg-gray-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-purple-600 hover:shadow-2xl transition-all flex items-center gap-3"
@@ -401,47 +401,51 @@ export default function TicketsResetPage() {
                       <div className="flex items-center gap-2 mt-6 relative z-10">
                         <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                         <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">
-                          {(!tempPassword && !selectedTicket.temporaryPassword) ? "Archive Indisponible (Ancien Ticket)" : (selectedTicket.status === 'EN_ATTENTE' ? 'Généré avec succès • Chiffrement Nucleus-X' : 'Token Actif • En attente Employee')}
+                          {selectedTicket.status === 'SÉCURISÉ' ? "Token Révoqué • Accès Déjà Sécurisé" : (!tempPassword && !selectedTicket.temporaryPassword) ? "Archive Indisponible (Ancien Ticket)" : (selectedTicket.status === 'EN_ATTENTE' ? 'Généré avec succès • Chiffrement Nucleus-X' : 'Token Actif • En attente Employee')}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
-                    <button 
-                      onClick={() => copyToClipboard(tempPassword || selectedTicket.temporaryPassword || selectedTicket.temporary_password || "")}
-                      className="h-20 bg-gray-50 border border-gray-100 rounded-[1.5rem] flex items-center justify-center gap-4 hover:border-purple-600 group transition-all"
-                    >
-                      {copied ? <Check className="text-emerald-500" /> : <Copy className="text-gray-400 group-hover:text-purple-600" />}
-                      <span className={`text-[11px] font-black uppercase tracking-widest ${copied ? 'text-emerald-500' : 'text-gray-500 group-hover:text-purple-600'}`}>
-                        {copied ? 'Copié !' : 'Copier Token'}
-                      </span>
-                    </button>
-                    <button 
-                      onClick={() => handleSendEmail(selectedTicket.idTicket, tempPassword || selectedTicket.temporaryPassword || selectedTicket.temporary_password || "")}
-                      className="h-20 bg-gray-50 border border-gray-100 rounded-[1.5rem] flex items-center justify-center gap-4 hover:border-purple-600 group transition-all"
-                    >
-                      <Mail className={`text-gray-400 group-hover:text-purple-600 ${emailSent ? 'text-emerald-500' : ''}`} />
-                      <span className={`text-[11px] font-black uppercase tracking-widest ${emailSent ? 'text-emerald-500' : 'text-gray-500 group-hover:text-purple-600'}`}>
-                        {emailSent ? 'Email Transmis !' : 'Envoyer par Email'}
-                      </span>
-                    </button>
-                  </div>
+                  {selectedTicket.status !== 'SÉCURISÉ' && (
+                    <div className="grid grid-cols-2 gap-6">
+                      <button 
+                        onClick={() => copyToClipboard(tempPassword || selectedTicket.temporaryPassword || selectedTicket.temporary_password || "")}
+                        className="h-20 bg-gray-50 border border-gray-100 rounded-[1.5rem] flex items-center justify-center gap-4 hover:border-purple-600 group transition-all"
+                      >
+                        {copied ? <Check className="text-emerald-500" /> : <Copy className="text-gray-400 group-hover:text-purple-600" />}
+                        <span className={`text-[11px] font-black uppercase tracking-widest ${copied ? 'text-emerald-500' : 'text-gray-500 group-hover:text-purple-600'}`}>
+                          {copied ? 'Copié !' : 'Copier Token'}
+                        </span>
+                      </button>
+                      <button 
+                        onClick={() => handleSendEmail(selectedTicket.idTicket, tempPassword || selectedTicket.temporaryPassword || selectedTicket.temporary_password || "")}
+                        className="h-20 bg-gray-50 border border-gray-100 rounded-[1.5rem] flex items-center justify-center gap-4 hover:border-purple-600 group transition-all"
+                      >
+                        <Mail className={`text-gray-400 group-hover:text-purple-600 ${emailSent ? 'text-emerald-500' : ''}`} />
+                        <span className={`text-[11px] font-black uppercase tracking-widest ${emailSent ? 'text-emerald-500' : 'text-gray-500 group-hover:text-purple-600'}`}>
+                          {emailSent ? 'Email Transmis !' : 'Envoyer par Email'}
+                        </span>
+                      </button>
+                    </div>
+                  )}
 
-                  <div className="bg-orange-50 border border-orange-100 rounded-3xl p-6 flex flex-col gap-4">
-                     <div className="flex gap-4">
-                       <AlertTriangle className="text-orange-500 shrink-0" size={20} />
-                       <p className="text-[10px] font-bold text-orange-800 leading-relaxed uppercase tracking-tight italic">
-                         ⚠️ Ce mot de passe est temporaire et à usage unique. Dès sa première saisie, l&apos;employé sera automatiquement redirigé vers l&apos;écran de modification obligatoire.
-                       </p>
-                     </div>
-                     <button 
-                       onClick={() => handleProcessTicket(selectedTicket.idTicket)}
-                       className="text-[10px] font-black text-orange-600 uppercase tracking-widest hover:text-orange-700 transition-all flex items-center gap-2 self-end"
-                     >
-                       <Activity size={14} /> Régénérer un nouveau token
-                     </button>
-                  </div>
+                   <div className="bg-orange-50 border border-orange-100 rounded-3xl p-6 flex flex-col gap-4">
+                      <div className="flex gap-4">
+                        <AlertTriangle className="text-orange-500 shrink-0" size={20} />
+                        <p className="text-[10px] font-bold text-orange-800 leading-relaxed uppercase tracking-tight italic">
+                          ⚠️ Ce mot de passe est temporaire et à usage unique. Dès sa première saisie, l&apos;employé sera automatiquement redirigé vers l&apos;écran de modification obligatoire.
+                        </p>
+                      </div>
+                      {selectedTicket.status !== 'SÉCURISÉ' && (
+                        <button 
+                          onClick={() => handleProcessTicket(selectedTicket.idTicket)}
+                          className="text-[10px] font-black text-orange-600 uppercase tracking-widest hover:text-orange-700 transition-all flex items-center gap-2 self-end"
+                        >
+                          <Activity size={14} /> Régénérer un nouveau token
+                        </button>
+                      )}
+                   </div>
 
                   {selectedTicket.status === 'EN_ATTENTE' && (
                     <button 

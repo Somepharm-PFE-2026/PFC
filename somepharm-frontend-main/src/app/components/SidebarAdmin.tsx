@@ -40,6 +40,8 @@ export default function SidebarAdmin() {
     router.push("/login");
   };
 
+  const canAccessSettings = userRole === "ROLE_HR_MANAGER" || userRole === "ROLE_RH_ADMIN";
+
   const menuItems = [
     { name: "Command Center", path: "/hr/dashboard", icon: LayoutDashboard },
     { name: "Collaborateurs", path: "/hr/collaborateurs", icon: Users },
@@ -48,7 +50,7 @@ export default function SidebarAdmin() {
     { name: "Temps & Présence", path: "/hr/temps-presence", icon: Clock },
     { name: "Communication", path: "/hr/communication", icon: Megaphone },
     { name: "Paie & Documents", path: "/hr/paie-documents", icon: Lock },
-    { name: "Paramètrage RH", path: "/hr/settings", icon: Cog },
+    ...(canAccessSettings ? [{ name: "Paramètrage RH", path: "/hr/settings", icon: Cog }] : []),
     { name: "Paramètres Compte", path: "/hr/settings-account", icon: Settings },
   ];
 

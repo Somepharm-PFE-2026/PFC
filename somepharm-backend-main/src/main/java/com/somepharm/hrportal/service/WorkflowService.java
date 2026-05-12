@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class WorkflowService {
@@ -51,7 +52,7 @@ public class WorkflowService {
                 WorkflowEtape firstStep = etapes.get(0);
                 req.setCurrentCircuit(circuit);
                 req.setCurrentEtapeOrdre(firstStep.getOrdre());
-                req.setStatutCycleVie(mapRoleToStatus(firstStep.getRoleValidateur()));
+                req.setStatutCycleVie(mapRoleToStatus(firstStep.getRoleValidateur().getNomRole()));
                 return;
             }
         }
@@ -84,6 +85,7 @@ public class WorkflowService {
 
         if (currentStepOpt.isPresent()) {
             WorkflowEtape currentStep = currentStepOpt.get();
+            String currentRole = currentStep.getRoleValidateur().getNomRole();
             
             // Move to next step
             Optional<WorkflowEtape> nextStepOpt = etapes.stream()
@@ -93,12 +95,11 @@ public class WorkflowService {
             if (nextStepOpt.isPresent()) {
                 WorkflowEtape nextStep = nextStepOpt.get();
                 req.setCurrentEtapeOrdre(nextStep.getOrdre());
-                req.setStatutCycleVie(mapRoleToStatus(nextStep.getRoleValidateur()));
+                req.setStatutCycleVie(mapRoleToStatus(nextStep.getRoleValidateur().getNomRole()));
                 
                 // Log action based on who validated
-                if ("MANAGER".equals(currentStep.getRoleValidateur()) || "CHEF_DEPARTEMENT".equals(currentStep.getRoleValidateur())) {
+                if ("MANAGER".equals(currentRole) || "CHEF_DEPARTEMENT".equals(currentRole)) {
                     req.setDateActionManager(LocalDateTime.now());
-                    req.setNomManagerAction(actorName);
                     req.setCommentaireManager(comment);
                 } else {
                     req.setCommentaireAction(comment);
@@ -107,9 +108,8 @@ public class WorkflowService {
                 // No more steps -> Final approval
                 req.setStatutCycleVie("APPROUVÉ");
                 req.setCommentaireAction(comment);
-                if ("MANAGER".equals(currentStep.getRoleValidateur()) || "CHEF_DEPARTEMENT".equals(currentStep.getRoleValidateur())) {
+                if ("MANAGER".equals(currentRole) || "CHEF_DEPARTEMENT".equals(currentRole)) {
                     req.setDateActionManager(LocalDateTime.now());
-                    req.setNomManagerAction(actorName);
                     req.setCommentaireManager(comment);
                 }
             }
@@ -119,8 +119,7 @@ public class WorkflowService {
 
         Requete saved = requeteRepository.save(req);
 
-        // 🚀 TRIGGER TERMINAL SIDE EFFECTS: If the request is now fully approved,
-        // we must ensure balance deduction, data sync, and notifications happen.
+        // If the request is now fully approved, trigger side effects
         if ("APPROUVÉ".equalsIgnoreCase(saved.getStatutCycleVie())) {
             return triggerTerminalActions(saved);
         }
@@ -131,7 +130,7 @@ public class WorkflowService {
     private Requete triggerTerminalActions(Requete req) {
         String action = "APPROUVE";
         String comment = req.getCommentaireAction();
-        Long id = req.getIdRequete();
+        UUID id = req.getIdRequete();
 
         if (req instanceof DemandeConge) {
             return congeService.updateStatut(id, action, comment);
@@ -149,36 +148,63 @@ public class WorkflowService {
         }
 
         if (req.getCurrentCircuit() == null) {
-            // Fallback: HR can validate everything if no circuit
+            System.out.println("[WORKFLOW DEBUG] canUserValidate: circuit is NULL for req=" + req.getIdRequete() + ", user=" + user.getMatricule() + " role=" + user.getRole().getNomRole() + " → fallback (HR only)");
             String role = user.getRole().getNomRole();
             return "RH_ADMIN".equals(role) || "HR_MANAGER".equals(role) || "SUPER_ADMIN".equals(role);
         }
 
         List<WorkflowEtape> etapes = etapeRepository.findByCircuit_IdCircuitOrderByOrdreAsc(req.getCurrentCircuit().getIdCircuit());
+        System.out.println("[WORKFLOW DEBUG] canUserValidate: req=" + req.getIdRequete() + " circuit=" + req.getCurrentCircuit().getIdCircuit() + " etapeOrdre=" + req.getCurrentEtapeOrdre() + " etapesCount=" + etapes.size());
+
         Optional<WorkflowEtape> currentStepOpt = etapes.stream()
-                .filter(e -> e.getOrdre() == req.getCurrentEtapeOrdre())
+                .filter(e -> req.getCurrentEtapeOrdre() != null && e.getOrdre() == req.getCurrentEtapeOrdre())
                 .findFirst();
+
+        if (!currentStepOpt.isPresent()) {
+            System.out.println("[WORKFLOW DEBUG] canUserValidate: NO matching etape found for ordre=" + req.getCurrentEtapeOrdre() + " in circuit=" + req.getCurrentCircuit().getIdCircuit());
+        }
 
         if (currentStepOpt.isPresent()) {
             WorkflowEtape step = currentStepOpt.get();
-            switch (step.getRoleValidateur()) {
+            String roleName = step.getRoleValidateur().getNomRole();
+            
+            // 🔍 DEBUG: Identify the step and request
+            System.out.println("[WORKFLOW DEBUG] canUserValidate: Checking request " + req.getIdRequete() + " at step role: " + roleName);
+
+            switch (roleName) {
                 case "MANAGER":
-                    if (req.getDemandeur() == null || req.getDemandeur().getManagerDirect() == null) return false;
-                    return req.getDemandeur().getManagerDirect().getIdUser().equals(user.getIdUser());
+                    if (req.getDemandeur() == null || req.getDemandeur().getManagerDirect() == null) {
+                        System.out.println("[WORKFLOW DEBUG] MANAGER check failed: Demandeur or ManagerDirect is null.");
+                        return false;
+                    }
+                    boolean isManager = java.util.Objects.equals(req.getDemandeur().getManagerDirect().getIdUser(), user.getIdUser());
+                    System.out.println("[WORKFLOW DEBUG] MANAGER check: " + isManager + " (ReqMgr=" + req.getDemandeur().getManagerDirect().getIdUser() + ", CurrentUser=" + user.getIdUser() + ")");
+                    return isManager;
+
                 case "CHEF_DEPARTEMENT":
-                    String deptName = req.getDemandeur().getDepartement();
-                    if (deptName == null) return false;
-                    Optional<Departement> deptOpt = departementRepository.findByNomDept(deptName);
-                    return deptOpt.isPresent() && 
-                           deptOpt.get().getManager() != null &&
-                           deptOpt.get().getManager().getIdUser().equals(user.getIdUser());
+                    if (req.getDemandeur() == null || req.getDemandeur().getDepartement() == null) {
+                        System.out.println("[WORKFLOW DEBUG] CHEF_DEPARTEMENT check failed: Demandeur or Department is null.");
+                        return false;
+                    }
+                    Departement dept = req.getDemandeur().getDepartement();
+                    boolean isChef = dept.getManager() != null && java.util.Objects.equals(dept.getManager().getIdUser(), user.getIdUser());
+                    System.out.println("[WORKFLOW DEBUG] CHEF_DEPARTEMENT check: " + isChef + " (DeptMgr=" + (dept.getManager() != null ? dept.getManager().getIdUser() : "NULL") + ", CurrentUser=" + user.getIdUser() + ")");
+                    return isChef;
+
                 case "RH_ADMIN":
                     String roleA = user.getRole().getNomRole();
-                    return "RH_ADMIN".equals(roleA) || "HR_MANAGER".equals(roleA) || "SUPER_ADMIN".equals(roleA);
+                    boolean isRH = "RH_ADMIN".equals(roleA) || "HR_MANAGER".equals(roleA) || "SUPER_ADMIN".equals(roleA);
+                    System.out.println("[WORKFLOW DEBUG] RH_ADMIN check: " + isRH + " (UserRole=" + roleA + ")");
+                    return isRH;
+
                 case "HR_MANAGER":
                     String roleM = user.getRole().getNomRole();
-                    return "HR_MANAGER".equals(roleM) || "SUPER_ADMIN".equals(roleM);
+                    boolean isHRM = "HR_MANAGER".equals(roleM) || "SUPER_ADMIN".equals(roleM);
+                    System.out.println("[WORKFLOW DEBUG] HR_MANAGER check: " + isHRM + " (UserRole=" + roleM + ")");
+                    return isHRM;
+
                 default:
+                    System.out.println("[WORKFLOW DEBUG] Unknown role: " + roleName);
                     return false;
             }
         }
@@ -211,7 +237,7 @@ public class WorkflowService {
             
             if (currentStepOpt.isPresent()) {
                 // Update status to match validator role of the step (in case it changed)
-                req.setStatutCycleVie(mapRoleToStatus(currentStepOpt.get().getRoleValidateur()));
+                req.setStatutCycleVie(mapRoleToStatus(currentStepOpt.get().getRoleValidateur().getNomRole()));
             } else {
                 // If the current step order no longer exists, move to the nearest higher order or reset
                 Optional<WorkflowEtape> nextBestStep = etapes.stream()
@@ -220,12 +246,12 @@ public class WorkflowService {
                 
                 if (nextBestStep.isPresent()) {
                     req.setCurrentEtapeOrdre(nextBestStep.get().getOrdre());
-                    req.setStatutCycleVie(mapRoleToStatus(nextBestStep.get().getRoleValidateur()));
+                    req.setStatutCycleVie(mapRoleToStatus(nextBestStep.get().getRoleValidateur().getNomRole()));
                 } else if (!etapes.isEmpty()) {
                     // Fallback to first step if completely lost
                     WorkflowEtape first = etapes.get(0);
                     req.setCurrentEtapeOrdre(first.getOrdre());
-                    req.setStatutCycleVie(mapRoleToStatus(first.getRoleValidateur()));
+                    req.setStatutCycleVie(mapRoleToStatus(first.getRoleValidateur().getNomRole()));
                 } else {
                     // No steps left in circuit -> Fallback to RH
                     req.setCurrentCircuit(null);
@@ -249,5 +275,37 @@ public class WorkflowService {
             default:
                 return "EN_ATTENTE_RH";
         }
+    }
+
+    /**
+     * When a mapping is created/updated, migrate all in-progress requests of that
+     * typeRequete to start following the new circuit from its first step.
+     */
+    @Transactional
+    public void syncRequestsForType(String typeRequete, WorkflowCircuit newCircuit) {
+        List<WorkflowEtape> etapes = etapeRepository.findByCircuit_IdCircuitOrderByOrdreAsc(newCircuit.getIdCircuit());
+        if (etapes.isEmpty()) return;
+
+        WorkflowEtape firstStep = etapes.get(0);
+
+        List<Requete> allRequests = requeteRepository.findAll();
+        List<Requete> toUpdate = new java.util.ArrayList<>();
+        for (Requete req : allRequests) {
+            if (!isPendingStatus(req.getStatutCycleVie())) continue;
+            boolean matches = switch (typeRequete) {
+                case "DEMANDE_CONGE" -> req instanceof DemandeConge;
+                default -> {
+                    if (req instanceof DemandeDocument doc) yield typeRequete.equals(doc.getTypeDocument());
+                    else if (req instanceof DemandeAdministrative adm) yield typeRequete.equals(adm.getTypeDemande());
+                    else yield false;
+                }
+            };
+            if (!matches) continue;
+            req.setCurrentCircuit(newCircuit);
+            req.setCurrentEtapeOrdre(firstStep.getOrdre());
+            req.setStatutCycleVie(mapRoleToStatus(firstStep.getRoleValidateur().getNomRole()));
+            toUpdate.add(req);
+        }
+        if (!toUpdate.isEmpty()) requeteRepository.saveAll(toUpdate);
     }
 }

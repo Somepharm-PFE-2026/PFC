@@ -13,7 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/workflow")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
 public class WorkflowController {
 
     private final WorkflowCircuitRepository circuitRepository;
@@ -23,6 +23,7 @@ public class WorkflowController {
     private final WorkflowBypassRuleRepository bypassRuleRepository;
     private final WorkflowDelegationRepository delegationRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final RoleRepository roleRepository;
     private final WorkflowService workflowService;
 
     public WorkflowController(WorkflowCircuitRepository circuitRepository,
@@ -32,6 +33,7 @@ public class WorkflowController {
                               WorkflowBypassRuleRepository bypassRuleRepository,
                               WorkflowDelegationRepository delegationRepository,
                               UtilisateurRepository utilisateurRepository,
+                              RoleRepository roleRepository,
                               WorkflowService workflowService) {
         this.circuitRepository = circuitRepository;
         this.etapeRepository = etapeRepository;
@@ -40,6 +42,7 @@ public class WorkflowController {
         this.bypassRuleRepository = bypassRuleRepository;
         this.delegationRepository = delegationRepository;
         this.utilisateurRepository = utilisateurRepository;
+        this.roleRepository = roleRepository;
         this.workflowService = workflowService;
     }
 
@@ -51,13 +54,14 @@ public class WorkflowController {
     }
 
     @PostMapping("/circuits")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HR_MANAGER')")
+    @Transactional
     public ResponseEntity<WorkflowCircuit> createCircuit(@RequestBody WorkflowCircuit circuit) {
         return ResponseEntity.ok(circuitRepository.save(circuit));
     }
 
     @DeleteMapping("/circuits/{id}")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HR_MANAGER')")
     @Transactional
     public ResponseEntity<Void> deleteCircuit(@PathVariable Long id) {
         // 1. Clear mappings associated with this circuit
@@ -89,29 +93,52 @@ public class WorkflowController {
     }
 
     @PostMapping("/circuits/{id}/etapes")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HR_MANAGER')")
     @Transactional
-    public ResponseEntity<WorkflowEtape> addEtape(@PathVariable Long id, @RequestBody WorkflowEtape etape) {
+    public ResponseEntity<?> addEtape(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         WorkflowCircuit circuit = circuitRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Circuit introuvable"));
+
+        String roleNom = (String) payload.get("roleValidateur");
+        if (roleNom == null || roleNom.isBlank()) {
+            return ResponseEntity.badRequest().body("Le rôle validateur est obligatoire.");
+        }
+
+        WorkflowEtape etape = new WorkflowEtape();
         etape.setCircuit(circuit);
+        
+        Role role = roleRepository.findByNomRole(roleNom)
+                .orElseThrow(() -> new RuntimeException("Rôle introuvable: " + roleNom));
+        etape.setRoleValidateur(role);
+        
+        etape.setLabel(payload.get("label") != null ? payload.get("label").toString() : "");
+        etape.setOrdre(payload.get("ordre") != null ? Integer.parseInt(payload.get("ordre").toString()) : 1);
+        etape.setDelaiHeures(payload.get("delaiHeures") != null ? Integer.parseInt(payload.get("delaiHeures").toString()) : 72);
+        etape.setActionExpiration(payload.get("actionExpiration") != null ? payload.get("actionExpiration").toString() : "RELANCE");
+        etape.setOptionnel(payload.get("optionnel") != null && Boolean.parseBoolean(payload.get("optionnel").toString()));
+
         WorkflowEtape saved = etapeRepository.save(etape);
         workflowService.syncRequestsForCircuit(id);
         return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/etapes/{id}")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HR_MANAGER')")
     @Transactional
-    public ResponseEntity<WorkflowEtape> updateEtape(@PathVariable Long id, @RequestBody WorkflowEtape updated) {
+    public ResponseEntity<WorkflowEtape> updateEtape(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         WorkflowEtape etape = etapeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Étape introuvable"));
-        etape.setOrdre(updated.getOrdre());
-        etape.setRoleValidateur(updated.getRoleValidateur());
-        etape.setLabel(updated.getLabel());
-        etape.setOptionnel(updated.isOptionnel());
-        etape.setDelaiHeures(updated.getDelaiHeures());
-        etape.setActionExpiration(updated.getActionExpiration());
+        if (payload.get("ordre") != null) etape.setOrdre(Integer.parseInt(payload.get("ordre").toString()));
+        if (payload.get("roleValidateur") != null) {
+            String roleName = payload.get("roleValidateur").toString();
+            Role role = roleRepository.findByNomRole(roleName)
+                    .orElseThrow(() -> new RuntimeException("Rôle introuvable: " + roleName));
+            etape.setRoleValidateur(role);
+        }
+        if (payload.get("label") != null) etape.setLabel(payload.get("label").toString());
+        if (payload.get("optionnel") != null) etape.setOptionnel(Boolean.parseBoolean(payload.get("optionnel").toString()));
+        if (payload.get("delaiHeures") != null) etape.setDelaiHeures(Integer.parseInt(payload.get("delaiHeures").toString()));
+        if (payload.get("actionExpiration") != null) etape.setActionExpiration(payload.get("actionExpiration").toString());
         
         WorkflowEtape saved = etapeRepository.save(etape);
         workflowService.syncRequestsForCircuit(etape.getCircuit().getIdCircuit());
@@ -119,13 +146,16 @@ public class WorkflowController {
     }
 
     @DeleteMapping("/etapes/{id}")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HR_MANAGER')")
     @Transactional
     public ResponseEntity<Void> deleteEtape(@PathVariable Long id) {
-        WorkflowEtape etape = etapeRepository.findById(id)
+        Long circuitId = etapeRepository.findCircuitIdByEtapeId(id)
                 .orElseThrow(() -> new RuntimeException("Étape introuvable"));
-        Long circuitId = etape.getCircuit().getIdCircuit();
-        etapeRepository.deleteById(id);
+        int deletedOrdre = etapeRepository.findById(id).map(e -> e.getOrdre()).orElse(0);
+        etapeRepository.deleteNative(id);
+        if (deletedOrdre > 0) {
+            etapeRepository.shiftOrdreAfterDelete(circuitId, deletedOrdre);
+        }
         workflowService.syncRequestsForCircuit(circuitId);
         return ResponseEntity.ok().build();
     }
@@ -138,21 +168,29 @@ public class WorkflowController {
     }
 
     @PostMapping("/mappings")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HR_MANAGER')")
+    @Transactional
     public ResponseEntity<WorkflowMapping> createMapping(@RequestBody Map<String, Object> payload) {
-        WorkflowMapping mapping = new WorkflowMapping();
-        mapping.setTypeRequete((String) payload.get("typeRequete"));
-
+        String typeRequete = (String) payload.get("typeRequete");
         Long circuitId = Long.valueOf(payload.get("circuitId").toString());
         WorkflowCircuit circuit = circuitRepository.findById(circuitId)
                 .orElseThrow(() -> new RuntimeException("Circuit introuvable"));
-        mapping.setCircuit(circuit);
 
-        return ResponseEntity.ok(mappingRepository.save(mapping));
+        WorkflowMapping mapping = mappingRepository.findByTypeRequete(typeRequete)
+                .orElse(new WorkflowMapping());
+        
+        mapping.setTypeRequete(typeRequete);
+        mapping.setCircuit(circuit);
+        WorkflowMapping saved = mappingRepository.save(mapping);
+
+        // Sync all in-progress requests of this type to follow the new circuit
+        workflowService.syncRequestsForType(typeRequete, circuit);
+
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/mappings/{id}")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HR_MANAGER')")
     public ResponseEntity<Void> deleteMapping(@PathVariable Long id) {
         mappingRepository.deleteById(id);
         return ResponseEntity.ok().build();
@@ -166,26 +204,34 @@ public class WorkflowController {
     }
 
     @PostMapping("/bypass-rules")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<WorkflowBypassRule> createBypassRule(@RequestBody WorkflowBypassRule rule) {
+    @PreAuthorize("hasRole('HR_MANAGER')")
+    public ResponseEntity<WorkflowBypassRule> createBypassRule(@RequestBody Map<String, Object> payload) {
+        WorkflowBypassRule rule = new WorkflowBypassRule();
+        rule.setNom(payload.get("nom").toString());
+        rule.setConditionType(payload.get("conditionType").toString());
+        if (payload.get("seuilHeures") != null) rule.setSeuilHeures(Integer.parseInt(payload.get("seuilHeures").toString()));
+        String roleName = payload.get("etapeIgnoree") != null ? payload.get("etapeIgnoree").toString() : "MANAGER";
+        roleRepository.findByNomRole(roleName).ifPresent(rule::setRoleIgnore);
         return ResponseEntity.ok(bypassRuleRepository.save(rule));
     }
 
     @PutMapping("/bypass-rules/{id}")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<WorkflowBypassRule> updateBypassRule(@PathVariable Long id, @RequestBody WorkflowBypassRule updated) {
+    @PreAuthorize("hasRole('HR_MANAGER')")
+    public ResponseEntity<WorkflowBypassRule> updateBypassRule(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         WorkflowBypassRule rule = bypassRuleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Règle introuvable"));
-        rule.setNom(updated.getNom());
-        rule.setConditionType(updated.getConditionType());
-        rule.setEtapeIgnoree(updated.getEtapeIgnoree());
-        rule.setSeuilHeures(updated.getSeuilHeures());
-        rule.setActif(updated.isActif());
+        if (payload.get("nom") != null) rule.setNom(payload.get("nom").toString());
+        if (payload.get("conditionType") != null) rule.setConditionType(payload.get("conditionType").toString());
+        if (payload.get("seuilHeures") != null) rule.setSeuilHeures(Integer.parseInt(payload.get("seuilHeures").toString()));
+        if (payload.get("actif") != null) rule.setActif(Boolean.parseBoolean(payload.get("actif").toString()));
+        if (payload.get("etapeIgnoree") != null) {
+            roleRepository.findByNomRole(payload.get("etapeIgnoree").toString()).ifPresent(rule::setRoleIgnore);
+        }
         return ResponseEntity.ok(bypassRuleRepository.save(rule));
     }
 
     @DeleteMapping("/bypass-rules/{id}")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HR_MANAGER')")
     public ResponseEntity<Void> deleteBypassRule(@PathVariable Long id) {
         bypassRuleRepository.deleteById(id);
         return ResponseEntity.ok().build();
@@ -199,7 +245,7 @@ public class WorkflowController {
     }
 
     @PostMapping("/delegations")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HR_MANAGER')")
     public ResponseEntity<WorkflowDelegation> createDelegation(@RequestBody Map<String, Object> payload) {
         WorkflowDelegation delegation = new WorkflowDelegation();
         
@@ -218,7 +264,7 @@ public class WorkflowController {
     }
 
     @DeleteMapping("/delegations/{id}")
-    @PreAuthorize("hasAnyRole('HR_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HR_MANAGER')")
     public ResponseEntity<Void> deleteDelegation(@PathVariable Long id) {
         delegationRepository.deleteById(id);
         return ResponseEntity.ok().build();

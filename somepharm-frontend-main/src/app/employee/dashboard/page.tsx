@@ -133,7 +133,7 @@ export default function EmployeeDashboard() {
   const fetchAnnonces = async (token: string) => {
     try {
       const res = await fetch("http://localhost:8080/api/annonces/targeted", { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) setAnnonces(await res.json());
+      if (res.ok) { const d = await res.json(); setAnnonces(Array.isArray(d) ? d : []); }
     } catch (err) { console.error(err); }
   };
 
@@ -151,11 +151,11 @@ export default function EmployeeDashboard() {
         let allRequests: any[] = [];
         if (resConge.ok) {
            const conges = await resConge.json();
-           allRequests.push(...conges.map((c: any) => ({ ...c, _group: 'CONGE' })));
+           allRequests.push(...(Array.isArray(conges) ? conges : []).map((c: any) => ({ ...c, _group: 'CONGE' })));
         }
         if (resDoc.ok) {
            const docs = await resDoc.json();
-           allRequests.push(...docs.map((d: any) => ({ ...d, _group: 'DOCUMENT' })));
+           allRequests.push(...(Array.isArray(docs) ? docs : []).map((d: any) => ({ ...d, _group: 'DOCUMENT' })));
         }
 
         const sortedRecent = allRequests

@@ -57,7 +57,7 @@ export default function ValidationRHPage() {
     }
   };
 
-  const handleAction = async (id: number, action: string, comment: string) => {
+  const handleAction = async (id: string, action: string, comment: string) => {
     // 🛡️ Reliability FIX: Pull fresh token directly from localStorage to avoid stale closure
     const currentToken = localStorage.getItem("token");
     if (!currentToken) {

@@ -15,7 +15,7 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
     Optional<Utilisateur> findByMatricule(String matricule);
 
     // --- NEW: Custom query to filter users by their department (For the Manager Role) ---
-    List<Utilisateur> findByDepartement(String departement);
+    List<Utilisateur> findByDepartement_NomDept(String nomDept);
 
     // --- DASHBOARD: Count team members for a manager ---
     long countByManagerDirect_IdUser(Long managerId);
@@ -23,12 +23,16 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
     // --- DASHBOARD: List all team members ---
     List<Utilisateur> findAllByManagerDirect_IdUser(Long managerId);
 
+    List<Utilisateur> findAllByDepartement_IdDept(Long idDept);
+
+    long countByDepartement_IdDept(Long idDept);
+
     // --- DASHBOARD: Role distribution ---
     List<Utilisateur> findAllByOrderByRoleAsc();
 
-    long countByDepartement(String departement);
+    long countByDepartement_NomDept(String nomDept);
 
-    long countByPoste(String poste);
+    long countByPoste_Titre(String titre);
 
     long countByStatutCompte(String statutCompte);
 

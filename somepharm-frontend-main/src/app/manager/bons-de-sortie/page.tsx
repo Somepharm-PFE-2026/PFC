@@ -98,7 +98,7 @@ export default function BonDeSortiePage() {
     }
   };
 
-  const annulerSortie = async (id: number) => {
+  const annulerSortie = async (id: string) => {
     if (!confirm("Êtes-vous sûr de vouloir annuler cette demande ?")) return;
     const token = localStorage.getItem("token");
     try {
@@ -114,7 +114,7 @@ export default function BonDeSortiePage() {
     }
   };
 
-  const handleDownload = async (id: number) => {
+  const handleDownload = async (id: string) => {
     const token = localStorage.getItem("token");
     try {
         const res = await fetch(`http://localhost:8080/api/documents/download/${id}`, {

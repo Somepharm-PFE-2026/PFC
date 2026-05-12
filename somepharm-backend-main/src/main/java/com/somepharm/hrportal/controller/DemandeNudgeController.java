@@ -6,6 +6,7 @@ import com.somepharm.hrportal.repository.RequeteRepository;
 import com.somepharm.hrportal.repository.UtilisateurRepository;
 import com.somepharm.hrportal.service.NotificationService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,18 +30,10 @@ public class DemandeNudgeController {
         this.utilisateurRepository = utilisateurRepository;
     }
 
+    @PreAuthorize("hasAnyRole('RH_ADMIN', 'HR_MANAGER', 'SUPER_ADMIN')")
     @PutMapping("/{id}/nudge")
-    public ResponseEntity<String> nudgeRequest(@PathVariable Long id, Authentication auth) {
-        // 1. Authentication Check
-        Utilisateur hrUser = utilisateurRepository.findByMatricule(auth.getName())
-                .orElseThrow(() -> new RuntimeException("CRITICAL: HR User not found."));
-
-        String roleName = hrUser.getRole().getNomRole();
-        if (!"RH_ADMIN".equals(roleName) && !"SUPER_ADMIN".equals(roleName) && !"HR_MANAGER".equals(roleName)) {
-            return ResponseEntity.status(403).body("Seul le RH ou le HR Manager peut envoyer une relance.");
-        }
-
-        // 2. Fetch Request
+    public ResponseEntity<String> nudgeRequest(@PathVariable java.util.UUID id, Authentication auth) {
+        // 1. Fetch Request
         Requete requete = requeteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Demande non trouvée."));
 

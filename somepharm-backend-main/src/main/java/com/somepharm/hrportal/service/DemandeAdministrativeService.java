@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class DemandeAdministrativeService {
@@ -44,7 +45,7 @@ public class DemandeAdministrativeService {
     }
 
     @Transactional
-    public DemandeAdministrative updateStatus(Long id, String status, String comment) {
+    public DemandeAdministrative updateStatus(UUID id, String status, String comment) {
         DemandeAdministrative dm = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Demande Administrative introuvable"));
 

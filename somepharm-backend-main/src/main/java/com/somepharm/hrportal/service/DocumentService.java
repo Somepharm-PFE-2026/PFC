@@ -71,7 +71,7 @@ public class DocumentService {
             body.add("L'employé(e) identifié(e) par le matricule : ");
             body.add(new Chunk(employe.getMatricule(), boldFont));
             body.add("\nDépartement : ");
-            body.add(new Chunk(employe.getDepartement(), boldFont));
+            body.add(new Chunk(employe.getDepartement() != null ? employe.getDepartement().getNomDept() : "", boldFont));
 
             String roleNom = employe.getRole() != null ? employe.getRole().getNomRole() : "Employé";
             body.add("\nFonction occupée : ");
@@ -125,7 +125,7 @@ public class DocumentService {
             infoTable.setWidthPercentage(100);
             infoTable.setSpacingAfter(20f);
             infoTable.addCell(createCell("Matricule: " + employe.getMatricule(), false));
-            infoTable.addCell(createCell("Département: " + employe.getDepartement(), false));
+            infoTable.addCell(createCell("Département: " + (employe.getDepartement() != null ? employe.getDepartement().getNomDept() : ""), false));
             infoTable.addCell(createCell("Nom & Prénom: " + employe.getNom() + " " + employe.getPrenom(), false));
             String roleNom = employe.getRole() != null ? employe.getRole().getNomRole() : "Employé";
             infoTable.addCell(createCell("Fonction: " + roleNom, false));
@@ -275,7 +275,7 @@ public class DocumentService {
             body.add("Il est accordé à l'employé(e) soussigné(e) :\n\n");
             body.add("Matricule : ");
             body.add(new Chunk(employe.getMatricule(), boldFont));
-            body.add("\nDépartement : " + employe.getDepartement());
+            body.add("\nDépartement : " + (employe.getDepartement() != null ? employe.getDepartement().getNomDept() : ""));
 
             body.add("\n\nUn congé réglementaire de l'année en cours.");
             body.add("\nSolde de congé actuel restant : ");
@@ -314,7 +314,7 @@ public class DocumentService {
             body.add(new Chunk(dd.getDemandeur().getNom() + " " + dd.getDemandeur().getPrenom(), boldFont));
             body.add("\nMatricule : ");
             body.add(new Chunk(dd.getDemandeur().getMatricule(), boldFont));
-            body.add("\nDépartement : " + dd.getDemandeur().getDepartement());
+            body.add("\nDépartement : " + (dd.getDemandeur().getDepartement() != null ? dd.getDemandeur().getDepartement().getNomDept() : ""));
 
             body.add("\n\nL'autorisation de s'absenter pour un motif personnel le : ");
             String dateSoumission = dd.getDateSoumission() != null ? dd.getDateSoumission().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
@@ -366,8 +366,8 @@ public class DocumentService {
             variables.put("nom_employe", employe.getNom());
             variables.put("prenom_employe", employe.getPrenom());
             variables.put("matricule", employe.getMatricule());
-            variables.put("poste", employe.getPoste() != null ? employe.getPoste() : "Employé");
-            variables.put("departement", employe.getDepartement());
+            variables.put("poste", employe.getPoste() != null ? employe.getPoste().getTitre() : "Employé");
+            variables.put("departement", employe.getDepartement() != null ? employe.getDepartement().getNomDept() : "");
             variables.put("date_entree", employe.getDateEmbauche() != null ? employe.getDateEmbauche().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-");
             variables.put("date_jour", LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
             variables.put("nom_societe", "SomePharm Distribution");

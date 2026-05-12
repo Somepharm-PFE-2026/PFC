@@ -24,9 +24,10 @@ public class WorkflowBypassRule {
     @Column(nullable = false, length = 50)
     private String conditionType;
 
-    /** Which step role to skip when the condition is met ("MANAGER", "CHEF_DEPARTEMENT") */
-    @Column(nullable = false, length = 50)
-    private String etapeIgnoree;
+    /** Which step role to skip when the condition is met */
+    @ManyToOne
+    @JoinColumn(name = "id_role_ignore", nullable = false)
+    private Role roleIgnore;
 
     /** Optional: threshold in hours for time-based conditions (e.g., 48h for urgency) */
     private Integer seuilHeures;

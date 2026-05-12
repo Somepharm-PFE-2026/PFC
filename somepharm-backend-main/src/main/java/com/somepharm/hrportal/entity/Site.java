@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "SITE")
 @Data
 @NoArgsConstructor
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 public class Site {
 
     @Id

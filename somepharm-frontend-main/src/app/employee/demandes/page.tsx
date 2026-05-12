@@ -11,7 +11,7 @@ export default function DemandesPage() {
   const [token, setToken] = useState("");
   const [userSolde, setUserSolde] = useState<number | string>("--");
   
-  const [refuseId, setRefuseId] = useState<number | null>(null);
+  const [refuseId, setRefuseId] = useState<string | null>(null);
   const [refuseComment, setRefuseComment] = useState("");
   const [refuseIsDoc, setRefuseIsDoc] = useState(false);
   
@@ -105,7 +105,7 @@ export default function DemandesPage() {
       return sortOrder === "NEWEST" ? dateB - dateA : dateA - dateB;
     });
 
-  const handleCancel = async (id: number, isDoc: boolean) => {
+  const handleCancel = async (id: string, isDoc: boolean) => {
     if (!confirm("Voulez-vous vraiment annuler cette demande ?")) return;
     try {
       const baseUrl = isDoc ? "http://localhost:8080/api/demandes-documents" : "http://localhost:8080/api/demandes";
@@ -122,7 +122,7 @@ export default function DemandesPage() {
     } catch (err) { console.error(err); }
   };
 
-  const handleUpdateStatus = async (id: number, newStatus: string, commentaire: string = "", isDoc: boolean) => {
+  const handleUpdateStatus = async (id: string, newStatus: string, commentaire: string = "", isDoc: boolean) => {
     try {
       const baseUrl = isDoc ? "http://localhost:8080/api/demandes-documents" : "http://localhost:8080/api/demandes";
       const res = await fetch(`${baseUrl}/${id}/statut?statut=${newStatus}&commentaire=${encodeURIComponent(commentaire)}`, {
@@ -137,7 +137,7 @@ export default function DemandesPage() {
     } catch (err) { console.error(err); }
   };
 
-  const handleDownload = async (idRequete: number) => {
+  const handleDownload = async (idRequete: string) => {
       try {
           const res = await fetch(`http://localhost:8080/api/documents/download/${idRequete}`, {
               headers: { "Authorization": `Bearer ${token}` }

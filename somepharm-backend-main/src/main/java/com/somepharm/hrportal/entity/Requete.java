@@ -5,10 +5,19 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import java.util.UUID;
+
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
-@Table(name = "requete")
+@Table(name = "requete", indexes = {
+    @Index(name = "idx_req_statut", columnList = "statutCycleVie"),
+    @Index(name = "idx_req_user", columnList = "id_user")
+})
 @Inheritance(strategy = InheritanceType.JOINED)
+@SQLDelete(sql = "UPDATE requete SET deleted = true WHERE id_requete = ? AND version = ?")
+@SQLRestriction("deleted = false")
 @Data
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
@@ -23,8 +32,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 public abstract class Requete {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idRequete;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id_requete", updatable = false, nullable = false)
+    private UUID idRequete;
 
     @Column(nullable = false)
     private LocalDateTime dateSoumission;
@@ -51,9 +61,6 @@ public abstract class Requete {
     // --- 🚀 NEW: AUDIT & WORKFLOW HISTORY ---
     @Column(name = "date_action_manager")
     private LocalDateTime dateActionManager;
-
-    @Column(name = "nom_manager_action")
-    private String nomManagerAction;
 
     @Column(name = "commentaire_manager", length = 500)
     private String commentaireManager;
@@ -84,4 +91,10 @@ public abstract class Requete {
 
     @Column(name = "current_etape_ordre")
     private Integer currentEtapeOrdre;
+
+    @Version
+    private Long version;
+
+    @Column(nullable = false)
+    private boolean deleted = false;
 }

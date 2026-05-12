@@ -8,9 +8,10 @@ import java.util.List;
 
 import com.somepharm.hrportal.entity.Utilisateur;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Repository
-public interface DemandeDocumentRepository extends JpaRepository<DemandeDocument, Long> {
+public interface DemandeDocumentRepository extends JpaRepository<DemandeDocument, UUID> {
     List<DemandeDocument> findByDemandeur_Matricule(String matricule);
     
     List<DemandeDocument> findByDemandeurAndTypeDocumentAndDateSoumissionBetween(

@@ -32,14 +32,28 @@ export async function POST(request: Request) {
             body = body.replace(regex, value as string);
         });
 
+        // --- SMART SMTP LOGIC ---
+        // Port 465 usually requires secure: true (Implicit SSL/TLS)
+        // Port 587 usually requires secure: false (STARTTLS)
+        // Others will follow the user's toggle
+        let isSecure = config.smtpSecure;
+        if (config.smtpPort === 465) isSecure = true;
+        if (config.smtpPort === 587) isSecure = false;
+
+        console.log(`[EMAIL_TEST] Attempting send via ${config.smtpHost}:${config.smtpPort} (Secure: ${isSecure})`);
+
         // Configure Nodemailer
         const transporter = nodemailer.createTransport({
             host: config.smtpHost,
             port: config.smtpPort || 587,
-            secure: config.smtpSecure,
+            secure: isSecure,
             auth: {
                 user: config.smtpUser,
                 pass: config.smtpPass
+            },
+            // Gmail specific tuning
+            tls: {
+                rejectUnauthorized: false // Helps with some self-signed certificates or proxy issues
             }
         });
 
@@ -60,7 +74,12 @@ export async function POST(request: Request) {
         });
 
     } catch (error: any) {
-        console.error('Email sending error:', error);
+        console.error('❌ Email sending error details:', {
+            code: error.code,
+            command: error.command,
+            response: error.response,
+            message: error.message
+        });
         return NextResponse.json({ 
             status: "ERROR", 
             message: error.message 

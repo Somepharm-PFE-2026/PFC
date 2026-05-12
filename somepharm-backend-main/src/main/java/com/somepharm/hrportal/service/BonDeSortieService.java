@@ -58,7 +58,7 @@ public class BonDeSortieService {
         ScanResultDTO.ScanResultDTOBuilder resultBuilder = ScanResultDTO.builder()
                 .matricule(demandeur.getMatricule())
                 .nomComplet(demandeur.getNom() + " " + demandeur.getPrenom())
-                .departement(demandeur.getDepartement())
+                .departement(demandeur.getDepartement() != null ? demandeur.getDepartement().getNomDept() : "")
                 .motif(bds.getMotif())
                 .periodeDemandee(bds.getHeureDebutAutorisee() + " - " + bds.getHeureFinAutorisee())
                 .dateDemande(bds.getHeureSortieEstimee() != null ? bds.getHeureSortieEstimee().toLocalDate().toString() : LocalDateTime.now().toLocalDate().toString())
@@ -106,8 +106,19 @@ public class BonDeSortieService {
 
         } else if ("EN_COURS".equals(bds.getStatut())) {
             // SCÉNARIO 2 : L'employé revient
-            bds.setHeureRetourReelle(LocalDateTime.now());
-            bds.setStatut("CLOTURE");
+            LocalDateTime now = LocalDateTime.now();
+            bds.setHeureRetourReelle(now);
+            
+            String currentHourStr = now.toLocalTime().toString().substring(0, 5);
+            boolean isLate = isAfterOrEqual(currentHourStr, bds.getHeureFinAutorisee()) && !currentHourStr.equals(bds.getHeureFinAutorisee());
+            
+            if (isLate) {
+                bds.setStatut("CLOTURE_AVEC_DEPASSEMENT");
+                auditService.logAction("SECURITY_SCAN", "⚠️ DÉPASSEMENT DE SORTIE pour " + demandeur.getMatricule() + " (Retour à " + currentHourStr + " au lieu de " + bds.getHeureFinAutorisee() + ")", scannerMatricule);
+            } else {
+                bds.setStatut("CLOTURE");
+            }
+            
             calculerEtDeduireHeures(bds);
             bonDeSortieRepository.save(bds);
 
@@ -119,7 +130,7 @@ public class BonDeSortieService {
             return resultBuilder
                     .status("SUCCESS")
                     .typeScan("ENTREE")
-                    .message("RETOUR ENREGISTRÉ - Bon retour au poste.")
+                    .message(isLate ? "RETOUR ENREGISTRÉ (AVEC RETARD)" : "RETOUR ENREGISTRÉ - Bon retour au poste.")
                     .build();
         }
 
@@ -149,15 +160,12 @@ public class BonDeSortieService {
             bds.setHeureRetourReelle(retour);
         }
 
-        long minutesAbsence = ChronoUnit.MINUTES.between(sortie, retour);
-        if (minutesAbsence < 0) minutesAbsence = 0;
-
-        double heuresAbsence = minutesAbsence / 60.0;
-        double joursADeduire = heuresAbsence / 8.0;
-
-        Utilisateur demandeur = bds.getDemandeur();
-        demandeur.setSoldeConges(demandeur.getSoldeConges() - joursADeduire);
-        utilisateurRepository.save(demandeur);
+        // Politique stricte : Absence non rémunérée.
+        // On ne déduit plus du solde de congé. Les heures d'absence seront déduites 
+        // automatiquement du total d'heures travaillées dans AttendanceCalculationService.
+        
+        // Optionnel : On peut sauvegarder la durée de l'absence dans le bon de sortie si besoin.
+        bds.setHeureRetourReelle(retour);
     }
 
     public List<AuditLog> getSecurityHistory(String matricule) {

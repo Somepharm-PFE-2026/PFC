@@ -32,7 +32,7 @@ public class BonDeSortie {
     private LocalDateTime heureRetourReelle; // Stamped when Guard scans IN
 
     @Column(name = "id_requete_origine")
-    private Long idRequeteOrigine;
+    private UUID idRequeteOrigine;
 
     @Column(name = "heure_debut_autorisee")
     private String heureDebutAutorisee;
@@ -79,8 +79,8 @@ public class BonDeSortie {
     public LocalDateTime getHeureRetourReelle() { return heureRetourReelle; }
     public void setHeureRetourReelle(LocalDateTime heureRetourReelle) { this.heureRetourReelle = heureRetourReelle; }
 
-    public Long getIdRequeteOrigine() { return idRequeteOrigine; }
-    public void setIdRequeteOrigine(Long idRequeteOrigine) { this.idRequeteOrigine = idRequeteOrigine; }
+    public UUID getIdRequeteOrigine() { return idRequeteOrigine; }
+    public void setIdRequeteOrigine(UUID idRequeteOrigine) { this.idRequeteOrigine = idRequeteOrigine; }
 
     public String getHeureDebutAutorisee() { return heureDebutAutorisee; }
     public void setHeureDebutAutorisee(String heureDebutAutorisee) { this.heureDebutAutorisee = heureDebutAutorisee; }

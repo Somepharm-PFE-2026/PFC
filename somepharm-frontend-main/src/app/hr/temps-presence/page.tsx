@@ -37,6 +37,7 @@ export default function TempsPresencePage() {
    const [selectedAnomaly, setSelectedAnomaly] = useState<any>(null);
    const [manualTime, setManualTime] = useState("");
    const [reason, setReason] = useState("");
+   const [searchTerm, setSearchTerm] = useState("");
 
    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
    const [serverTime, setServerTime] = useState<string>("");
@@ -147,7 +148,7 @@ export default function TempsPresencePage() {
       csvContent += "Matricule,Nom,Prenom,Departement,Type,Heure,Methode,Statut\n";
 
       stats.todayLogs.forEach((log: any) => {
-         csvContent += `${log.employe.matricule},${log.employe.nom},${log.employe.prenom},${log.employe.departement},${log.typePointage},${new Date(log.horodatage).toLocaleTimeString()},${log.methode},${log.statut}\n`;
+         csvContent += `${log.employe.matricule},${log.employe.nom},${log.employe.prenom},${log.employe.departement?.nomDept || log.employe.departement},${log.typePointage},${new Date(log.horodatage).toLocaleTimeString()},${log.methode},${log.statut}\n`;
       });
 
       const encodedUri = "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
@@ -368,6 +369,8 @@ export default function TempsPresencePage() {
                               <input
                                  type="text"
                                  placeholder="Chercher un collaborateur..."
+                                 value={searchTerm}
+                                 onChange={(e) => setSearchTerm(e.target.value)}
                                  className="pl-12 pr-6 py-3 bg-white border border-gray-100 rounded-2xl text-xs outline-none focus:border-blue-500 transition-all w-64"
                               />
                            </div>
@@ -386,7 +389,15 @@ export default function TempsPresencePage() {
                               </tr>
                            </thead>
                            <tbody className="divide-y">
-                              {stats.todayLogs?.map((log: any) => (
+                              {(stats.todayLogs || [])
+                                 .filter((log: any) => {
+                                    if (!searchTerm) return true;
+                                    const searchLower = searchTerm.toLowerCase();
+                                    return (log.employe.matricule?.toLowerCase() || '').includes(searchLower) ||
+                                           (log.employe.nom?.toLowerCase() || '').includes(searchLower) ||
+                                           (log.employe.prenom?.toLowerCase() || '').includes(searchLower);
+                                 })
+                                 .map((log: any) => (
                                  <tr key={log.id} className="hover:bg-gray-50/50 transition-colors group">
                                     <td className="px-10 py-6">
                                        <div className="flex items-center gap-4">
@@ -395,7 +406,7 @@ export default function TempsPresencePage() {
                                           </div>
                                           <div>
                                              <p className="font-black text-gray-800 text-sm uppercase">{log.employe.prenom} {log.employe.nom}</p>
-                                             <p className="text-[10px] text-gray-400 font-bold uppercase">{log.employe.departement}</p>
+                                             <p className="text-[10px] text-gray-400 font-bold uppercase">{log.employe.departement?.nomDept || log.employe.departement}</p>
                                           </div>
                                        </div>
                                     </td>
@@ -548,7 +559,7 @@ export default function TempsPresencePage() {
                                     </div>
                                     <div>
                                        <p className="font-black text-gray-800 uppercase leading-tight">{ano.employe.prenom} {ano.employe.nom}</p>
-                                       <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{ano.employe.departement}</p>
+                                       <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{ano.employe.departement?.nomDept || ano.employe.departement}</p>
                                     </div>
                                  </div>
                                  <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{selectedDate}</span>

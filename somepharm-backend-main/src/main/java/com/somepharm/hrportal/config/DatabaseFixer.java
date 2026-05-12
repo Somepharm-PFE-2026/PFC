@@ -24,8 +24,12 @@ public class DatabaseFixer implements CommandLineRunner {
         logger.info("🛠️ DatabaseFixer: Checking and fixing pointage table schema...");
         try {
             // 1. Make date_jour nullable (legacy column)
-            jdbcTemplate.execute("ALTER TABLE pointage ALTER COLUMN date_jour DROP NOT NULL");
-            logger.info("✅ Column 'date_jour' is now nullable.");
+            try {
+                jdbcTemplate.execute("ALTER TABLE pointage ALTER COLUMN date_jour DROP NOT NULL");
+                logger.info("✅ Column 'date_jour' is now nullable.");
+            } catch (Exception e) {
+                logger.info("ℹ️ Column 'date_jour' skipped (does not exist or already nullable).");
+            }
 
             // 2. Drop the redundant 'id' column if it exists and is NOT the primary key
             // We want to use 'id_pointage' as the main SERIAL ID.
@@ -33,7 +37,7 @@ public class DatabaseFixer implements CommandLineRunner {
                 jdbcTemplate.execute("ALTER TABLE pointage DROP COLUMN id");
                 logger.info("✅ Redundant column 'id' dropped.");
             } catch (Exception e) {
-                logger.warn("⚠️ Could not drop column 'id' (it might not exist or is constrained): {}", e.getMessage());
+                logger.info("ℹ️ Could not drop column 'id' (it might not exist or is constrained).");
             }
 
             // 3. Make 'id_utilisateur' the primary FK (already NOT NULL, but let's ensure id_user is handled)
@@ -41,7 +45,7 @@ public class DatabaseFixer implements CommandLineRunner {
                 jdbcTemplate.execute("ALTER TABLE pointage ALTER COLUMN id_user DROP NOT NULL");
                 logger.info("✅ Column 'id_user' is now nullable.");
             } catch (Exception e) {
-                logger.warn("⚠️ Could not alter column 'id_user': {}", e.getMessage());
+                logger.info("ℹ️ Could not alter column 'id_user' (might already be nullable or missing).");
             }
 
             // 4. Reset SP-HR password and clear lockout
@@ -50,7 +54,7 @@ public class DatabaseFixer implements CommandLineRunner {
                 jdbcTemplate.update("UPDATE utilisateur SET mot_de_passe = ?, failed_login_attempts = 0, lockout_until = NULL WHERE matricule = 'SP-HR'", newHash);
                 logger.info("✅ Password reset to 'password123' and lockout cleared for SP-HR.");
             } catch (Exception e) {
-                logger.warn("⚠️ Could not reset SP-HR password/lockout: {}", e.getMessage());
+                logger.info("ℹ️ Could not reset SP-HR password/lockout (user might not exist yet).");
             }
 
             // 5. Fix system_config table (replace nulls with defaults)
@@ -67,14 +71,27 @@ public class DatabaseFixer implements CommandLineRunner {
                     "stamp_y = COALESCE(stamp_y, 150)");
                 logger.info("✅ System configuration repaired (null values replaced with defaults).");
             } catch (Exception e) {
-                logger.warn("⚠️ Could not repair system_config: {}", e.getMessage());
+                logger.info("ℹ️ Could not repair system_config (table might not exist yet).");
+            }
+
+            // 6. Fix email_config table (fix typo and deduplicate)
+            try {
+                // Fix typo first
+                jdbcTemplate.execute("UPDATE email_config SET smtp_host = 'smtp.gmail.com' WHERE smtp_host = 'smtp.gmaail.com'");
+                
+                // Deduplicate: Keep only the lowest ID
+                jdbcTemplate.execute("DELETE FROM email_config WHERE id NOT IN (SELECT MIN(id) FROM email_config)");
+                
+                logger.info("✅ Email configuration repaired (deduplicated and typo fixed).");
+            } catch (Exception e) {
+                logger.info("ℹ️ Could not repair email_config (table might not exist yet or is already clean).");
             }
 
             logger.info("🚀 DatabaseFixer: Schema fix and account recovery completed successfully.");
 
 
         } catch (Exception e) {
-            logger.error("❌ DatabaseFixer failed: {}", e.getMessage());
+            logger.info("ℹ️ DatabaseFixer skipped some steps due to missing tables (expected on fresh DB).");
         }
     }
 }

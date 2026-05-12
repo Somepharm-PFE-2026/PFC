@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "workflow_etape")
 @Data
 @NoArgsConstructor
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 public class WorkflowEtape {
 
     @Id
@@ -17,19 +18,30 @@ public class WorkflowEtape {
 
     @ManyToOne
     @JoinColumn(name = "id_circuit", nullable = false)
-    @JsonIgnore
+    @com.fasterxml.jackson.annotation.JsonBackReference
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private WorkflowCircuit circuit;
 
     /** Step order within the circuit (1, 2, 3...) */
     @Column(nullable = false)
     private int ordre;
 
-    /** 
+    /**
      * The role responsible for validation at this step.
-     * Values: "MANAGER", "CHEF_DEPARTEMENT", "RH_ADMIN", "HR_MANAGER"
      */
-    @Column(nullable = false, length = 50)
-    private String roleValidateur;
+    @ManyToOne
+    @JoinColumn(name = "id_role_validateur", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Role roleValidateur;
+
+    /**
+     * Helper for Jackson to return the role name string as expected by the frontend.
+     */
+    @com.fasterxml.jackson.annotation.JsonProperty("roleValidateur")
+    public String getRoleValidateurName() {
+        return roleValidateur != null ? roleValidateur.getNomRole() : null;
+    }
 
     /** Display label for the step (e.g. "Validation Manager Direct") */
     @Column(length = 150)

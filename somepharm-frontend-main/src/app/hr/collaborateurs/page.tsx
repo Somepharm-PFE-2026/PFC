@@ -162,24 +162,44 @@ export default function CollaborateursPage() {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEmployeeForm, setNewEmployeeForm] = useState({
-    nom: "", prenom: "", email: "", roleId: 4, 
+    nom: "", prenom: "", email: "", roleId: 3, 
     departement: "", poste: "", dateEmbauche: new Date().toISOString().split('T')[0], 
     managerId: "", siteId: "", situationFamiliale: "CELIBATAIRE"
   });
 
   // Auto-assign Role based on Department
   useEffect(() => {
-    let targetRoleId = 4; // Default EMPLOYE
-    const dept = newEmployeeForm.departement.toUpperCase();
+    let targetRoleId = 3; // Default EMPLOYE (Corrected from 4)
+    const dept = (newEmployeeForm.departement || "").toUpperCase();
     
     if (dept.includes("SECURITE") || dept.includes("SÉCURITÉ")) {
-      targetRoleId = 7; // SECURITY_AGENTS
+      targetRoleId = 6; // SECURITY_AGENTS (Corrected from 7)
     } else if (dept.includes("RESSOURCES HUMAINES") || dept.includes("RH")) {
-      targetRoleId = 1; // RH_ADMIN
+      targetRoleId = 1; // RH_ADMIN (Confirmed as 1)
     }
     
-    setNewEmployeeForm(prev => ({ ...prev, roleId: targetRoleId }));
+    if (newEmployeeForm.roleId !== targetRoleId) {
+      setNewEmployeeForm({ ...newEmployeeForm, roleId: targetRoleId });
+    }
   }, [newEmployeeForm.departement]);
+
+  // Auto-assign Role based on Department for EDIT modal
+  useEffect(() => {
+    if (!editingEmployee || !showEditModal) return;
+    
+    const dept = (editingEmployee.departement || "").toUpperCase();
+    let targetRoleId = null;
+
+    if (dept.includes("SECURITE") || dept.includes("SÉCURITÉ")) {
+      targetRoleId = 6; // Corrected from 7
+    } else if (dept.includes("RESSOURCES HUMAINES") || dept.includes("RH")) {
+      targetRoleId = 1;
+    }
+
+    if (targetRoleId && targetRoleId !== editingEmployee.roleId) {
+      setEditingEmployee({ ...editingEmployee, roleId: targetRoleId });
+    }
+  }, [editingEmployee?.departement, showEditModal]);
 
   const handleCreateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -196,11 +216,11 @@ export default function CollaborateursPage() {
           prenom: newEmployeeForm.prenom,
           email: newEmployeeForm.email,
           role: { idRole: newEmployeeForm.roleId },
-          departement: newEmployeeForm.departement,
-          poste: newEmployeeForm.poste,
+          departement: departments.find(d => d.nomDept === newEmployeeForm.departement) ? { idDept: departments.find(d => d.nomDept === newEmployeeForm.departement).idDept } : null,
+          poste: postes.find(p => p.titre === newEmployeeForm.poste) ? { idPoste: postes.find(p => p.titre === newEmployeeForm.poste).idPoste } : null,
           dateEmbauche: newEmployeeForm.dateEmbauche,
           situationFamiliale: newEmployeeForm.situationFamiliale,
-          managerDirect: newEmployeeForm.managerId ? { idUser: parseInt(newEmployeeForm.managerId) } : null,
+          managerDirect: newEmployeeForm.managerId === "null" ? null : (newEmployeeForm.managerId ? { idUser: parseInt(newEmployeeForm.managerId) } : null),
           site: newEmployeeForm.siteId ? { idSite: parseInt(newEmployeeForm.siteId) } : null
         })
       });
@@ -234,6 +254,8 @@ export default function CollaborateursPage() {
         },
         body: JSON.stringify({
           ...editingEmployee,
+          departement: departments.find(d => d.nomDept === editingEmployee.departement) ? { idDept: departments.find(d => d.nomDept === editingEmployee.departement).idDept } : null,
+          poste: postes.find(p => p.titre === editingEmployee.poste) ? { idPoste: postes.find(p => p.titre === editingEmployee.poste).idPoste } : null,
           role: editingEmployee.roleId ? { idRole: editingEmployee.roleId } : (typeof editingEmployee.role === 'object' ? editingEmployee.role : { idRole: parseInt(editingEmployee.role || 1) }),
           managerDirect: editingEmployee.managerDirectId === "null" ? null : (editingEmployee.managerDirectId ? { idUser: parseInt(editingEmployee.managerDirectId) } : editingEmployee.managerDirect),
           site: editingEmployee.siteId ? { idSite: parseInt(editingEmployee.siteId) } : editingEmployee.site
@@ -423,9 +445,16 @@ export default function CollaborateursPage() {
                       required
                     >
                       <option value="">Sélectionner un service...</option>
-                      {departments.map((dept: any) => (
-                        <option key={dept.idDept} value={dept.nomDept}>{dept.nomDept}</option>
-                      ))}
+                      {departments
+                        .filter((dept: any) => {
+                          const dName = dept.nomDept.toUpperCase();
+                          const isRH = dName.includes("RESSOURCES HUMAINES") || dName.includes("RH");
+                          if (isRH && currentUser?.role === "RH_ADMIN") return false;
+                          return true;
+                        })
+                        .map((dept: any) => (
+                          <option key={dept.idDept} value={dept.nomDept}>{dept.nomDept}</option>
+                        ))}
                     </select>
                   </div>
                   {/* Manager Select */}
@@ -442,12 +471,16 @@ export default function CollaborateursPage() {
                       {(() => {
                         const deptData = departments.find(d => d.nomDept === newEmployeeForm.departement);
                         return employees.filter(e => {
-                          // 🚀 Role Check: Use string comparison since backend sends role as string
-                          const role = typeof e.role === 'string' ? e.role : e.role?.nomRole;
-                          const isManager = role !== 'EMPLOYE' && role !== 'SECURITY_AGENTS';
                           const isInDept = e.departement === newEmployeeForm.departement;
                           const isHeadManager = deptData && e.idUser === deptData.managerId;
-                          return isInDept && (isManager || isHeadManager);
+                          
+                          // 🛡️ Hierarchy Guard: Only show users who are strictly higher in the hierarchy
+                          const newLevel = getPositionLevel(newEmployeeForm.poste);
+                          const targetLevel = getPositionLevel(e.poste);
+                          const isManager = targetLevel < 3;
+                          const isStrictlyHigher = targetLevel < newLevel;
+
+                          return isInDept && (isManager || isHeadManager) && (isStrictlyHigher || isHeadManager);
                         }).map(u => (
                           <option key={u.idUser} value={u.idUser}>
                             {u.prenom} {u.nom} ({u.poste}){u.idUser === deptData?.managerId ? " [CHEF DE SERVICE]" : ""}
@@ -519,9 +552,19 @@ export default function CollaborateursPage() {
                         ${(originalDept && originalDept !== "Général" && originalDept !== "") ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-gray-50 focus:border-blue-600 focus:bg-white text-gray-900"}`}
                     >
                       <option value="">Sélectionner un service...</option>
-                      {departments.map((dept: any) => (
-                        <option key={dept.idDept} value={dept.nomDept}>{dept.nomDept}</option>
-                      ))}
+                      {departments
+                        .filter((dept: any) => {
+                          const dName = dept.nomDept.toUpperCase();
+                          const isRH = dName.includes("RESSOURCES HUMAINES") || dName.includes("RH");
+                          // RH_ADMIN cannot move a user to RH dept if they weren't already there (or if they are "not defined")
+                          if (isRH && currentUser?.role === "RH_ADMIN") {
+                             return originalDept && (originalDept.toUpperCase().includes("RH") || originalDept.toUpperCase().includes("RESSOURCES HUMAINES"));
+                          }
+                          return true;
+                        })
+                        .map((dept: any) => (
+                          <option key={dept.idDept} value={dept.nomDept}>{dept.nomDept}</option>
+                        ))}
                     </select>
                   </div>
                   <div className="space-y-2">
@@ -561,16 +604,15 @@ export default function CollaborateursPage() {
                         return employees.filter(e => {
                           if (e.idUser === editingEmployee.idUser) return false;
                           
-                          const role = typeof e.role === 'string' ? e.role : e.role?.nomRole;
-                          const isManager = role !== 'EMPLOYE' && role !== 'SECURITY_AGENTS';
                           const isInSameDept = e.departement === editingEmployee.departement;
                           const isDesignatedDeptManager = deptData && e.idUser === deptData.managerId;
-
+  
                           // 🛡️ Hierarchy Guard: Only show users who are strictly higher in the hierarchy
                           const currentLevel = getPositionLevel(originalPoste);
                           const targetUserLevel = getPositionLevel(e.poste);
+                          const isManager = targetUserLevel < 3;
                           const isStrictlyHigher = targetUserLevel < currentLevel;
-
+  
                           return isInSameDept && (isManager || isDesignatedDeptManager) && (isStrictlyHigher || isDesignatedDeptManager);
                         }).map(u => (
                           <option key={u.idUser} value={u.idUser}>

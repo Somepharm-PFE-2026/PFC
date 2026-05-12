@@ -11,7 +11,7 @@ export default function ValidationManagerPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Refusal State
-  const [refuseId, setRefuseId] = useState<number | null>(null);
+  const [refuseId, setRefuseId] = useState<string | null>(null);
   const [refuseComment, setRefuseComment] = useState("");
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export default function ValidationManagerPage() {
     }
   };
 
-  const handleUpdateStatus = async (id: number, status: string, commentaire: string = "") => {
+  const handleUpdateStatus = async (id: string, status: string, commentaire: string = "") => {
     const token = localStorage.getItem("token");
     try {
       // 🚀 UNIFIED MANAGER VALIDATION ENDPOINT

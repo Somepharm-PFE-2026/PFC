@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface BonDeSortieRepository extends JpaRepository<BonDeSortie, Long> {
@@ -15,7 +16,7 @@ public interface BonDeSortieRepository extends JpaRepository<BonDeSortie, Long> 
     // Allows the system to find all passes that haven't returned yet
     List<BonDeSortie> findByStatut(String statut);
 
-    boolean existsByIdRequeteOrigine(Long idRequeteOrigine);
+    boolean existsByIdRequeteOrigine(UUID idRequeteOrigine);
 
-    Optional<BonDeSortie> findByIdRequeteOrigine(Long idRequeteOrigine);
+    Optional<BonDeSortie> findByIdRequeteOrigine(UUID idRequeteOrigine);
 }

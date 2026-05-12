@@ -165,7 +165,7 @@ export default function ProfilPage() {
                  <InfoItem icon={<Activity size={20}/>} label="Date de Naissance" value={profil.dateNaissance ? new Date(profil.dateNaissance).toLocaleDateString() : "—"} />
                  <InfoItem icon={<Calendar size={20}/>} label="Date d'Embauche" value={profil.dateEmbauche ? new Date(profil.dateEmbauche).toLocaleDateString() : "—"} />
                  <InfoItem icon={<Briefcase size={20}/>} label="Département" value={profil.departement || "Administration"} />
-                 <InfoItem icon={<User size={20}/>} label="Rôle Système" value={profil.role?.nomRole || "HR"} />
+                 <InfoItem icon={<User size={20}/>} label="Rôle Système" value={typeof profil.role === 'string' ? profil.role : profil.role?.nomRole || "HR"} />
               </div>
 
               {/* Emergency Region */}

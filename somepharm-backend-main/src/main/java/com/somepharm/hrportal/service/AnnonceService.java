@@ -50,8 +50,8 @@ public class AnnonceService {
         }
 
         if ("DEPARTMENT".equals(a.getTargetType())) {
-            boolean match = user.getDepartement() != null && user.getDepartement().equalsIgnoreCase(targetValue);
-            if (!match) System.out.println("[AnnonceService] Dept mismatch for " + a.getIdAnnonce() + ": user=" + user.getDepartement() + ", target=" + targetValue);
+            boolean match = user.getDepartement() != null && user.getDepartement().getNomDept().equalsIgnoreCase(targetValue);
+            if (!match) System.out.println("[AnnonceService] Dept mismatch for " + a.getIdAnnonce() + ": user=" + (user.getDepartement() != null ? user.getDepartement().getNomDept() : "") + ", target=" + targetValue);
             return match;
         }
 
@@ -65,7 +65,7 @@ public class AnnonceService {
             if (isRoleMatch(targetValue, "RH_ADMIN") && isRoleMatch(userRole, "HR_MANAGER")) return true;
             
             // Special Case: SECURITY_AGENTS targeting also includes anyone in the SECURITE department
-            if (isRoleMatch(targetValue, "SECURITY_AGENTS") && "SECURITE".equalsIgnoreCase(user.getDepartement())) return true;
+            if (isRoleMatch(targetValue, "SECURITY_AGENTS") && "SECURITE".equalsIgnoreCase(user.getDepartement() != null ? user.getDepartement().getNomDept() : "")) return true;
             
             System.out.println("[AnnonceService] Role mismatch for " + a.getIdAnnonce() + ": userRole=" + userRole + ", target=" + targetValue);
             return false;
@@ -142,7 +142,8 @@ public class AnnonceService {
             return utilisateurRepository.count();
         }
         if ("DEPARTMENT".equals(a.getTargetType())) {
-            return utilisateurRepository.countByDepartement(a.getTargetValue());
+            // Need to change repository to countByDepartement_NomDept
+            return utilisateurRepository.countByDepartement_NomDept(a.getTargetValue());
         }
         if ("ROLE".equals(a.getTargetType())) {
             // Using the isTargeted logic directly on the user list to avoid double counting

@@ -64,7 +64,8 @@ export default function ModificationRequestModal({ profil, onClose }: Props) {
         }
 
         setSuccess(true);
-        setTimeout(onClose, 2000);
+        window.alert("Votre demande de modification a été envoyée avec succès au service RH.");
+        setTimeout(onClose, 3500);
       }
     } catch (err) {
       console.error("Submission error:", err);

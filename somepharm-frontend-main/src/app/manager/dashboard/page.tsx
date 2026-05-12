@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
-import { 
-  Calendar, Clock, Users, UserMinus, 
+import {
+  Calendar, Clock, Users, UserMinus,
   ArrowRight, Fingerprint, Timer, CheckCircle2,
-  AlertTriangle, ShieldCheck
+  AlertTriangle, ShieldCheck, RefreshCw
 } from "lucide-react";
 import NotificationCenter from "../../components/NotificationCenter";
 import Link from "next/link";
@@ -55,6 +55,7 @@ export default function ManagerDashboard() {
   const [stats, setStats] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [pointage, setPointage] = useState<any>(null);
   const [loadingPointage, setLoadingPointage] = useState(false);
   const router = useRouter();
@@ -62,17 +63,34 @@ export default function ManagerDashboard() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return router.push("/login");
+
     fetchDashboardData(token);
     fetchPointageStatus(token);
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+
+    const clockTimer = setInterval(() => setCurrentTime(new Date()), 1000);
+    // Refresh team data every 30 seconds so presence, absences and late alerts stay live
+    const dataPoller = setInterval(() => {
+      const t = localStorage.getItem("token");
+      if (t) fetchDashboardData(t);
+    }, 30000);
+
+    return () => {
+      clearInterval(clockTimer);
+      clearInterval(dataPoller);
+    };
   }, []);
 
   const fetchDashboardData = async (token: string) => {
     try {
       const res = await fetch("http://localhost:8080/api/dashboard/stats", { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) setStats(await res.json());
-    } catch (err) { console.error(err); } finally { setLoading(false); }
+      if (res.ok) {
+        setStats(await res.json());
+        setLastRefreshed(new Date());
+      } else {
+        const errBody = await res.text();
+        console.error(`[Dashboard] API error ${res.status}:`, errBody);
+      }
+    } catch (err) { console.error("[Dashboard] Fetch failed:", err); } finally { setLoading(false); }
   };
 
   const fetchPointageStatus = async (token: string) => {
@@ -125,9 +143,25 @@ export default function ManagerDashboard() {
       <header className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-black text-gray-800 italic uppercase tracking-tighter">Pilotage Équipe</h1>
-          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest mt-1">Status du service au {stats.dateDuJour}</p>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Status du service au {stats.dateDuJour}</p>
+            {lastRefreshed && (
+              <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">
+                · Mis à jour {lastRefreshed.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            )}
+          </div>
         </div>
-        <NotificationCenter />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { const t = localStorage.getItem("token"); if (t) fetchDashboardData(t); }}
+            className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-blue-600 hover:border-blue-200 hover:shadow-md transition-all"
+            title="Actualiser"
+          >
+            <RefreshCw size={16} />
+          </button>
+          <NotificationCenter />
+        </div>
       </header>
 
       <PunchWidget pointage={pointage} handlePointage={handlePointage} loadingPointage={loadingPointage} timeString={timeString} />

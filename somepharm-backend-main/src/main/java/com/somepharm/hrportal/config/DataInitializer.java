@@ -16,28 +16,25 @@ import java.util.List;
 public class DataInitializer {
 
     @Bean
-    CommandLineRunner initRoles(com.somepharm.hrportal.repository.RoleRepository repository) {
-        return args -> {
-            List<String> roles = List.of("RH_ADMIN", "MANAGER", "EMPLOYE", "SUPER_ADMIN", "HR_MANAGER");
-            for (String roleName : roles) {
-                if (repository.findByNomRole(roleName).isEmpty()) {
-                    com.somepharm.hrportal.entity.Role role = new com.somepharm.hrportal.entity.Role();
-                    role.setNomRole(roleName);
-                    repository.save(role);
-                    System.out.println("✅ ROLE: " + roleName + " initialized.");
-                }
-            }
-        };
-    }
-
-    @Bean
-    CommandLineRunner initUsers(com.somepharm.hrportal.repository.UtilisateurRepository userRepo, 
+    CommandLineRunner initData(com.somepharm.hrportal.repository.UtilisateurRepository userRepo, 
                                 com.somepharm.hrportal.repository.RoleRepository roleRepo,
                                 org.springframework.security.crypto.password.PasswordEncoder encoder) {
         return args -> {
+            // 1. Initialize Roles
+            List<String> roles = List.of("RH_ADMIN", "MANAGER", "EMPLOYE", "SUPER_ADMIN", "HR_MANAGER", "SECURITY_AGENTS", "CHEF_DEPARTEMENT");
+            for (String roleName : roles) {
+                if (roleRepo.findByNomRole(roleName).isEmpty()) {
+                    com.somepharm.hrportal.entity.Role role = new com.somepharm.hrportal.entity.Role();
+                    role.setNomRole(roleName);
+                    roleRepo.save(role);
+                    System.out.println("✅ ROLE: " + roleName + " initialized.");
+                }
+            }
+
+            // 2. Initialize HR Manager User
             if (userRepo.findByMatricule("SP-HRMGR").isEmpty()) {
                 com.somepharm.hrportal.entity.Role hrManagerRole = roleRepo.findByNomRole("HR_MANAGER")
-                        .orElseThrow(() -> new RuntimeException("Role HR_MANAGER not found"));
+                        .orElseThrow(() -> new RuntimeException("Role HR_MANAGER not found even after initialization"));
                 
                 com.somepharm.hrportal.entity.Utilisateur hrManager = new com.somepharm.hrportal.entity.Utilisateur();
                 hrManager.setMatricule("SP-HRMGR");

@@ -47,31 +47,44 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 3. Extract the token (we skip the first 7 characters to remove the word "Bearer ")
         jwt = authHeader.substring(7);
 
-        // 4. Ask our JwtService to read the matricule from the token
-        userMatricule = jwtService.extractUsername(jwt);
+        try {
+            // 4. Ask our JwtService to read the matricule from the token
+            userMatricule = jwtService.extractUsername(jwt);
 
-        // 5. If we found a matricule AND the user is not already logged in...
-        if (userMatricule != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // 5. If we found a matricule AND the user is not already logged in...
+            if (userMatricule != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // Fetch the user from our database using the matricule
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userMatricule);
+                // Fetch the user from our database using the matricule
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userMatricule);
 
-            // 6. If the token is cryptographically valid and not expired...
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-                // Create an "Authentication Ticket"
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
+                // 6. If the token is cryptographically valid and not expired...
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    System.out.println("DEBUG: Token valid for user: " + userMatricule + " with authorities: " + userDetails.getAuthorities());
+                    // Create an "Authentication Ticket"
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
 
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
 
-                // 7. Tell Spring Security: "This user is officially allowed in!"
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    // 7. Tell Spring Security: "This user is officially allowed in!"
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Token expiré. Veuillez vous reconnecter.\"}");
+            return;
+        } catch (Exception e) {
+            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Token invalide.\"}");
+            return;
         }
 
         // 8. Pass the request to the next step

@@ -49,7 +49,6 @@ public class DepartementService {
         if (!posteRepository.existsByTitreAndDepartement_IdDept(managerTitre, dept.getIdDept())) {
             com.somepharm.hrportal.entity.Poste managerPoste = new com.somepharm.hrportal.entity.Poste();
             managerPoste.setTitre(managerTitre);
-            managerPoste.setTitrePoste(managerTitre);
             managerPoste.setDepartement(dept);
             posteRepository.save(managerPoste);
         }
@@ -59,7 +58,6 @@ public class DepartementService {
         if (!posteRepository.existsByTitreAndDepartement_IdDept(employeeTitre, dept.getIdDept())) {
             com.somepharm.hrportal.entity.Poste employeePoste = new com.somepharm.hrportal.entity.Poste();
             employeePoste.setTitre(employeeTitre);
-            employeePoste.setTitrePoste(employeeTitre);
             employeePoste.setDepartement(dept);
             posteRepository.save(employeePoste);
         }
@@ -153,14 +151,28 @@ public class DepartementService {
                 
                 // 1. Demote Old Manager if exists
                 if (oldManager != null && !oldManager.getIdUser().equals(newManager.getIdUser())) {
-                    oldManager.setPoste("EMP_" + existing.getNomDept().toUpperCase());
+                    String empTitle = "EMP_" + existing.getNomDept().toUpperCase();
+                    com.somepharm.hrportal.entity.Poste empPoste = posteRepository.findByTitre(empTitle).orElseGet(() -> {
+                        com.somepharm.hrportal.entity.Poste p = new com.somepharm.hrportal.entity.Poste();
+                        p.setTitre(empTitle);
+                        p.setDepartement(existing);
+                        return posteRepository.save(p);
+                    });
+                    oldManager.setPoste(empPoste);
                     roleRepository.findByNomRole("EMPLOYE").ifPresent(oldManager::setRole);
                     oldManager.setManagerDirect(newManager); // 🛡️ Smart Link: Old head reports to new head
                     utilisateurRepository.save(oldManager);
                 }
 
                 // 2. Promote New Manager to RESPONSABLE
-                newManager.setPoste("RESPONSABLE DE " + existing.getNomDept().toUpperCase());
+                String respTitle = "RESPONSABLE DE " + existing.getNomDept().toUpperCase();
+                com.somepharm.hrportal.entity.Poste respPoste = posteRepository.findByTitre(respTitle).orElseGet(() -> {
+                    com.somepharm.hrportal.entity.Poste p = new com.somepharm.hrportal.entity.Poste();
+                    p.setTitre(respTitle);
+                    p.setDepartement(existing);
+                    return posteRepository.save(p);
+                });
+                newManager.setPoste(respPoste);
                 roleRepository.findByNomRole("MANAGER").ifPresent(newManager::setRole);
                 newManager.setManagerDirect(null);
                 utilisateurRepository.save(newManager);
@@ -168,7 +180,7 @@ public class DepartementService {
                 existing.setManager(newManager);
 
                 // 3. 🛡️ SMART CASCADE: Preserve sub-hierarchies (Team Leads)
-                List<com.somepharm.hrportal.entity.Utilisateur> allDeptEmployees = utilisateurRepository.findByDepartement(existing.getNomDept());
+                List<com.somepharm.hrportal.entity.Utilisateur> allDeptEmployees = utilisateurRepository.findByDepartement_NomDept(existing.getNomDept());
                 for (com.somepharm.hrportal.entity.Utilisateur emp : allDeptEmployees) {
                     // Do not update the new manager themselves!
                     if (newManager.getIdUser().equals(emp.getIdUser())) continue;
@@ -188,7 +200,14 @@ public class DepartementService {
                 // 🛡️ MODE: ASSIGN TEAM LEAD (CHEF D'EQUIPE)
                 
                 // 1. Promote to Chef d'équipe
-                newManager.setPoste("CHEF D'EQUIPE");
+                String leadTitle = "CHEF D'EQUIPE " + existing.getNomDept().toUpperCase();
+                com.somepharm.hrportal.entity.Poste leadPoste = posteRepository.findByTitre(leadTitle).orElseGet(() -> {
+                    com.somepharm.hrportal.entity.Poste p = new com.somepharm.hrportal.entity.Poste();
+                    p.setTitre(leadTitle);
+                    p.setDepartement(existing);
+                    return posteRepository.save(p);
+                });
+                newManager.setPoste(leadPoste);
                 roleRepository.findByNomRole("MANAGER").ifPresent(newManager::setRole);
                 
                 // 2. Resolve hierarchy: Their manager is the current Department Head
@@ -203,13 +222,13 @@ public class DepartementService {
                 // 3. 🛡️ SMART CASCADE (if checkbox was checked in frontend)
                 // Note: The 'forceOverwriteAll' boolean is used here too if passed
                 if (forceOverwriteAll) {
-                    List<com.somepharm.hrportal.entity.Utilisateur> allDeptEmployees = utilisateurRepository.findByDepartement(existing.getNomDept());
+                    List<com.somepharm.hrportal.entity.Utilisateur> allDeptEmployees = utilisateurRepository.findByDepartement_NomDept(existing.getNomDept());
                     for (com.somepharm.hrportal.entity.Utilisateur emp : allDeptEmployees) {
                         if (newManager.getIdUser().equals(emp.getIdUser())) continue;
 
                         // If they were already a Chef d'équipe, demote them because they now report to a new Lead
-                        if ("CHEF D'EQUIPE".equalsIgnoreCase(emp.getPoste())) {
-                            emp.setPoste("EMP_" + existing.getNomDept().toUpperCase());
+                        if ("CHEF D'EQUIPE".equalsIgnoreCase(emp.getPoste() != null ? emp.getPoste().getTitre() : "")) {
+                            emp.setPoste(posteRepository.findByTitre("EMP_" + existing.getNomDept().toUpperCase()).orElse(null));
                             roleRepository.findByNomRole("EMPLOYE").ifPresent(emp::setRole);
                         }
                         
@@ -234,7 +253,7 @@ public class DepartementService {
         }
 
         // 🛡️ FAIL-SAFE: Check for active employees
-        long userCount = utilisateurRepository.countByDepartement(dept.getNomDept());
+        long userCount = utilisateurRepository.countByDepartement_NomDept(dept.getNomDept());
         if (userCount > 0) {
             throw new RuntimeException("Impossible de supprimer ce département : " + userCount + " collaborateur(s) y sont encore affectés.");
         }

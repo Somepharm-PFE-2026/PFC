@@ -16,6 +16,7 @@ public class Pointage {
 
     @ManyToOne
     @JoinColumn(name = "id_utilisateur", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"poste", "managerDirect", "motDePasse", "role", "authorities", "customAttributes"})
     private Utilisateur employe;
 
     private LocalDateTime horodatage; // Single timestamp for IN or OUT

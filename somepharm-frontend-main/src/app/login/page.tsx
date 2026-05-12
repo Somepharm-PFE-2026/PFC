@@ -53,7 +53,7 @@ export default function LoginPage() {
         }
 
         if (role === "EMPLOYE" || role === "SECURITY_AGENTS") router.push("/employee/dashboard");
-        else if (role === "MANAGER") router.push("/manager/dashboard");
+        else if (role === "MANAGER" || role === "CHEF_DEPARTEMENT") router.push("/manager/dashboard");
         else if (role === "SUPER_ADMIN") router.push("/admin/dashboard");
         else if (role === "RH_ADMIN" || role === "HR_MANAGER") router.push("/hr/dashboard");
         else router.push("/"); // Fallback

@@ -8,9 +8,10 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface DemandeCongeRepository extends JpaRepository<DemandeConge, Long> {
+public interface DemandeCongeRepository extends JpaRepository<DemandeConge, UUID> {
     // This finds requests where the Demandeur's matricule matches the input
     List<DemandeConge> findByDemandeur_Matricule(String matricule);
 
@@ -30,6 +31,19 @@ public interface DemandeCongeRepository extends JpaRepository<DemandeConge, Long
     List<DemandeConge> findApprovedTeamLeavesInRange(@Param("managerId") Long managerId, 
                                                    @Param("startDate") LocalDate startDate, 
                                                    @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT d FROM DemandeConge d WHERE d.demandeur.departement.idDept = :idDept " +
+           "AND (d.statutCycleVie = 'APPROUVE' OR d.statutCycleVie = 'APPROUVÉ') " +
+           "AND d.dateDebut <= :endDate AND d.dateFin >= :startDate")
+    List<DemandeConge> findApprovedDeptLeavesInRange(@Param("idDept") Long idDept, 
+                                                   @Param("startDate") LocalDate startDate, 
+                                                   @Param("endDate") LocalDate endDate);
+
+    // --- ANALYTICS: Global Leaves on Date ---
+    @Query("SELECT COUNT(d) FROM DemandeConge d WHERE " +
+           "(d.statutCycleVie = 'APPROUVE' OR d.statutCycleVie = 'APPROUVÉ') " +
+           "AND d.dateDebut <= :targetDate AND d.dateFin >= :targetDate")
+    long countGlobalApprovedLeavesOnDate(@Param("targetDate") LocalDate targetDate);
 
     // --- ANALYTICS: Count Urgent (>48h) ---
     @Query("SELECT COUNT(d) FROM DemandeConge d WHERE d.demandeur.managerDirect.idUser = :managerId " +

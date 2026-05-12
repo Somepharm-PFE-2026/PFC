@@ -11,6 +11,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Service
 public class DemandeCongeService {
@@ -21,19 +22,22 @@ public class DemandeCongeService {
     private final AuditService auditService;
     private final NotificationService notificationService;
     private final HolidayService holidayService;
+    private final EmailService emailService;
 
     public DemandeCongeService(DemandeCongeRepository demandeCongeRepository, 
                                com.somepharm.hrportal.repository.UtilisateurRepository utilisateurRepository,
                                com.somepharm.hrportal.repository.TypeCongeRepository typeCongeRepository,
                                AuditService auditService, 
                                NotificationService notificationService, 
-                               HolidayService holidayService) {
+                               HolidayService holidayService,
+                               EmailService emailService) {
         this.demandeCongeRepository = demandeCongeRepository;
         this.utilisateurRepository = utilisateurRepository;
         this.typeCongeRepository = typeCongeRepository;
         this.auditService = auditService;
         this.notificationService = notificationService;
         this.holidayService = holidayService;
+        this.emailService = emailService;
     }
 
     public DemandeConge createDemande(DemandeConge demande) {
@@ -97,7 +101,7 @@ public class DemandeCongeService {
     }
 
     @Transactional
-    public DemandeConge updateStatut(Long id, String nouveauStatut, String commentaire) {
+    public DemandeConge updateStatut(UUID id, String nouveauStatut, String commentaire) {
         DemandeConge demande = demandeCongeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
 
@@ -156,11 +160,22 @@ public class DemandeCongeService {
         String notificationMessage = "Votre demande de congé #" + id + " a été mise à jour : nouveau statut [" + nouveauStatut + "].";
         notificationService.createNotification(demande.getDemandeur().getIdUser(), notificationMessage);
 
+        // --- NEW: Asynchronous Email to Employee ---
+        if (demande.getDemandeur().getEmail() != null && !demande.getDemandeur().getEmail().trim().isEmpty()) {
+            String emailSubject = "Mise à jour de votre demande de congé #" + id;
+            String emailBody = "Bonjour " + demande.getDemandeur().getPrenom() + ",\n\n"
+                    + "Votre demande de congé du " + demande.getDateDebut() + " au " + demande.getDateFin() + " a été traitée.\n"
+                    + "Nouveau statut : " + nouveauStatut + "\n"
+                    + "Commentaire du validateur : " + (commentaire != null && !commentaire.trim().isEmpty() ? commentaire : "Aucun commentaire.") + "\n\n"
+                    + "Cordialement,\nService RH Somepharm";
+            emailService.sendSimpleEmail(demande.getDemandeur().getEmail(), emailSubject, emailBody);
+        }
+
         return demandeCongeRepository.save(demande);
     }
 
     @Transactional
-    public DemandeConge annulerDemande(Long id, String matricule) {
+    public DemandeConge annulerDemande(UUID id, String matricule) {
         DemandeConge demande = demandeCongeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
         

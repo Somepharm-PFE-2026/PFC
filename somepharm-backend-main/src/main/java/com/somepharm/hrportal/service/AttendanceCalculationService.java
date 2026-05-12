@@ -26,15 +26,18 @@ public class AttendanceCalculationService {
     private final UtilisateurRepository utilisateurRepository;
     private final DemandeCongeRepository congeRepository;
     private final SystemConfigRepository configRepository;
+    private final HolidayService holidayService;
 
     public AttendanceCalculationService(PointageRepository pointageRepository, 
                                         UtilisateurRepository utilisateurRepository, 
                                         DemandeCongeRepository congeRepository, 
-                                        SystemConfigRepository configRepository) {
+                                        SystemConfigRepository configRepository,
+                                        HolidayService holidayService) {
         this.pointageRepository = pointageRepository;
         this.utilisateurRepository = utilisateurRepository;
         this.congeRepository = congeRepository;
         this.configRepository = configRepository;
+        this.holidayService = holidayService;
     }
 
     public AttendanceReportDTO calculateMonthlyReport(String matricule, int year, int month) {
@@ -101,28 +104,35 @@ public class AttendanceCalculationService {
         daily.setOvertime(0);
         daily.setLateMinutes(0);
         
+        List<DemandeConge> conges = congeRepository.findByDemandeur_Matricule(employe.getMatricule());
+        boolean onLeave = conges.stream()
+                .filter(c -> "APPROUVE".equals(c.getStatutCycleVie()) || "APPROUVÉ".equals(c.getStatutCycleVie()))
+                .anyMatch(c -> !date.isBefore(c.getDateDebut()) && !date.isAfter(c.getDateFin()));
+        
+        boolean isWeekend = (date.getDayOfWeek().getValue() == 5 || date.getDayOfWeek().getValue() == 6);
+        boolean isHoliday = holidayService.isHoliday(date);
+        
         if (logs.isEmpty()) {
-            List<DemandeConge> conges = congeRepository.findByDemandeur_Matricule(employe.getMatricule());
-            boolean onLeave = conges.stream()
-                    .filter(c -> "APPROUVE".equals(c.getStatutCycleVie()) || "APPROUVÉ".equals(c.getStatutCycleVie()))
-                    .anyMatch(c -> !date.isBefore(c.getDateDebut()) && !date.isAfter(c.getDateFin()));
-            
             if (onLeave) {
                 daily.setStatus("CONGE");
                 double hours = Duration.between(thStart, thEnd).toMinutes() / 60.0;
                 daily.setHours(hours);
                 daily.setEntry("CONGÉ");
                 daily.setExit("CONGÉ");
+            } else if (isWeekend) {
+                daily.setStatus("WEEKEND");
+                daily.setEntry("-");
+                daily.setExit("-");
+            } else if (isHoliday) {
+                daily.setStatus("FERIE");
+                double hours = Duration.between(thStart, thEnd).toMinutes() / 60.0;
+                daily.setHours(hours);
+                daily.setEntry("FÉRIÉ");
+                daily.setExit("FÉRIÉ");
             } else {
-                if (date.getDayOfWeek().getValue() >= 6) {
-                    daily.setStatus("WEEKEND");
-                    daily.setEntry("-");
-                    daily.setExit("-");
-                } else {
-                    daily.setStatus("ABSENT");
-                    daily.setEntry("MISSING");
-                    daily.setExit("MISSING");
-                }
+                daily.setStatus("ABSENT");
+                daily.setEntry("MISSING");
+                daily.setExit("MISSING");
             }
             return daily;
         }
@@ -132,10 +142,17 @@ public class AttendanceCalculationService {
         Pointage exit = logs.stream().filter(p -> "SORTIE".equals(p.getTypePointage()))
                 .max((p1, p2) -> p1.getHorodatage().compareTo(p2.getHorodatage())).orElse(null);
 
+        // Fallback : Si l'employé est parti définitivement avec un Bon de Sortie, 
+        // la SORTIE_AUTORISEE compte comme son pointage de sortie final.
+        if (exit == null) {
+            exit = logs.stream().filter(p -> "SORTIE_AUTORISEE".equals(p.getTypePointage()))
+                    .max((p1, p2) -> p1.getHorodatage().compareTo(p2.getHorodatage())).orElse(null);
+        }
+
         if (entry != null) {
             daily.setEntry(entry.getHorodatage().toLocalTime().toString().substring(0, 5));
             LocalTime eTime = entry.getHorodatage().toLocalTime();
-            if (eTime.isAfter(thStart.plusMinutes(tolerance))) {
+            if (!isWeekend && !isHoliday && !onLeave && eTime.isAfter(thStart.plusMinutes(tolerance))) {
                 daily.setLateMinutes(Duration.between(thStart, eTime).toMinutes());
                 daily.setStatus("RETARD");
             } else {
@@ -149,7 +166,7 @@ public class AttendanceCalculationService {
         if (exit != null) {
             daily.setExit(exit.getHorodatage().toLocalTime().toString().substring(0, 5));
             LocalTime exTime = exit.getHorodatage().toLocalTime();
-            if (exTime.isAfter(thEnd)) {
+            if (!isWeekend && !isHoliday && !onLeave && exTime.isAfter(thEnd)) {
                 daily.setOvertime(Duration.between(thEnd, exTime).toMinutes() / 60.0);
             }
         } else {
@@ -161,7 +178,32 @@ public class AttendanceCalculationService {
             double grossHours = Duration.between(entry.getHorodatage(), exit.getHorodatage()).toMinutes() / 60.0;
             // Lunch deduction if worked > 5h
             if (grossHours > 5) grossHours -= 1.0;
-            daily.setHours(Math.max(0, Math.round(grossHours * 100.0) / 100.0));
+
+            // Déduction de l'absence non rémunérée (Bon de Sortie en milieu de journée)
+            Pointage sortieAuth = logs.stream().filter(p -> "SORTIE_AUTORISEE".equals(p.getTypePointage()))
+                    .max((p1, p2) -> p1.getHorodatage().compareTo(p2.getHorodatage())).orElse(null);
+            Pointage entreeAuth = logs.stream().filter(p -> "ENTREE_AUTORISEE".equals(p.getTypePointage()))
+                    .max((p1, p2) -> p1.getHorodatage().compareTo(p2.getHorodatage())).orElse(null);
+            
+            // On s'assure qu'il est revenu. (S'il n'est pas revenu, la sortieAuth sert déjà d'exit final, donc pas de déduction supplémentaire)
+            if (sortieAuth != null && entreeAuth != null && entreeAuth.getHorodatage().isAfter(sortieAuth.getHorodatage())) {
+                double absenceHours = Duration.between(sortieAuth.getHorodatage(), entreeAuth.getHorodatage()).toMinutes() / 60.0;
+                grossHours -= absenceHours;
+            }
+
+            double finalHours = Math.max(0, Math.round(grossHours * 100.0) / 100.0);
+            
+            if (onLeave) {
+                daily.setStatus("ANOMALIE");
+                daily.setHours(0);
+                daily.setOvertime(0);
+            } else if (isWeekend || isHoliday) {
+                daily.setStatus("HEURES_SUP");
+                daily.setHours(0);
+                daily.setOvertime(finalHours); // 100% overtime
+            } else {
+                daily.setHours(finalHours);
+            }
         }
 
         return daily;

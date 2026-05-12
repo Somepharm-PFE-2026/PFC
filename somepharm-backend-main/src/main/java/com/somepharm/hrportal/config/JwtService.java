@@ -45,8 +45,8 @@ public class JwtService {
         utilisateurRepository.findByMatricule(userDetails.getUsername())
                 .ifPresent(utilisateur -> {
                     extraClaims.put("solde", utilisateur.getSoldeConges());
-                    extraClaims.put("departement", utilisateur.getDepartement());
-                    extraClaims.put("poste", utilisateur.getPoste());
+                    extraClaims.put("departement", utilisateur.getDepartement() != null ? utilisateur.getDepartement().getNomDept() : "");
+                    extraClaims.put("poste", utilisateur.getPoste() != null ? utilisateur.getPoste().getTitre() : "");
                 });
 
         return generateToken(extraClaims, userDetails);
