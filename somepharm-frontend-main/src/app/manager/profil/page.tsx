@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { 
   User, Mail, Building, Shield, Phone, Briefcase, 
-  Calendar, Clock, Heart, UserCheck, Activity, Edit3
+  Calendar, Clock, Heart, UserCheck, Activity, Edit3,
+  Loader2, MapPin, CheckCircle2, ChevronRight
 } from "lucide-react";
 import ModificationRequestModal from "./components/ModificationRequestModal";
 
@@ -32,8 +33,17 @@ export default function ProfilPage() {
     }
   };
 
-  if (loading) return <div className="p-10 font-black animate-pulse text-blue-600">Initialisation du profil (Manager)...</div>;
-  if (!profil) return <div className="p-10 text-red-500 font-bold uppercase tracking-widest">Erreur de chargement.</div>;
+  if (loading) return (
+    <div className="flex h-[50vh] items-center justify-center">
+      <Loader2 size={32} className="animate-spin text-teal-500" />
+    </div>
+  );
+  
+  if (!profil) return (
+    <div className="bg-rose-50 border border-rose-100 p-6 rounded-2xl text-rose-700 font-bold uppercase text-xs">
+      Erreur de chargement du profil.
+    </div>
+  );
 
   const seniority = profil.dateEmbauche 
     ? (() => {
@@ -47,140 +57,138 @@ export default function ProfilPage() {
     : "Non renseignée";
 
   return (
-    <div className="p-10 bg-gray-50/50 min-h-screen">
+    <div className="space-y-6 lg:space-y-8 animate-in fade-in duration-700 pb-12">
       
-      {/* ═══ Header with Integrated Action ═══ */}
-      <div className="flex justify-between items-end mb-12">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
-          <div className="bg-amber-600/10 text-amber-600 px-4 py-1.5 rounded-full w-fit text-[10px] font-black uppercase tracking-widest mb-3 border border-amber-200">
-             Manager Profile Identity
+          <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2 border border-teal-100">
+             Identité Digitale
           </div>
-          <h1 className="text-4xl font-black text-gray-800 italic uppercase leading-none">Mon Profil</h1>
-          <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mt-2 px-1">Consultation et gestion de vos informations de pilotage</p>
+          <h1 className="text-2xl lg:text-3xl font-heading font-bold text-slate-900">Mon Profil</h1>
+          <p className="text-slate-500 text-sm mt-1">Gérez vos informations personnelles et professionnelles</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-3 px-8 py-4 bg-white border shadow-sm hover:shadow-lg hover:border-amber-300 rounded-2xl transition-all group"
+          className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 shadow-sm hover:border-teal-500 hover:text-teal-600 px-5 py-3 rounded-xl font-bold text-sm transition-all group active:scale-95"
         >
-          <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-all">
-            <Edit3 size={16} />
-          </div>
-          <span className="text-[11px] font-black text-gray-700 uppercase tracking-widest">Mettre à jour</span>
+          <Edit3 size={18} className="text-slate-400 group-hover:text-teal-600" />
+          <span>Mettre à jour</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
         
-        {/* ═══ Left Column: Identity Sidebar ═══ */}
-        <div className="lg:col-span-4 space-y-8">
-           <div className="bg-white rounded-[3rem] p-10 border border-gray-100 shadow-sm text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-amber-50/50 to-transparent"></div>
+        {/* Left Column: Profile Card */}
+        <div className="lg:col-span-4 space-y-6">
+           <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm text-center relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-slate-50 to-transparent"></div>
               
               <div className="relative mb-6">
                 {profil.photoUrl ? (
-                  <img src={profil.photoUrl} className="w-32 h-32 rounded-[2.5rem] mx-auto object-cover border-4 border-white shadow-xl" />
+                  <img src={profil.photoUrl} className="w-28 h-28 rounded-3xl mx-auto object-cover border-4 border-white shadow-md" />
                 ) : (
-                  <div className="w-32 h-32 bg-amber-600 rounded-[2.5rem] mx-auto flex items-center justify-center text-5xl font-black text-white shadow-xl border-4 border-white uppercase">
+                  <div className="w-28 h-28 bg-teal-600 rounded-3xl mx-auto flex items-center justify-center text-3xl font-bold text-white shadow-md border-4 border-white uppercase">
                     {profil.prenom?.charAt(0)}{profil.nom?.charAt(0)}
                   </div>
                 )}
-                <div className="absolute -bottom-2 -right-2 bg-emerald-500 w-8 h-8 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-                   <ShieldCheck size={12} className="text-white" />
+                <div className="absolute -bottom-1 right-[30%] lg:right-[25%] bg-emerald-500 w-6 h-6 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
+                  <CheckCircle2 size={12} className="text-white" />
                 </div>
               </div>
 
-              <h2 className="text-2xl font-black text-gray-800 uppercase tracking-tight mb-1">{profil.prenom} {profil.nom}</h2>
-              <p className="text-amber-600 font-black text-[10px] uppercase tracking-widest mb-6">{profil.poste || "Poste de Management"}</p>
+              <h2 className="text-xl font-heading font-bold text-slate-900 mb-1">{profil.prenom} {profil.nom}</h2>
+              <p className="text-teal-600 font-bold text-xs uppercase tracking-wider mb-6">{profil.poste || "Poste non défini"}</p>
               
-              <div className="space-y-3 pt-6 border-t border-gray-50">
-                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-tighter">
-                   <span className="text-gray-400">Matricule Manager</span>
-                   <span className="text-gray-800">#{profil.matricule}</span>
+              <div className="space-y-3 pt-6 border-t border-slate-50">
+                <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-tight">
+                   <span className="text-slate-400">Matricule</span>
+                   <span className="text-slate-700">#{profil.matricule}</span>
                 </div>
-                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-tighter">
-                   <span className="text-gray-400">Département</span>
-                   <span className="text-gray-800">{profil.departement || "Sompharm"}</span>
+                <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-tight">
+                   <span className="text-slate-400">Département</span>
+                   <span className="text-slate-700">{profil.departement || "Non assigné"}</span>
                 </div>
-                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-tighter">
-                   <span className="text-gray-400">Rôle</span>
-                   <span className="text-amber-600 bg-amber-50 px-3 py-1 rounded-lg">MANAGER</span>
+                <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-tight">
+                   <span className="text-slate-400">Statut</span>
+                   <span className="text-emerald-600 font-bold">Actif</span>
                 </div>
               </div>
            </div>
 
-           <div className="bg-gray-900 rounded-[3rem] p-8 text-white relative overflow-hidden shadow-2xl">
-              <UserCheck size={120} className="absolute -right-8 -bottom-8 opacity-10" />
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Hiérarchie Supérieure</p>
+           <div className="bg-slate-900 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg">
+              <UserCheck size={80} className="absolute -right-4 -bottom-4 opacity-10" />
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Manager Direct</p>
               {profil.managerDirect ? (
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-xl font-black">
+                <div className="flex items-center gap-4 relative z-10">
+                  <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-lg font-bold">
                      {profil.managerDirect.prenom?.charAt(0)}{profil.managerDirect.nom?.charAt(0)}
                   </div>
                   <div>
-                    <p className="font-black text-white text-lg leading-tight">{profil.managerDirect.prenom} {profil.managerDirect.nom}</p>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">N+1 Hiérarchique</p>
+                    <p className="font-bold text-white text-base leading-tight">{profil.managerDirect.prenom} {profil.managerDirect.nom}</p>
+                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-1">Responsable Hiérarchique</p>
                   </div>
                 </div>
               ) : (
-                <p className="italic text-gray-500 text-sm font-bold">Direction Générale / Aucun N+1</p>
+                <p className="italic text-slate-400 text-xs">Aucun manager assigné</p>
               )}
            </div>
         </div>
 
-        {/* ═══ Right Column: Detailed Sections ═══ */}
-        <div className="lg:col-span-8 space-y-8">
+        {/* Right Column: Details */}
+        <div className="lg:col-span-8 space-y-6 lg:space-y-8">
            
-           {/* Summary Cards Row */}
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center gap-6 group hover:border-amber-100 transition-colors">
-                 <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-3xl flex items-center justify-center">
-                    <Calendar size={28} />
+           {/* Summary Grid */}
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5">
+                 <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center">
+                    <Calendar size={24} />
                  </div>
                  <div>
-                    <p className="text-2xl font-black text-gray-800">{seniority}</p>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ancienneté Somepharm</p>
+                    <p className="text-xl font-heading font-bold text-slate-900">{seniority}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ancienneté</p>
                  </div>
               </div>
-              <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center gap-6">
-                 <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center">
-                    <Heart size={28} />
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-5">
+                 <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center">
+                    <Heart size={24} />
                  </div>
                  <div>
-                    <p className="text-2xl font-black text-gray-800 uppercase tracking-tighter">{profil.situationFamiliale || "NON RENSEIGNÉE"}</p>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Situation Familiale</p>
+                    <p className="text-xl font-heading font-bold text-slate-900 uppercase">{profil.situationFamiliale || "—"}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Situation Familiale</p>
                  </div>
               </div>
            </div>
 
-           {/* Professional & Personal Data Blocks */}
-           <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden">
-              <div className="p-10 border-b border-gray-50 flex items-center gap-4 bg-gray-50/30">
-                 <div className="w-2 h-8 bg-amber-600 rounded-full"></div>
-                 <h3 className="text-xl font-black text-gray-800 uppercase italic tracking-tighter">Informations Managériales</h3>
+           {/* Detailed Info Section */}
+           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-slate-50 flex items-center gap-3">
+                 <div className="w-1.5 h-6 bg-teal-600 rounded-full"></div>
+                 <h3 className="font-heading font-bold text-slate-800">Informations Complémentaires</h3>
               </div>
               
-              <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-y-12 gap-x-12">
-                 <InfoItem icon={<Mail size={20}/>} label="Email Professionnel" value={profil.email} activeColor="group-hover:bg-amber-600" />
-                 <InfoItem icon={<Phone size={20}/>} label="Téléphone" value={profil.telephone || "Non renseigné"} activeColor="group-hover:bg-amber-600" />
-                 <InfoItem icon={<Activity size={20}/>} label="Date de Naissance" value={profil.dateNaissance ? new Date(profil.dateNaissance).toLocaleDateString('fr-FR') : "—"} activeColor="group-hover:bg-amber-600" />
-                 <InfoItem icon={<Calendar size={20}/>} label="Date d'Embauche" value={profil.dateEmbauche ? new Date(profil.dateEmbauche).toLocaleDateString('fr-FR') : "—"} activeColor="group-hover:bg-amber-600" />
-                 <InfoItem icon={<Briefcase size={20}/>} label="Département" value={profil.departement || "Management"} activeColor="group-hover:bg-amber-600" />
-                 <InfoItem icon={<Shield size={20}/>} label="Niveau d'Accès" value={profil.role?.nomRole || "Manager"} activeColor="group-hover:bg-amber-600" />
+              <div className="p-6 lg:p-8 grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+                 <InfoItem icon={<Mail size={18}/>} label="Email Professionnel" value={profil.email} />
+                 <InfoItem icon={<Phone size={18}/>} label="Téléphone" value={profil.telephone || "Non renseigné"} />
+                 <InfoItem icon={<Activity size={18}/>} label="Date de Naissance" value={profil.dateNaissance ? new Date(profil.dateNaissance).toLocaleDateString() : "—"} />
+                 <InfoItem icon={<Calendar size={18}/>} label="Date d'Embauche" value={profil.dateEmbauche ? new Date(profil.dateEmbauche).toLocaleDateString() : "—"} />
+                 <InfoItem icon={<Briefcase size={18}/>} label="Poste Actuel" value={profil.poste || "Non défini"} />
+                 <InfoItem icon={<Shield size={18}/>} label="Rôle Système" value={profil.role?.nomRole?.replace('ROLE_', '') || "Employé"} />
               </div>
 
               {/* Emergency Region */}
-              <div className="mx-10 mb-10 p-8 bg-rose-50/50 rounded-[2rem] border border-rose-100 flex items-center justify-between group">
-                 <div className="flex items-center gap-6">
-                    <div className="w-14 h-14 bg-rose-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-rose-200">
-                       <Heart size={24} />
+              <div className="m-6 p-6 bg-rose-50/50 rounded-xl border border-rose-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                 <div className="flex items-center gap-4 text-center sm:text-left">
+                    <div className="w-12 h-12 bg-rose-600 text-white rounded-xl flex items-center justify-center shadow-md">
+                       <Heart size={20} />
                     </div>
                     <div>
-                       <p className="text-[10px] font-black text-rose-400 uppercase tracking-[0.2em] mb-1">Contact d'Urgence</p>
-                       <p className="text-xl font-black text-rose-900 uppercase tracking-tighter">{profil.contactUrgence || "À renseigner"}</p>
+                       <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Contact d'Urgence</p>
+                       <p className="text-lg font-bold text-rose-900">{profil.contactUrgence || "À renseigner"}</p>
                     </div>
                  </div>
-                 <div className="text-right">
-                    <p className="text-[10px] font-bold text-rose-300 italic">Données de sécurité prioritaires</p>
+                 <div className="hidden sm:block text-right">
+                    <p className="text-[10px] font-semibold text-rose-400 italic">Données sécurisées</p>
                  </div>
               </div>
            </div>
@@ -197,34 +205,15 @@ export default function ProfilPage() {
   );
 }
 
-function ShieldCheck({ size, className }: { size: number, className: string }) {
+function InfoItem({ icon, label, value }: { icon: any, label: string, value: string }) {
   return (
-    <svg 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="3" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
-  );
-}
-
-function InfoItem({ icon, label, value, activeColor }: { icon: any, label: string, value: string, activeColor: string }) {
-  return (
-    <div className="flex items-start gap-4 group">
-       <div className={`p-3 bg-gray-100 text-gray-400 ${activeColor} group-hover:text-white rounded-xl transition-all duration-300 shadow-sm border border-transparent group-hover:border-white/20`}>
+    <div className="flex items-start gap-4">
+       <div className="p-2.5 bg-slate-50 text-slate-400 rounded-lg">
           {icon}
        </div>
        <div>
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{label}</p>
-          <p className="text-sm font-bold text-gray-700 tracking-tight">{value}</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
+          <p className="text-sm font-semibold text-slate-700 truncate max-w-[200px]" title={value}>{value}</p>
        </div>
     </div>
   );

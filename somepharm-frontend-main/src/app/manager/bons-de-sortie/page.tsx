@@ -1,13 +1,27 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, Clock, ArrowRight, CheckCircle2, QrCode as qrIcon, Download, Info, XCircle, AlertCircle } from "lucide-react";
+import { 
+  Shield, 
+  Clock, 
+  CheckCircle2, 
+  Download, 
+  Info, 
+  XCircle, 
+  AlertCircle, 
+  RefreshCw,
+  Plus,
+  ChevronRight,
+  FileText
+} from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { useUI } from "../../../context/UIContext";
+import ConfirmDialog from "../../../components/ui/ConfirmDialog";
 
 export default function BonDeSortiePage() {
   const router = useRouter();
+  const { addToast } = useUI();
   
-  // New unified state matching DemandeModal
   const [formData, setFormData] = useState({
     heureDebut: "09",
     minuteDebut: "00",
@@ -19,13 +33,14 @@ export default function BonDeSortiePage() {
   const [sorties, setSorties] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [config, setConfig] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cancelDialog, setCancelDialog] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return router.push("/login");
 
-    // Simple decoding to get the matricule for the QR content later
     try {
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -33,10 +48,31 @@ export default function BonDeSortiePage() {
         setUser(JSON.parse(jsonPayload));
     } catch (e) { console.error(e); }
 
+    fetchConfig(token);
     fetchMesSorties(token);
   }, [router]);
 
-  // Strict minute synchronization
+  const fetchConfig = async (token: string) => {
+    try {
+        const res = await fetch("http://localhost:8080/api/config/system", {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+            const data = await res.json();
+            setConfig(data);
+            if (data.workingHoursStart) {
+                const startH = data.workingHoursStart.split(':')[0];
+                const endH = (parseInt(startH) + 1).toString().padStart(2, '0');
+                setFormData(prev => ({ ...prev, heureDebut: startH, heureFin: endH }));
+            }
+        } else {
+            setConfig({ workingHoursStart: "08:00", workingHoursEnd: "17:00" });
+        }
+    } catch (err) {
+        setConfig({ workingHoursStart: "08:00", workingHoursEnd: "17:00" });
+    }
+  }
+
   useEffect(() => {
     if (formData.minuteFin !== formData.minuteDebut) {
         setFormData(prev => ({ ...prev, minuteFin: prev.minuteDebut }));
@@ -45,19 +81,14 @@ export default function BonDeSortiePage() {
 
   const fetchMesSorties = async (token: string) => {
     try {
-      // Unified endpoint
       const res = await fetch("http://localhost:8080/api/demandes-documents/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
-        // Filter only for Exit Permits
-        const filtered = data.filter((d: any) => d.typeDocument === "BON_SORTIE");
-        setSorties(filtered);
+        setSorties(data.filter((d: any) => d.typeDocument === "BON_SORTIE"));
       }
-    } catch (err) {
-      console.error("Erreur chargement sorties:", err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const demanderSortie = async (e: React.FormEvent) => {
@@ -68,6 +99,7 @@ export default function BonDeSortiePage() {
     
     try {
       const payload = {
+          type: "DOCUMENT",
           typeDocument: "BON_SORTIE",
           description: formData.motif,
           heureDebut: `${formData.heureDebut}:${formData.minuteDebut}`,
@@ -80,10 +112,11 @@ export default function BonDeSortiePage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}` 
         },
-        body: JSON.stringify({ ...payload, type: "DOCUMENT" })
+        body: JSON.stringify(payload)
       });
       
       if (res.ok) {
+        addToast("success", "Demande de sortie envoyée");
         fetchMesSorties(token || "");
         setFormData({ ...formData, motif: "" });
       } else {
@@ -91,27 +124,28 @@ export default function BonDeSortiePage() {
         setError(errData.message || "Une erreur est survenue.");
       }
     } catch (err) {
-      console.error("Erreur demande:", err);
-      setError("Erreur réseau ou serveur.");
+      setError("Erreur technique lors de l'envoi.");
     } finally {
       setLoading(false);
     }
   };
 
-  const annulerSortie = async (id: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir annuler cette demande ?")) return;
+  const confirmCancel = async () => {
+    if (!cancelDialog) return;
     const token = localStorage.getItem("token");
     try {
-        const res = await fetch(`http://localhost:8080/api/demandes-documents/${id}/annuler`, {
+        const res = await fetch(`http://localhost:8080/api/demandes-documents/${cancelDialog}/annuler`, {
             method: "PUT",
             headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
+            addToast("success", "Demande annulée");
             fetchMesSorties(token || "");
+            setCancelDialog(null);
+        } else {
+            addToast("error", "Impossible d'annuler");
         }
-    } catch (err) {
-        console.error("Erreur annulation:", err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const handleDownload = async (id: string) => {
@@ -129,221 +163,241 @@ export default function BonDeSortiePage() {
             document.body.appendChild(a);
             a.click();
             a.remove();
+            addToast("success", "Téléchargement lancé");
         }
-    } catch (e) {
-        console.error(e);
-    }
+    } catch (e) { console.error(e); }
   }
 
+  const getStartHours = () => {
+    const cfg = config || { workingHoursStart: "08:00", workingHoursEnd: "18:00" };
+    const start = parseInt(cfg.workingHoursStart?.split(':')[0]) || 8;
+    const end = parseInt(cfg.workingHoursEnd?.split(':')[0]) || 18;
+    const hours = [];
+    for (let h = start; h < end; h++) {
+        hours.push(h.toString().padStart(2, '0'));
+    }
+    return hours;
+  };
+
+  const getEndHours = () => {
+    const cfg = config || { workingHoursEnd: "18:00" };
+    const start = parseInt(formData.heureDebut) || 8;
+    const end = parseInt(cfg.workingHoursEnd?.split(':')[0]) || 18;
+    const hours = [];
+    for (let h = start + 1; h <= end; h++) {
+        hours.push(h.toString().padStart(2, '0'));
+    }
+    return hours;
+  };
+
   return (
-    <div className="p-8 bg-gray-50 min-h-screen font-sans">
-      <div className="max-w-[1400px] mx-auto">
-        <div className="flex justify-between items-center mb-10">
-        <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-black text-gray-800 italic uppercase tracking-tighter">Bons de Sortie</h1>
-            <span className="bg-blue-600 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest animate-pulse">Live QR</span>
+    <div className="space-y-6 lg:space-y-8 animate-in fade-in duration-500 pb-12">
+      
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-heading font-bold text-slate-900">Bons de Sortie</h1>
+          <p className="text-slate-500 text-sm mt-1">Gérez vos autorisations de sortie temporaires</p>
         </div>
-        <div className="bg-white shadow-sm border px-6 py-2 rounded-2xl font-bold text-blue-600 flex items-center gap-2">
-          <Shield size={18} /> Digital Verification
+        <div className="inline-flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-teal-600 font-bold text-xs shadow-sm">
+          <Shield size={16} /> 
+          <span>Vérification Digitale</span>
         </div>
       </div>
 
-      <div className="flex flex-col 2xl:flex-row gap-8 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8 items-start">
         
-        {/* --- FORMULAIRE DE DEMANDE --- */}
-        <div className="w-full 2xl:w-1/3 order-1">
-          <div className="bg-white rounded-[2rem] shadow-xl border p-8 2xl:sticky 2xl:top-8">
+        {/* Form Section */}
+        <div className="xl:col-span-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 lg:p-8">
             <div className="flex items-center gap-3 mb-6">
-              <div className="bg-blue-600 p-3 rounded-xl text-white shadow-md">
-                <Clock size={20} />
+              <div className="bg-teal-600 p-2.5 rounded-xl text-white">
+                <Plus size={20} />
               </div>
-              <h2 className="text-xl font-black text-gray-800 uppercase">Nouvelle Sortie</h2>
+              <h2 className="text-lg font-heading font-bold text-slate-800">Nouvelle Sortie</h2>
             </div>
 
             {error && (
-                <div className="mb-6 bg-red-50 border-2 border-red-100 p-4 rounded-2xl flex items-start gap-3 text-red-600 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <AlertCircle className="shrink-0 mt-0.5" size={18} />
-                    <p className="text-xs font-bold leading-relaxed">{error}</p>
+                <div className="mb-6 bg-rose-50 border border-rose-100 p-3 rounded-xl flex items-start gap-2 text-rose-600">
+                    <AlertCircle className="shrink-0 mt-0.5" size={16} />
+                    <p className="text-[10px] font-bold uppercase tracking-wider">{error}</p>
                 </div>
             )}
 
-            <form onSubmit={demanderSortie} className="space-y-6">
-              
-              <div className="flex flex-col gap-6">
-                <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-1">Période de Sortie (Début)</label>
-                    <div className="flex gap-3">
-                        <div className="relative flex-1">
-                            <select 
-                                className="w-full bg-white border-2 border-gray-100 p-3 rounded-xl font-bold text-gray-700 outline-none focus:border-blue-500 shadow-sm appearance-none"
-                                value={formData.heureDebut}
-                                onChange={(e) => setFormData({...formData, heureDebut: e.target.value})}
-                            >
-                                {Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0')).map(h => (
-                                    <option key={h} value={h}>{h} Heures</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="relative flex-1">
-                            <select 
-                                className="w-full bg-white border-2 border-gray-100 p-3 rounded-xl font-bold text-gray-700 outline-none focus:border-blue-500 shadow-sm appearance-none"
-                                value={formData.minuteDebut}
-                                onChange={(e) => setFormData({...formData, minuteDebut: e.target.value})}
-                            >
-                                <option value="00">00 Min</option>
-                                <option value="30">30 Min</option>
-                            </select>
-                        </div>
+            <form onSubmit={demanderSortie} className="space-y-5">
+              <div className="space-y-4">
+                <div className="bg-slate-50 p-4 rounded-xl space-y-3">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Début de la sortie</label>
+                    <div className="grid grid-cols-2 gap-3">
+                        <select 
+                            className="w-full bg-white border border-slate-200 p-2.5 rounded-lg font-bold text-slate-700 outline-none focus:border-teal-500 shadow-sm cursor-pointer"
+                            value={formData.heureDebut}
+                            onChange={(e) => {
+                                const h = e.target.value;
+                                setFormData({...formData, heureDebut: h, heureFin: (parseInt(h)+1).toString().padStart(2, '0')});
+                            }}
+                        >
+                            {getStartHours().map(h => (
+                                <option key={h} value={h}>{h} h</option>
+                            ))}
+                        </select>
+                        <select 
+                            className="w-full bg-white border border-slate-200 p-2.5 rounded-lg font-bold text-slate-700 outline-none focus:border-teal-500 shadow-sm cursor-pointer"
+                            value={formData.minuteDebut}
+                            onChange={(e) => setFormData({...formData, minuteDebut: e.target.value})}
+                        >
+                            <option value="00">00 min</option>
+                            <option value="30">30 min</option>
+                        </select>
                     </div>
                 </div>
 
-                <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-1">Période de Sortie (Fin prévue)</label>
-                    <div className="flex gap-3">
-                        <div className="relative flex-1">
-                            <select 
-                                className="w-full bg-white border-2 border-gray-100 p-3 rounded-xl font-bold text-gray-700 outline-none focus:border-blue-500 shadow-sm appearance-none"
-                                value={formData.heureFin}
-                                onChange={(e) => setFormData({...formData, heureFin: e.target.value})}
-                            >
-                                {Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0')).map(h => (
-                                    <option key={h} value={h}>{h} Heures</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="relative flex-1">
-                            <select 
-                                className="w-full bg-gray-200 border-2 border-gray-200 p-3 rounded-xl font-bold text-gray-400 cursor-not-allowed appearance-none"
-                                value={formData.minuteFin}
-                                disabled
-                            >
-                                <option value="00">00 Min</option>
-                                <option value="30">30 Min</option>
-                            </select>
-                        </div>
+                <div className="bg-slate-50 p-4 rounded-xl space-y-3">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Fin prévue</label>
+                    <div className="grid grid-cols-2 gap-3">
+                        <select 
+                            className="w-full bg-white border border-slate-200 p-2.5 rounded-lg font-bold text-slate-700 outline-none focus:border-teal-500 shadow-sm cursor-pointer"
+                            value={formData.heureFin}
+                            onChange={(e) => setFormData({...formData, heureFin: e.target.value})}
+                        >
+                            {getEndHours().map(h => (
+                                <option key={h} value={h}>{h} h</option>
+                            ))}
+                        </select>
+                        <select 
+                            className="w-full bg-slate-200 border border-slate-200 p-2.5 rounded-lg font-bold text-slate-400 cursor-not-allowed"
+                            value={formData.minuteFin}
+                            disabled
+                        >
+                            <option value="00">00 min</option>
+                            <option value="30">30 min</option>
+                        </select>
                     </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                   Motif de la sortie
-                </label>
-                <textarea
-                  value={formData.motif}
-                  onChange={(e) => setFormData({...formData, motif: e.target.value})}
-                  className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl text-sm font-medium text-gray-700 min-h-[100px] focus:outline-none focus:border-blue-500 transition-all resize-none"
-                  placeholder="Rendez-vous médical, urgent..."
-                  required
-                />
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Motif</label>
+                  <textarea
+                    value={formData.motif}
+                    onChange={(e) => setFormData({...formData, motif: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl text-sm font-semibold text-slate-700 min-h-[80px] focus:outline-none focus:border-teal-500 focus:bg-white transition-all resize-none"
+                    placeholder="Raison de la sortie..."
+                    required
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white font-black uppercase tracking-widest text-xs py-5 rounded-2xl shadow-lg hover:bg-blue-700 hover:-translate-y-1 transition-all disabled:opacity-50"
+                className="w-full bg-teal-600 text-white font-bold uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-lg shadow-teal-600/20 hover:bg-teal-700 active:scale-95 transition-all disabled:opacity-50"
               >
-                {loading ? "Chargement..." : "Demander l'Autorisation"}
+                {loading ? "Chargement..." : "Soumettre la demande"}
               </button>
             </form>
           </div>
         </div>
 
-        {/* --- HISTORIQUE DES SORTIES --- */}
-        <div className="w-full 2xl:w-2/3 order-2 space-y-4">
-          <div className="flex items-center justify-between pl-2">
-            <h2 className="text-lg font-black text-gray-400 uppercase tracking-widest">Historique des sorties</h2>
-            <div className="text-xs font-bold text-gray-400 flex items-center gap-1 italic"><Info size={14}/> Les codes QR s'activent après validation.</div>
+        {/* List Section */}
+        <div className="xl:col-span-8 space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Historique</h2>
+            <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5 italic">
+              <Info size={14} className="text-teal-500" /> Codes QR actifs après validation
+            </div>
           </div>
-          
+
           {sorties.length === 0 ? (
-             <div className="bg-white rounded-[2rem] border border-dashed border-gray-300 p-16 text-center">
-                <Shield className="mx-auto text-gray-200 mb-4" size={64} />
-                <p className="text-gray-400 font-black uppercase tracking-tight">Aucun bon de sortie actif</p>
-             </div>
+            <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center flex flex-col items-center gap-3">
+               <Shield size={48} className="text-slate-100" />
+               <p className="text-slate-400 font-semibold text-sm italic">Aucun bon de sortie enregistré</p>
+            </div>
           ) : (
-            sorties.map((sortie, index) => {
-              const isApproved = sortie.statutCycleVie === 'APPROUVE' || sortie.statutCycleVie === 'APPROUVÉ';
-              const isCancelled = sortie.statutCycleVie === 'ANNULÉ';
-              const isCancellable = !isApproved && !isCancelled && !sortie.statutCycleVie.includes('REFUSE');
-              const qrData = `BON_SORTIE|${user?.sub || 'EMP'}|${new Date(sortie.dateSoumission).toLocaleDateString()}|${sortie.heureDebut}-${sortie.heureFin}|VALIDATED_SOMEPHARM`;
-              
-              return (
-              <div key={sortie.idRequete} className="bg-white rounded-[2rem] shadow-sm border p-8 flex flex-col md:flex-row items-center gap-8 justify-between transition-all hover:shadow-xl hover:border-blue-100 group">
+            <div className="space-y-4">
+              {sorties.map((sortie) => {
+                const isApproved = sortie.statutCycleVie === 'APPROUVE' || sortie.statutCycleVie === 'APPROUVÉ';
+                const isCancelled = sortie.statutCycleVie === 'ANNULÉ' || sortie.statutCycleVie === 'ANNULE';
+                const isRefused = sortie.statutCycleVie?.includes('REFUSE') || sortie.statutCycleVie?.includes('REFUSÉ');
+                const isCancellable = !isApproved && !isCancelled && !isRefused;
+                const qrData = `BON_SORTIE|${user?.sub || 'EMP'}|${new Date(sortie.dateSoumission).toLocaleDateString()}|${sortie.heureDebut}-${sortie.heureFin}|VALIDATED_SOMEPHARM`;
                 
-                <div className="flex-1 space-y-3 text-center md:text-left">
-                  <div className="flex items-center justify-center md:justify-start gap-3">
-                    <span className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-xl border flex items-center gap-1 ${
-                      isApproved ? 'bg-green-50 text-green-600 border-green-100 shadow-sm shadow-green-50' :
-                      sortie.statutCycleVie.includes('REFUSE') ? 'bg-red-50 text-red-600 border-red-100' :
-                      'bg-amber-50 text-amber-600 border-amber-100 animate-pulse'
-                    }`}>
-                      {isApproved && <CheckCircle2 size={12}/>}
-                      {sortie.statutCycleVie}
-                    </span>
-                    <span className="text-gray-300 text-xs font-black italic uppercase tracking-tighter">REF: #{sortie.idRequete}</span>
+                return (
+                  <div key={sortie.idRequete} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col sm:flex-row items-center gap-6 justify-between transition-all hover:shadow-md group">
+                    
+                    <div className="flex-1 space-y-4 text-center sm:text-left min-w-0">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                        <span className={`px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg border flex items-center gap-1.5 ${
+                          isApproved ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                          isCancelled ? 'bg-slate-50 text-slate-400 border-slate-200' :
+                          isRefused ? 'bg-rose-50 text-rose-700 border-rose-100' :
+                          'bg-amber-50 text-amber-700 border-amber-100 animate-pulse'
+                        }`}>
+                          {isApproved ? <CheckCircle2 size={12}/> : <Clock size={12}/>}
+                          {sortie.statutCycleVie.replace(/_/g, ' ')}
+                        </span>
+                        <span className="text-slate-300 text-[10px] font-bold uppercase tabular-nums">#{sortie.idRequete}</span>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-2xl font-heading font-bold text-slate-900 tracking-tight flex items-center justify-center sm:justify-start gap-2">
+                          {sortie.heureDebut} <ChevronRight size={16} className="text-slate-300" /> {sortie.heureFin}
+                        </h3>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Date: {new Date(sortie.dateSoumission).toLocaleDateString()}</p>
+                      </div>
+      
+                      <div className="bg-slate-50 p-3 rounded-xl border-l-4 border-slate-200">
+                        <p className="text-xs font-semibold text-slate-600 line-clamp-2" title={sortie.description}>
+                          {sortie.description || "Aucun motif précisé."}
+                        </p>
+                      </div>
+      
+                      {isCancellable && (
+                        <button 
+                          onClick={() => setCancelDialog(sortie.idRequete)}
+                          className="text-[10px] font-bold text-rose-500 uppercase hover:text-rose-700 hover:underline flex items-center gap-1 mx-auto sm:mx-0"
+                        >
+                          <XCircle size={14} /> Annuler la demande
+                        </button>
+                      )}
+                    </div>
+     
+                    <div className="shrink-0 flex flex-col items-center gap-3">
+                      {isApproved ? (
+                        <div className="relative group/qr p-3 bg-white border border-slate-100 rounded-2xl shadow-sm transition-all hover:bg-slate-50">
+                          <QRCodeSVG value={qrData} size={100} level="H" />
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/qr:opacity-100 transition-opacity bg-slate-900/10 rounded-2xl">
+                            <button 
+                              onClick={() => handleDownload(sortie.idRequete)}
+                              className="p-2 bg-white text-teal-600 rounded-full shadow-lg hover:scale-110 transition-all"
+                            >
+                              <Download size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className={`w-[124px] h-[124px] rounded-2xl flex flex-col items-center justify-center p-4 text-center border ${isCancelled ? 'bg-slate-50 border-slate-100' : 'bg-slate-50 border-dashed border-slate-200'}`}>
+                           {isCancelled ? <XCircle size={24} className="text-slate-200 mb-1" /> : <Clock size={24} className="text-slate-200 mb-1 animate-pulse" />}
+                           <p className="text-[8px] font-bold text-slate-400 uppercase leading-tight">{isCancelled ? "Annulée" : "En cours"}</p>
+                        </div>
+                      )}
+                      {isApproved && <span className="text-[9px] font-bold text-teal-600 uppercase tracking-widest bg-teal-50 px-2.5 py-1 rounded-full border border-teal-100">Prêt</span>}
+                    </div>
                   </div>
-                  
-                  <div className="flex flex-col">
-                      <h3 className="text-2xl font-black text-gray-900 tracking-tighter">
-                        {sortie.heureDebut} <span className="text-blue-300 mx-1">→</span> {sortie.heureFin}
-                      </h3>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Période du {new Date(sortie.dateSoumission).toLocaleDateString()}</p>
-                  </div>
-
-                  <p className="text-sm font-medium text-gray-500 bg-gray-50 p-4 rounded-xl border-l-4 border-gray-200">
-                    {sortie.description || "Aucun motif précisé."}
-                  </p>
-
-                  {isCancellable && (
-                      <button 
-                        onClick={() => annulerSortie(sortie.idRequete)}
-                        className="flex items-center gap-2 text-[10px] font-black text-red-400 uppercase hover:text-red-600 transition-colors mt-2"
-                      >
-                        <XCircle size={14} className="lucide lucide-x-circle" /> Annuler la demande
-                      </button>
-                  )}
-                </div>
-
-                {/* --- QR CODE SECTION (APPROUVÉ) --- */}
-                <div className="flex flex-col items-center justify-center gap-4">
-                    {isApproved ? (
-                        <div className="relative group/qr p-4 bg-white border-2 border-gray-100 rounded-[2rem] shadow-inner transition-all hover:bg-gray-50">
-                            <QRCodeSVG 
-                                value={qrData}
-                                size={120}
-                                level="H"
-                                includeMargin={false}
-                                className="transition-transform group-hover/qr:scale-110 duration-500"
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/qr:opacity-100 transition-opacity bg-black/5 rounded-[2rem]">
-                                <Download 
-                                    size={24} 
-                                    className="text-blue-600 bg-white p-2 rounded-full cursor-pointer shadow-lg"
-                                    onClick={() => handleDownload(sortie.idRequete)}
-                                />
-                            </div>
-                        </div>
-                    ) : isCancelled ? (
-                        <div className="w-[152px] h-[152px] bg-gray-50 border-2 border-gray-100 rounded-[2rem] flex flex-col items-center justify-center text-gray-200 p-6 text-center">
-                            <XCircle size={32} className="mb-2 opacity-10 lucide lucide-x-circle" />
-                            <p className="text-[9px] font-black uppercase leading-tight">Demande Annulée</p>
-                        </div>
-                    ) : (
-                        <div className="w-[152px] h-[152px] bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2rem] flex flex-col items-center justify-center text-gray-300 p-6 text-center">
-                            <Clock size={32} className="mb-2 opacity-20" />
-                            <p className="text-[9px] font-black uppercase leading-tight">En attente de validation RH</p>
-                        </div>
-                    )}
-                    {isApproved && <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full">Prêt pour scan</p>}
-                </div>
-
-              </div>
-            )})
+                );
+              })}
+            </div>
           )}
         </div>
-        </div>
       </div>
+
+      <ConfirmDialog 
+        isOpen={!!cancelDialog}
+        onClose={() => setCancelDialog(null)}
+        onConfirm={confirmCancel}
+        title="Annuler le bon"
+        description="Voulez-vous vraiment annuler ce bon de sortie ?"
+        isDestructive={true}
+      />
     </div>
   );
 }

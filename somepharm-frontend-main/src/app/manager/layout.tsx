@@ -11,10 +11,17 @@ export default function ManagerLayout({
   const { isSidebarRetracted } = useUI();
 
   return (
-    <div className="bg-gray-50 flex min-h-screen overflow-x-hidden">
+    <div className="bg-slate-50 flex min-h-screen overflow-x-hidden font-sans">
       <UrgentAnnouncementPopup />
       <SidebarManager />
-      <main className={`flex-1 min-h-screen p-8 animate-in fade-in duration-700 transition-all duration-500 ${isSidebarRetracted ? 'ml-32' : 'ml-96'}`}>
+      
+      {/* 
+        Mobile: pt-20 (to clear the top bar), no left margin
+        Desktop: lg:pt-8, ml depends on sidebar state
+      */}
+      <main className={`flex-1 min-h-screen p-4 pt-20 lg:p-8 animate-in fade-in duration-700 transition-all ease-in-out
+        ${isSidebarRetracted ? 'lg:ml-32' : 'lg:ml-96'}
+      `}>
         {children}
       </main>
     </div>

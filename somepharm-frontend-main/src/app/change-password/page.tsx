@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldAlert, Lock, Eye, EyeOff, CheckCircle2, ArrowRight } from "lucide-react";
+import { ShieldAlert, Lock, Eye, EyeOff, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 
 
@@ -80,75 +80,70 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-400 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-400 rounded-full blur-[120px]" />
-      </div>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-teal-50/50 to-slate-100 p-4">
 
-      <div className="w-full max-w-xl bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white p-10 relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <div className="w-full max-w-[450px] bg-white rounded-2xl shadow-lg border border-slate-100 p-6 sm:p-10 relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
         
-        <div className="text-center mb-10">
-          <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
-            <ShieldAlert size={40} />
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="w-16 h-16 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-teal-100 shadow-sm">
+            <ShieldAlert size={32} />
           </div>
-          <h1 className="text-3xl font-black text-gray-900 mb-2">Sécurité Requise</h1>
-          <p className="text-gray-500 font-medium">Pour votre première connexion, vous devez définir un nouveau mot de passe personnel.</p>
+          <h1 className="text-2xl font-heading font-bold text-slate-900 mb-2">Sécurité Requise</h1>
+          <p className="text-slate-500 text-sm">Veuillez définir un nouveau mot de passe personnel pour votre première connexion.</p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 px-6 py-4 rounded-2xl mb-8 flex items-center gap-3 animate-in shake-in duration-300">
-            <ShieldAlert size={20} />
-            <span className="text-sm font-bold">{error}</span>
+          <div className="bg-rose-50 border border-rose-200 text-rose-600 px-4 py-3 rounded-lg mb-6 flex items-center gap-2 animate-in fade-in">
+            <ShieldAlert size={18} className="shrink-0" />
+            <span className="text-sm font-medium">{error}</span>
           </div>
         )}
 
         {success ? (
-          <div className="text-center py-10 animate-in zoom-in duration-500">
-            <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 size={48} />
+          <div className="text-center py-8 animate-in fade-in zoom-in duration-500">
+            <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 size={36} />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Mot de passe mis à jour !</h2>
-            <p className="text-gray-500">Redirection vers votre espace de travail...</p>
+            <h2 className="text-xl font-heading font-bold text-slate-900 mb-2">Mot de passe mis à jour !</h2>
+            <p className="text-slate-500 text-sm">Redirection vers votre espace de travail...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-4">Nouveau mot de passe</label>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-slate-700">Nouveau mot de passe</label>
               <div className="relative group">
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors">
-                  <Lock size={20} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors">
+                  <Lock size={18} />
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-3xl py-4 pl-14 pr-14 font-bold text-gray-900 transition-all outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 focus:bg-white rounded-lg py-3 pl-10 pr-10 text-slate-900 transition-all outline-none"
                   placeholder="••••••••"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-4">Confirmer le mot de passe</label>
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-slate-700">Confirmer le mot de passe</label>
               <div className="relative group">
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors">
-                  <Lock size={20} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors">
+                  <Lock size={18} />
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-3xl py-4 pl-14 pr-14 font-bold text-gray-900 transition-all outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 focus:bg-white rounded-lg py-3 pl-10 pr-10 text-slate-900 transition-all outline-none"
                   placeholder="••••••••"
                   required
                 />
@@ -156,7 +151,7 @@ export default function ChangePasswordPage() {
             </div>
 
             {/* Password Requirements Grid */}
-            <div className="grid grid-cols-2 gap-4 bg-gray-50/50 p-6 rounded-3xl border border-gray-100">
+            <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2">
               <Requirement met={requirements.length} label="8+ caractères" />
               <Requirement met={requirements.upper} label="Majuscule" />
               <Requirement met={requirements.digit} label="Chiffre" />
@@ -166,17 +161,21 @@ export default function ChangePasswordPage() {
             <button
               type="submit"
               disabled={loading || !allMet}
-              className={`w-full py-5 rounded-3xl font-black uppercase tracking-[0.2em] text-sm transition-all shadow-xl flex items-center justify-center gap-3
+              className={`w-full flex items-center justify-center gap-2 rounded-lg p-3 font-semibold transition-all duration-200 shadow-sm mt-2
                 ${allMet 
-                  ? "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200 active:scale-[0.98]" 
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                  ? "bg-teal-600 text-white hover:bg-teal-700 active:scale-[0.98]" 
+                  : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
                 }`}
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Sécurisation...</span>
+                </>
               ) : (
                 <>
-                  Sécuriser mon compte <ArrowRight size={18} />
+                  <span>Sécuriser mon compte</span>
+                  <ArrowRight size={18} />
                 </>
               )}
             </button>
@@ -189,11 +188,11 @@ export default function ChangePasswordPage() {
 
 function Requirement({ met, label }: { met: boolean; label: string }) {
   return (
-    <div className={`flex items-center gap-2 transition-all ${met ? "text-green-600" : "text-gray-400"}`}>
-      <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${met ? "bg-green-100 border-green-200" : "bg-white border-gray-200"}`}>
-        {met && <CheckCircle2 size={12} strokeWidth={3} />}
+    <div className={`flex items-center gap-2 transition-all ${met ? "text-emerald-600" : "text-slate-500"}`}>
+      <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${met ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-transparent"}`}>
+        <CheckCircle2 size={12} strokeWidth={3} className={met ? "block" : "hidden"} />
       </div>
-      <span className="text-[11px] font-black uppercase tracking-wider">{label}</span>
+      <span className="text-[11px] font-medium tracking-wide">{label}</span>
     </div>
   );
 }

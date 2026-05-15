@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useUI } from "../../../context/UIContext";
+import Modal from "../../../components/ui/Modal";
+import { Loader2 } from "lucide-react";
 
 interface DemandeModalProps {
   isOpen: boolean;
@@ -12,15 +14,7 @@ interface DemandeModalProps {
 
 export default function DemandeModal({ isOpen, onClose, onSuccess, token, initialCategory }: DemandeModalProps) {
   const [category, setCategory] = useState(initialCategory || "CONGE");
-  const { incrementModalCount, decrementModalCount } = useUI();
-
-  // Handle sidebar blurring when modal is active
-  useEffect(() => {
-    if (isOpen) {
-      incrementModalCount();
-      return () => decrementModalCount();
-    }
-  }, [isOpen, incrementModalCount, decrementModalCount]);
+  const { addToast } = useUI();
 
   useEffect(() => {
     if (initialCategory) setCategory(initialCategory);
@@ -83,6 +77,7 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
   const checkIsHoliday = (date: Date) => {
     if (!date || isNaN(date.getTime())) return false;
     
+    // Normalize to YYYY-MM-DD for comparison
     const y = date.getFullYear();
     const m = date.getMonth();
     const d = date.getDate();
@@ -150,19 +145,16 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
 
   const requestedDays = calculateWorkingDays(formDataConge.dateDebut, formDataConge.dateFin);
   
-  // 🛡️ Only restrict balance for Annual Leave
   const isAnnualLeave = formDataConge.typeConge === "Congé Annuel";
   const maxEndDate = (isAnnualLeave && userBalance && userBalance > 0) ? calculateMaxEndDate(formDataConge.dateDebut, userBalance) : "";
   const isBalanceExceeded = isAnnualLeave && userBalance !== null && requestedDays > userBalance;
   
-  // 🕒 Tomorrow calculation
   const minDate = (() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
     return d.toISOString().split('T')[0];
   })();
 
-  // 🛡️ STRICT ENFORCEMENT: Snap dateFin back to max ONLY if balance is critical
   useEffect(() => {
     if (isAnnualLeave && formDataConge.dateFin && maxEndDate && formDataConge.dateFin > maxEndDate) {
       if (userBalance !== null && userBalance > 0) {
@@ -170,7 +162,6 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
       }
     }
   }, [formDataConge.dateFin, maxEndDate, userBalance, isAnnualLeave]);
-
 
   const fetchLeaveTypes = async () => {
     try {
@@ -192,8 +183,6 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
     }
   };
 
-  if (!isOpen) return null;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -201,7 +190,7 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
     try {
       if (category === "CONGE") {
         if (new Date(formDataConge.dateFin) < new Date(formDataConge.dateDebut)) {
-          alert("La date de fin ne peut pas être avant la date de début !");
+          addToast("error", "La date de fin ne peut pas être avant la date de début !");
           setLoading(false);
           return;
         }
@@ -222,15 +211,15 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
         });
 
         if (res.ok) {
+          addToast("success", "Demande de congé soumise avec succès");
           onSuccess();
           onClose();
           setFormDataConge({ typeConge: "Congé Annuel", dateDebut: "", dateFin: "", motif: "" });
         } else {
-          alert(`Erreur: ${await res.text()}`);
+          addToast("error", `Erreur: ${await res.text()}`);
         }
 
       } else {
-        // Document submission
         const payload = {
             typeDocument: formDataDoc.typeDocument,
             description: formDataDoc.motif,
@@ -246,6 +235,7 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
         });
 
         if (res.ok) {
+          addToast("success", "Demande de document soumise avec succès");
           onSuccess();
           onClose();
           setFormDataDoc({ 
@@ -253,168 +243,157 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
             motif: "",
           });
         } else {
-          alert(`Erreur: ${await res.text()}`);
+          addToast("error", `Erreur: ${await res.text()}`);
         }
       }
     } catch (err) {
-      console.error("Erreur soumission:", err);
+      addToast("error", "Erreur lors de la soumission");
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[100] p-4">
-      <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-        <div className="bg-blue-600 p-8 text-white relative">
-          <h2 className="text-2xl font-black italic uppercase tracking-widest">Nouvelle Demande</h2>
-          <p className="text-blue-100 text-xs font-bold mt-1">Sélectionnez le type de requête</p>
-          
-          <div className="absolute -bottom-5 left-8 right-8 flex gap-2">
-             <button 
-                type="button"
-                onClick={() => setCategory("CONGE")}
-                className={`flex-1 py-3 px-4 rounded-xl font-black text-xs uppercase tracking-widest border-2 transition-all shadow-md ${category === 'CONGE' ? 'bg-white text-blue-600 border-white' : 'bg-blue-700/50 text-blue-100 border-transparent hover:bg-blue-700'}`}
-             >
-                Absence / Congé
-             </button>
-             <button 
-                type="button"
-                onClick={() => setCategory("ATTESTATION")}
-                className={`flex-1 py-3 px-4 rounded-xl font-black text-xs uppercase tracking-widest border-2 transition-all shadow-md ${category === 'ATTESTATION' ? 'bg-white text-blue-600 border-white' : 'bg-blue-700/50 text-blue-100 border-transparent hover:bg-blue-700'}`}
-             >
-                Document RH
-             </button>
-          </div>
-
-          {category === "CONGE" && userBalance !== null && (
-            <div className="absolute top-4 right-8 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/30">
-              <span className="text-[10px] font-black uppercase tracking-tighter">Solde: {userBalance}j</span>
-            </div>
-          )}
-        </div>
-
-
-        <form onSubmit={handleSubmit} className="p-8 pt-12 space-y-6">
-            
-          {category === "CONGE" ? (
-             <>
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Nature de l'absence</label>
-                  <select
-                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-bold text-gray-700 focus:border-blue-500 outline-none transition-all"
-                    value={formDataConge.typeConge}
-                    onChange={(e) => setFormDataConge({ ...formDataConge, typeConge: e.target.value })}
-                  >
-                    {leaveTypes.map((type) => (
-                      <option key={type.idTypeConge} value={type.nom}>
-                         {type.nom}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Du (Inclus)</label>
-                    <input
-                      type="date"
-                      required
-                      min={minDate}
-                      className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-bold text-gray-700 outline-none focus:border-blue-500"
-                      value={formDataConge.dateDebut}
-                      onChange={(e) => setFormDataConge({ ...formDataConge, dateDebut: e.target.value, dateFin: "" })}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Au (Inclus)</label>
-                    <input
-                      type="date"
-                      required
-                      disabled={!formDataConge.dateDebut}
-                      min={formDataConge.dateDebut || minDate}
-                      max={maxEndDate || undefined}
-                      className={`w-full bg-gray-50 border-2 ${isBalanceExceeded ? 'border-red-500 bg-red-50' : 'border-gray-100'} rounded-2xl p-4 font-bold text-gray-700 outline-none focus:border-blue-500 disabled:opacity-50`}
-                      value={formDataConge.dateFin}
-                      onChange={(e) => setFormDataConge({ ...formDataConge, dateFin: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                {formDataConge.dateDebut && formDataConge.dateFin && (
-                  <div className={`p-4 rounded-2xl flex items-center justify-between ${isBalanceExceeded ? 'bg-red-50 border-2 border-red-100' : 'bg-blue-50 border-2 border-blue-100'}`}>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Durée calculée:</span>
-                    <span className={`text-sm font-black ${isBalanceExceeded ? 'text-red-600' : 'text-blue-600'}`}>
-                      {requestedDays} jour{requestedDays > 1 ? 's' : ''} ouvrable{requestedDays > 1 ? 's' : ''}
-                    </span>
-                  </div>
-                )}
-
-                {isBalanceExceeded && (
-                  <p className="text-red-500 text-[10px] font-bold uppercase text-center animate-bounce">
-                    ⚠️ Votre solde est insuffisant ({userBalance} jours max)
-                  </p>
-                )}
-
-
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Justification / Motif</label>
-                  <textarea
-                    placeholder="Expliquez brièvement la raison de votre demande..."
-                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-medium text-gray-700 outline-none focus:border-blue-500 min-h-[80px] resize-none"
-                    value={formDataConge.motif}
-                    onChange={(e) => setFormDataConge({ ...formDataConge, motif: e.target.value })}
-                  />
-                </div>
-             </>
-          ) : (
-             <>
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Type de Document</label>
-                  <select
-                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-bold text-gray-700 focus:border-blue-500 outline-none transition-all"
-                    value={formDataDoc.typeDocument}
-                    onChange={(e) => setFormDataDoc({ ...formDataDoc, typeDocument: e.target.value })}
-                  >
-                    <option value="ATTESTATION_TRAVAIL">Attestation de Travail</option>
-                    <option value="ATTESTATION_SALAIRE">Attestation de Salaire</option>
-                    <option value="RELEVE_EMOLUMENTS">Relevé des Émoluments</option>
-                  </select>
-                </div>
-
-                
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Remarques (Optionnel)</label>
-                  <textarea
-                    placeholder="Précisez toute information utile pour le service RH..."
-                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-medium text-gray-700 outline-none focus:border-blue-500 min-h-[100px] resize-none"
-                    value={formDataDoc.motif}
-                    onChange={(e) => setFormDataDoc({ ...formDataDoc, motif: e.target.value })}
-                  />
-                </div>
-             </>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex gap-4 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-6 py-4 rounded-2xl font-black text-gray-400 uppercase text-xs hover:bg-gray-100 transition"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={loading || (category === "CONGE" && isBalanceExceeded)}
-              className="flex-[2] bg-blue-600 text-white px-6 py-4 rounded-2xl font-black uppercase text-xs shadow-lg shadow-blue-200 hover:bg-blue-700 transition disabled:opacity-50"
-            >
-              {loading ? "Envoi en cours..." : "Soumettre la demande"}
-            </button>
-          </div>
-        </form>
+    <Modal isOpen={isOpen} onClose={onClose} title="Nouvelle Demande">
+      <div className="flex gap-2 p-1 bg-slate-200/50 rounded-xl mb-6">
+        <button 
+          type="button"
+          onClick={() => setCategory("CONGE")}
+          className={`flex-1 py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm transition-all shadow-sm ${category === 'CONGE' ? 'bg-white text-teal-700' : 'text-slate-500 hover:text-slate-700 shadow-none'}`}
+        >
+          Absence / Congé
+        </button>
+        <button 
+          type="button"
+          onClick={() => setCategory("ATTESTATION")}
+          className={`flex-1 py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm transition-all shadow-sm ${category === 'ATTESTATION' ? 'bg-white text-teal-700' : 'text-slate-500 hover:text-slate-700 shadow-none'}`}
+        >
+          Document RH
+        </button>
       </div>
-    </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+          
+        {category === "CONGE" ? (
+          <>
+            {userBalance !== null && (
+              <div className="bg-teal-50 border border-teal-100 rounded-xl p-3 flex justify-between items-center mb-2">
+                <span className="text-teal-700 font-semibold text-sm">Solde actuel:</span>
+                <span className="text-teal-700 font-bold">{userBalance} jours</span>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-slate-700">Nature de l'absence</label>
+              <select
+                className="w-full bg-white border border-slate-200 rounded-xl p-3 font-medium text-slate-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all"
+                value={formDataConge.typeConge}
+                onChange={(e) => setFormDataConge({ ...formDataConge, typeConge: e.target.value })}
+              >
+                {leaveTypes.map((type) => (
+                  <option key={type.idTypeConge} value={type.nom}>{type.nom}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-slate-700">Du (Inclus)</label>
+                <input
+                  type="date"
+                  required
+                  min={minDate}
+                  className="w-full bg-white border border-slate-200 rounded-xl p-3 font-medium text-slate-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all"
+                  value={formDataConge.dateDebut}
+                  onChange={(e) => setFormDataConge({ ...formDataConge, dateDebut: e.target.value, dateFin: "" })}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-slate-700">Au (Inclus)</label>
+                <input
+                  type="date"
+                  required
+                  disabled={!formDataConge.dateDebut}
+                  max={maxEndDate || undefined}
+                  className={`w-full bg-white border rounded-xl p-3 font-medium outline-none transition-all disabled:opacity-50 ${isBalanceExceeded ? 'border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/30 text-rose-900' : 'border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 text-slate-900'}`}
+                  value={formDataConge.dateFin}
+                  onChange={(e) => setFormDataConge({ ...formDataConge, dateFin: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {formDataConge.dateDebut && formDataConge.dateFin && (
+              <div className={`p-3 rounded-xl flex items-center justify-between border ${isBalanceExceeded ? 'bg-rose-50 border-rose-100' : 'bg-slate-50 border-slate-200'}`}>
+                <span className="text-xs font-semibold text-slate-500">Durée calculée:</span>
+                <span className={`text-sm font-bold ${isBalanceExceeded ? 'text-rose-600' : 'text-slate-800'}`}>
+                  {requestedDays} jour{requestedDays > 1 ? 's' : ''} ouvrable{requestedDays > 1 ? 's' : ''}
+                </span>
+              </div>
+            )}
+
+            {isBalanceExceeded && (
+              <p className="text-rose-500 text-xs font-semibold flex items-center gap-1 mt-1">
+                ⚠️ Votre solde est insuffisant ({userBalance} jours max)
+              </p>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-slate-700">Justification / Motif</label>
+              <textarea
+                placeholder="Expliquez brièvement la raison..."
+                className="w-full bg-white border border-slate-200 rounded-xl p-3 font-medium text-slate-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none min-h-[100px] resize-none transition-all"
+                value={formDataConge.motif}
+                onChange={(e) => setFormDataConge({ ...formDataConge, motif: e.target.value })}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-slate-700">Type de Document</label>
+              <select
+                className="w-full bg-white border border-slate-200 rounded-xl p-3 font-medium text-slate-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all"
+                value={formDataDoc.typeDocument}
+                onChange={(e) => setFormDataDoc({ ...formDataDoc, typeDocument: e.target.value })}
+              >
+                <option value="ATTESTATION_TRAVAIL">Attestation de Travail</option>
+                <option value="ATTESTATION_SALAIRE">Attestation de Salaire</option>
+                <option value="RELEVE_EMOLUMENTS">Relevé des Émoluments</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-slate-700">Remarques (Optionnel)</label>
+              <textarea
+                placeholder="Précisez tout commentaire ou information utile..."
+                className="w-full bg-white border border-slate-200 rounded-xl p-3 font-medium text-slate-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none min-h-[120px] resize-none transition-all"
+                value={formDataDoc.motif}
+                onChange={(e) => setFormDataDoc({ ...formDataDoc, motif: e.target.value })}
+              />
+            </div>
+          </>
+        )}
+
+        <div className="flex gap-3 pt-4 mt-6 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-700 font-semibold text-sm hover:bg-slate-50 active:scale-[0.97] transition-all"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            disabled={loading || (category === "CONGE" && isBalanceExceeded)}
+            className="flex-[2] flex items-center justify-center gap-2 bg-teal-600 text-white px-4 py-3 rounded-xl font-semibold text-sm shadow-sm hover:bg-teal-700 active:scale-[0.97] transition-all disabled:opacity-70 disabled:pointer-events-none"
+          >
+            {loading ? <Loader2 size={18} className="animate-spin" /> : null}
+            <span>{loading ? "Envoi..." : "Soumettre la demande"}</span>
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,7 +31,6 @@ export default function LoginPage() {
         }
         throw new Error("Identifiants incorrects. Veuillez réessayer.");
       }
-
 
       // 2. Extract the JWT Token from the JSON response
       const data = await res.json();
@@ -69,29 +69,30 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl border border-slate-100">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-teal-50/50 to-slate-100 p-4">
+      <div className="w-full max-w-[450px] rounded-2xl bg-white p-6 sm:p-10 shadow-lg border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
         
-        <div className="mb-10 text-center flex flex-col items-center">
-          <img 
-            src="/logo.png" 
-            alt="SomePharm Logo" 
-            className="h-20 w-auto mb-4" 
-          />
-          <span className="px-4 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
+        <div className="mb-8 text-center flex flex-col items-center">
+          <div className="h-16 w-16 bg-teal-50 rounded-2xl flex items-center justify-center mb-4 border border-teal-100 shadow-sm">
+            {/* If you have a logo.png, use it here, otherwise use text */}
+            <span className="text-3xl font-heading font-bold text-teal-600">SP</span>
+          </div>
+          <h1 className="text-2xl font-heading font-bold text-slate-900 mb-2">SomePharm</h1>
+          <span className="px-3 py-1 bg-teal-50 text-teal-700 rounded-full text-xs font-medium tracking-wide border border-teal-100">
             Portail Ressources Humaines
           </span>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 border border-red-200">
-            {error}
+          <div className="mb-6 rounded-lg bg-rose-50 p-4 text-sm text-rose-600 border border-rose-200 flex items-center gap-2 animate-in fade-in">
+            <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+            <span>{error}</span>
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-slate-700">
               Matricule
             </label>
             <input
@@ -99,21 +100,28 @@ export default function LoginPage() {
               value={matricule}
               onChange={(e) => setMatricule(e.target.value)}
               placeholder="Ex: EMP-999"
-              className="w-full rounded-lg border border-slate-300 p-3 text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              className={`w-full rounded-lg border p-3 text-slate-900 placeholder:text-slate-400 outline-none transition-all ${
+                error ? "border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/30" : "border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 bg-slate-50/50 focus:bg-white"
+              }`}
               required
             />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Mot de passe
-            </label>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-slate-700">
+                Mot de passe
+              </label>
+              {/* Optional: Add forgot password link here if needed in the future */}
+            </div>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full rounded-lg border border-slate-300 p-3 text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              className={`w-full rounded-lg border p-3 text-slate-900 placeholder:text-slate-400 outline-none transition-all ${
+                error ? "border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/30" : "border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 bg-slate-50/50 focus:bg-white"
+              }`}
               required
             />
           </div>
@@ -121,9 +129,16 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 p-3 font-semibold text-white hover:bg-blue-700 disabled:bg-blue-300 transition-all"
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-teal-600 p-3 font-semibold text-white hover:bg-teal-700 active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none transition-all duration-200 shadow-sm"
           >
-            {loading ? "Connexion en cours..." : "Se connecter"}
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Connexion en cours...</span>
+              </>
+            ) : (
+              <span>Se connecter</span>
+            )}
           </button>
         </form>
         

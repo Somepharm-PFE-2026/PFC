@@ -8,22 +8,21 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        blue: {
-          50: "#F0F9FE",
-          100: "#E0F3FD",
-          200: "#B9E5F9",
-          300: "#7CD0F4",
-          400: "#25ADE3",
-          500: "#25ADE3", // Brand Color
-          600: "#25ADE3", // Also Brand Color to catch all instances
-          700: "#1E8FBC",
-          800: "#176E91",
-          900: "#0F465C",
-        }
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        heading: ['"Plus Jakarta Sans"', 'sans-serif'],
       },
+      boxShadow: {
+        'sm': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+        'md': '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
+        'lg': '0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05)',
+      },
+      borderRadius: {
+        'sm': '0.25rem',
+        'md': '0.5rem',
+        'lg': '0.75rem',
+        'xl': '1rem',
+      }
     },
   },
   plugins: [],
