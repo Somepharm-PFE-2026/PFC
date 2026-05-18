@@ -1,0 +1,129 @@
+@no-cookie-jar
+
+### 1. Get all departments
+GET http://localhost:8080/api/departements
+
+### 2. Create a new Department
+POST http://localhost:8080/api/departements
+Content-Type: application/json
+
+{
+  "nomDept": "Ressources Humaines"
+}
+
+### 3. Create a new Utilisateur
+POST http://localhost:8080/api/utilisateurs
+Content-Type: application/json
+
+{
+  "matricule": "EMP-001",
+  "email": "achraf@somepharm.dz",
+  "motDePasse": "password123",
+  "statutCompte": "ACTIF"
+}
+
+### 4. Get all Utilisateurs
+GET http://localhost:8080/api/utilisateurs
+
+### 5. Create a Manager User
+POST http://localhost:8080/api/utilisateurs
+Content-Type: application/json
+
+{
+  "matricule": "MGR-999",
+  "email": "manager@somepharm.dz",
+  "motDePasse": "supersecretpassword",
+  "statutCompte": "ACTIF"
+}
+
+### 6. Create a Department WITH the Manager attached
+POST http://localhost:8080/api/departements
+Content-Type: application/json
+
+{
+  "nomDept": "Direction Générale",
+  "manager": {
+    "idUser": 2
+  }
+}
+
+### 7. Fetch all Departments (The Magic Reveal)
+GET http://localhost:8080/api/departements
+
+### 8. Submit a Leave Request (Notice we pass the User ID as 'demandeur')
+POST http://localhost:8080/api/demandes-conge
+Content-Type: application/json
+
+{
+  "dateDebut": "2026-06-01",
+  "dateFin": "2026-06-15",
+  "motif": "Vacances d'été",
+  "typeConge": "ANNUEL",
+  "demandeur": {
+    "idUser": 1
+  }
+}
+
+### 9. Fetch all Leave Requests
+GET http://localhost:8080/api/demandes-conge
+
+### 10. Register a brand new secure user
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "matricule": "MGR-999",
+  "nom": "Manager",
+  "prenom": "RH",
+  "email": "manager@somepharm.dz",
+  "motDePasse": "supersecretpassword",
+  "role": "MANAGER"
+}
+
+### 11. Login with the secure user (This should return a new Token)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "matricule": "EMP-999",
+  "password": "mySecurePassword123"
+}
+
+### 12. Try to access the locked Departments API
+# Replace the <PASTE_TOKEN_HERE> with the long random string you got from Step 10 or 11!
+GET http://localhost:8080/api/departements
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJFTVAtOTk5IiwiaWF0IjoxNzc0MTk0NTQ1LCJleHAiOjE3NzQyODA5NDV9.iXUEZnAF8xosHkeJm15P5WTYaEOV7drievHt_m7ZpgY
+
+
+### 13. Manager Action: Approve a Leave Request (Assuming request ID is 1)
+PUT http://localhost:8080/api/demandes/1/statut?statut=APPROUVE
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJFTVAtOTk5IiwiaWF0IjoxNzc0MTk0NTQ1LCJleHAiOjE3NzQyODA5NDV9.iXUEZnAF8xosHkeJm15P5WTYaEOV7drievHt_m7ZpgY
+
+
+### Register the Ultimate Manager
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "matricule": "BOSS-999",
+  "nom": "Super",
+  "prenom": "Manager",
+  "email": "boss@somepharm.dz",
+  "motDePasse": "admin123",
+  "statutCompte": "ACTIF"
+}
+
+
+### Register a Real Employee
+# @no-cookie-jar
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "matricule": "EMP-002",
+  "nom": "Test",
+  "prenom": "Employee",
+  "email": "emp002@somepharm.dz",
+  "motDePasse": "password123",
+  "statutCompte": "ACTIF"
+}

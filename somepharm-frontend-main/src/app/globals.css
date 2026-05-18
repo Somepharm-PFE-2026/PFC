@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 font-sans text-sm antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight;
+  }
+}
+
+@layer utilities {
+  .animate-in {
+    animation-duration: 500ms;
+    animation-fill-mode: both;
+  }
+
+  .fade-in {
+    animation-name: fadeIn;
+  }
+
+  .slide-in-from-left-2 {
+    animation-name: slideInFromLeft;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInFromLeft {
+  from { transform: translateX(-0.5rem); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* QUILL PREMIUM OVERRIDES */
+.ql-toolbar.ql-snow {
+  border: none !important;
+  background: #f9fafb !important;
+  padding: 1.25rem !important;
+  border-bottom: 2px solid #f3f4f6 !important;
+  border-radius: 2rem 2rem 0 0 !important;
+}
+
+.ql-container.ql-snow {
+  border: none !important;
+  font-family: inherit !important;
+  font-size: 0.875rem !important;
+}
+
+.ql-editor {
+  padding: 2rem !important;
+  min-height: 200px !important;
+}
+
+.ql-editor.ql-blank::before {
+  left: 2rem !important;
+  font-style: italic !important;
+  color: #9ca3af !important;
+}
+
+.ql-viewer .ql-editor {
+  padding: 0 !important;
+  min-height: auto !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db;
+}
