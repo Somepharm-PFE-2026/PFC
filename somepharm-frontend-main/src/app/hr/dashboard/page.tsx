@@ -15,7 +15,7 @@ const LayoutDashboard = ({ size }: { size: number }) => (
 
 const StatCard = ({ title, value, label, icon: Icon, trend, href }: any) => {
   const content = (
-    <div className="h-full bg-slate-950/40 backdrop-blur-xl p-8 rounded-[2.5rem] border border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] hover:-translate-y-1 transition-all duration-500 relative overflow-hidden group">
+    <div className="h-full bg-slate-950/85 backdrop-blur-xl p-8 rounded-[2.5rem] border border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] hover:-translate-y-1 transition-all duration-500 relative overflow-hidden group">
       {/* Decorative Gold Radial Glow on hover */}
       <div className="absolute -right-20 -bottom-20 w-48 h-48 rounded-full bg-indigo-500/5 blur-3xl group-hover:bg-indigo-500/10 transition-all duration-700 pointer-events-none" />
       
@@ -90,7 +90,7 @@ export default function HRDashboard() {
 
         
         {/* NEW: ATTENDANCE ANOMALIES WIDGET */}
-        <Link href="/hr/temps-presence" className="bg-slate-950/40 backdrop-blur-xl p-8 rounded-[2.5rem] border border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] hover:-translate-y-1 transition-all duration-500 relative overflow-hidden group">
+        <Link href="/hr/temps-presence" className="bg-slate-950/85 backdrop-blur-xl p-8 rounded-[2.5rem] border border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] hover:-translate-y-1 transition-all duration-500 relative overflow-hidden group">
            <div className="absolute -right-20 -bottom-20 w-48 h-48 rounded-full bg-indigo-500/5 blur-3xl group-hover:bg-indigo-500/10 transition-all duration-700 pointer-events-none" />
            <div className="flex justify-between items-center mb-6 z-10 relative">
               <div className="p-4 rounded-2xl bg-indigo-500/10 text-indigo-300 shadow-sm border border-slate-800/80 group-hover:scale-105 transition-transform">
@@ -107,7 +107,7 @@ export default function HRDashboard() {
            <p className="text-slate-400 text-[10px] font-bold uppercase mt-3 tracking-widest z-10 relative">Erreurs de pointage à régler</p>
         </Link>
 
-        <Link href="/hr/validation-rh" className="bg-slate-950/40 backdrop-blur-xl p-8 rounded-[2.5rem] border border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group overflow-hidden relative block">
+        <Link href="/hr/validation-rh" className="bg-slate-950/85 backdrop-blur-xl p-8 rounded-[2.5rem] border border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group overflow-hidden relative block">
           <div className="absolute -right-10 -bottom-10 text-indigo-400/5 group-hover:scale-110 transition-transform duration-700 pointer-events-none"><ShieldCheck size={160} /></div>
           <div className="z-10 relative">
              <div className="flex justify-between items-center mb-6">
@@ -122,7 +122,7 @@ export default function HRDashboard() {
         </Link>
       </div>
 
-      <Link href="/hr/validation-rh" className="bg-slate-950/40 backdrop-blur-xl rounded-[2.5rem] p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.15)] relative overflow-hidden text-white border border-slate-800/80 hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] hover:-translate-y-1 transition-all duration-500 block group">
+      <Link href="/hr/validation-rh" className="bg-slate-950/85 backdrop-blur-xl rounded-[2.5rem] p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.15)] relative overflow-hidden text-white border border-slate-800/80 hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] hover:-translate-y-1 transition-all duration-500 block group">
         <div className="absolute right-0 top-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
         <div className="relative z-10 flex flex-col xl:flex-row items-center justify-between gap-8">
            <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-6">
@@ -192,4 +192,5 @@ export default function HRDashboard() {
     </div>
   );
 }
+
 

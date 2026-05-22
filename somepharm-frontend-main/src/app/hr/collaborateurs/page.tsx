@@ -288,7 +288,7 @@ export default function CollaborateursPage() {
             <p className="text-slate-400 font-medium">Visualisez et gérez l'ensemble des talents de SomePharm.</p>
           </div>
 
-          <div className="flex items-center gap-3 bg-slate-950/40 backdrop-blur-xl p-2 rounded-[2rem] border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)]">
+          <div className="flex items-center gap-3 bg-slate-950/85 backdrop-blur-xl p-2 rounded-[2rem] border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)]">
             <button 
               onClick={() => setViewMode("list")}
               className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all
@@ -321,12 +321,12 @@ export default function CollaborateursPage() {
               placeholder="Rechercher par nom, matricule ou poste..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900/60 border border-slate-800/80 focus:border-indigo-500/40 rounded-3xl py-5 pl-16 pr-6 font-bold text-white shadow-[0_0_15px_rgba(0,0,0,0.1)] transition-all outline-none placeholder:text-slate-500"
+              className="w-full bg-slate-900/85 border border-slate-800/80 focus:border-indigo-500/40 rounded-3xl py-5 pl-16 pr-6 font-bold text-white shadow-[0_0_15px_rgba(0,0,0,0.1)] transition-all outline-none placeholder:text-slate-500"
             />
           </div>
           
           <div className="flex gap-4 w-full lg:w-auto justify-end">
-            <button className="bg-slate-900/60 p-5 rounded-3xl border border-slate-800/80 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/30 transition-all shadow-sm">
+            <button className="bg-slate-900/85 p-5 rounded-3xl border border-slate-800/80 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/30 transition-all shadow-sm">
               <Filter size={20} />
             </button>
             {(currentUser?.role === "RH_ADMIN" || isHRManager) && (
@@ -391,7 +391,7 @@ export default function CollaborateursPage() {
                       onChange={(e) => setNewEmployeeForm({...newEmployeeForm, poste: e.target.value})}
                       disabled={!newEmployeeForm.departement}
                       className={`w-full bg-slate-950 border border-slate-800/80 focus:border-indigo-500/40 rounded-2xl py-4 px-6 font-bold text-white outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all cursor-pointer
-                        ${!newEmployeeForm.departement ? "opacity-50 cursor-not-allowed bg-slate-950/40 text-slate-500" : ""}`}
+                        ${!newEmployeeForm.departement ? "opacity-50 cursor-not-allowed bg-slate-950/85 text-slate-500" : ""}`}
                       required
                     >
                       <option value="" className="bg-slate-950 text-white">{newEmployeeForm.departement ? "Sélectionner un poste..." : "Choisissez d'abord un département"}</option>
@@ -469,7 +469,7 @@ export default function CollaborateursPage() {
                       onChange={(e) => setNewEmployeeForm({...newEmployeeForm, managerId: e.target.value})}
                       disabled={!newEmployeeForm.departement}
                       className={`w-full bg-slate-950 border border-slate-800/80 focus:border-indigo-500/40 rounded-2xl py-4 px-6 font-bold text-white outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all cursor-pointer
-                        ${!newEmployeeForm.departement ? "opacity-50 cursor-not-allowed bg-slate-950/40 text-slate-500" : ""}`}
+                        ${!newEmployeeForm.departement ? "opacity-50 cursor-not-allowed bg-slate-950/85 text-slate-500" : ""}`}
                     >
                       <option value="null" className="bg-slate-950 text-white">Aucun</option>
                       {(() => {
@@ -555,7 +555,7 @@ export default function CollaborateursPage() {
                       disabled={!!originalDept && originalDept !== "Général" && originalDept !== ""}
                       className={`w-full border rounded-2xl py-4 px-6 font-bold outline-none transition-all cursor-pointer focus:ring-4 focus:ring-indigo-500/10 
                         ${(originalDept && originalDept !== "Général" && originalDept !== "") 
-                          ? "bg-slate-950/40 border-slate-800/60 text-slate-500 cursor-not-allowed" 
+                          ? "bg-slate-950/85 border-slate-800/60 text-slate-500 cursor-not-allowed" 
                           : "bg-slate-950 border-slate-800/80 focus:border-indigo-500/40 text-white"}`}
                     >
                       <option value="" className="bg-slate-950 text-white">Sélectionner un service...</option>
@@ -581,7 +581,7 @@ export default function CollaborateursPage() {
                       onChange={(e) => setEditingEmployee({...editingEmployee, poste: e.target.value})}
                       disabled={!editingEmployee.departement}
                       className={`w-full bg-slate-950 border border-slate-800/80 focus:border-indigo-500/40 rounded-2xl py-4 px-6 font-bold text-white outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all cursor-pointer
-                        ${!editingEmployee.departement ? "opacity-50 cursor-not-allowed bg-slate-950/40 text-slate-500" : ""}`}
+                        ${!editingEmployee.departement ? "opacity-50 cursor-not-allowed bg-slate-950/85 text-slate-500" : ""}`}
                     >
                       <option value="" className="bg-slate-950 text-white">{editingEmployee.departement ? "Sélectionner un poste..." : "Choisissez d'abord un département"}</option>
                       {postes
@@ -603,7 +603,7 @@ export default function CollaborateursPage() {
                       onChange={(e) => setEditingEmployee({...editingEmployee, managerDirectId: e.target.value})}
                       disabled={!editingEmployee.departement}
                       className={`w-full bg-slate-950 border border-slate-800/80 focus:border-indigo-500/40 rounded-2xl py-4 px-6 font-bold text-white outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all cursor-pointer
-                        ${!editingEmployee.departement ? "opacity-50 cursor-not-allowed bg-slate-950/40 text-slate-500" : ""}`}
+                        ${!editingEmployee.departement ? "opacity-50 cursor-not-allowed bg-slate-950/85 text-slate-500" : ""}`}
                     >
                       <option value="null" className="bg-slate-950 text-white">Aucun</option>
                       {(() => {
@@ -682,7 +682,7 @@ export default function CollaborateursPage() {
                 <h2 className="text-xl font-black uppercase tracking-tight">Accès Générés avec Succès</h2>
               </div>
               <div className="p-8 space-y-6">
-                <div className="bg-slate-950/60 p-6 rounded-3xl space-y-4 border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)]">
+                <div className="bg-slate-950/85 p-6 rounded-3xl space-y-4 border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)]">
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Matricule</span>
                     <div className="flex items-center gap-2">
@@ -731,8 +731,8 @@ export default function CollaborateursPage() {
             <div className="w-12 h-12 border-4 border-slate-800 border-t-indigo-500 rounded-full animate-spin" />
           </div>
         ) : viewMode === "list" ? (
-          <div className="bg-slate-950/20 rounded-[2.5rem] border border-slate-800/80 shadow-sm overflow-hidden backdrop-blur-md">
-            <div className="grid grid-cols-12 gap-4 px-8 py-6 bg-slate-900/40 border-b border-slate-800/80">
+          <div className="bg-slate-950/85 rounded-[2.5rem] border border-slate-800/80 shadow-sm overflow-hidden backdrop-blur-xl">
+            <div className="grid grid-cols-12 gap-4 px-8 py-6 bg-slate-900/85 border-b border-slate-800/80">
               <div className="col-span-3 text-[10px] font-black uppercase text-slate-400 tracking-widest pl-4">Collaborateur</div>
               <div className="col-span-2 text-[10px] font-black uppercase text-slate-400 tracking-widest">Statut Compte</div>
               {canSeeSensitiveInfo && (
@@ -780,7 +780,7 @@ export default function CollaborateursPage() {
             </div>
           </div>
         ) : (
-          <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[2.5rem] p-12 overflow-x-auto no-scrollbar">
+          <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[2.5rem] p-12 overflow-x-auto no-scrollbar">
             <EmployeeTree employees={employees} managerId={null} level={0} />
           </div>
         )}
@@ -900,7 +900,7 @@ function EmployeeRow({ employee, currentUser, isHRManager, canSeeSensitiveInfo, 
 
             <button 
               onClick={onConsult}
-              className="p-3 bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/80 text-slate-400 hover:text-indigo-300 rounded-xl transition-all shadow-sm"
+              className="p-3 bg-slate-900/85 hover:bg-slate-800/80 border border-slate-800/80 text-slate-400 hover:text-indigo-300 rounded-xl transition-all shadow-sm"
               title="Consulter le profil"
             >
               <Eye size={16} />
@@ -908,7 +908,7 @@ function EmployeeRow({ employee, currentUser, isHRManager, canSeeSensitiveInfo, 
 
             <button 
               onClick={onEdit}
-              className="p-3 bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/80 text-slate-400 hover:text-indigo-300 rounded-xl transition-all shadow-sm"
+              className="p-3 bg-slate-900/85 hover:bg-slate-800/80 border border-slate-800/80 text-slate-400 hover:text-indigo-300 rounded-xl transition-all shadow-sm"
               title="Modifier le profil"
             >
               <MoreHorizontal size={16} />
@@ -919,3 +919,4 @@ function EmployeeRow({ employee, currentUser, isHRManager, canSeeSensitiveInfo, 
     </div>
   );
 }
+

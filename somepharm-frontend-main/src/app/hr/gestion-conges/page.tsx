@@ -217,7 +217,7 @@ export default function GestionCongesPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4">
+          <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4">
             <div className="bg-indigo-500/10 p-2 rounded-xl text-indigo-300">
               <TrendingDown size={20} />
             </div>
@@ -226,7 +226,7 @@ export default function GestionCongesPage() {
               <p className="text-xl font-black text-indigo-300">{liveAbsenteeismRate}%</p>
             </div>
           </div>
-          <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4">
+          <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4">
             <div className="bg-indigo-500/10 p-2 rounded-xl text-indigo-300">
               <Users size={20} />
             </div>
@@ -239,7 +239,7 @@ export default function GestionCongesPage() {
       </div>
 
       {/* TABS NAVIGATION */}
-      <div className="flex flex-wrap gap-2 mb-8 bg-slate-950/40 p-2 rounded-3xl border border-slate-800/80 backdrop-blur-sm w-fit">
+      <div className="flex flex-wrap gap-2 mb-8 bg-slate-950/85 p-2 rounded-3xl border border-slate-800/80 backdrop-blur-sm w-fit">
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -253,7 +253,7 @@ export default function GestionCongesPage() {
         ))}
       </div>
 
-      <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[2.5rem] overflow-hidden">
+      <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[2.5rem] overflow-hidden">
         
         {/* TAB CONTENT: PLANNING */}
         {activeTab === "planning" && (
@@ -324,7 +324,7 @@ export default function GestionCongesPage() {
             </div>
             
             {/* FILTER BAR */}
-            <div className="flex flex-col gap-4 mb-8 bg-slate-900/40 p-6 rounded-3xl border border-slate-800/80 shadow-sm">
+            <div className="flex flex-col gap-4 mb-8 bg-slate-900/85 p-6 rounded-3xl border border-slate-800/80 shadow-sm">
               <div className="flex flex-wrap gap-4 items-center">
                 <div className="relative flex-1 min-w-[300px]">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
@@ -413,7 +413,7 @@ export default function GestionCongesPage() {
               <div className="space-y-4 overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="text-left bg-slate-900/40 border-b border-slate-800/80">
+                    <tr className="text-left bg-slate-900/85 border-b border-slate-800/80">
                       <th 
                         className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest cursor-pointer hover:text-indigo-300 transition-colors group"
                         onClick={() => handleSort('employee')}
@@ -517,7 +517,7 @@ export default function GestionCongesPage() {
                     {filteredAndSortedData.length === 0 && (
                       <tr>
                         <td colSpan={6} className="p-20 text-center">
-                          <div className="bg-slate-950/40 border border-slate-800/80 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-indigo-400/20">
+                          <div className="bg-slate-950/85 border border-slate-800/80 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-indigo-400/20">
                             <Search size={40} />
                           </div>
                           <h4 className="text-white font-black uppercase tracking-tighter italic text-lg">Aucun résultat</h4>
@@ -570,8 +570,8 @@ export default function GestionCongesPage() {
                     return (
                       <div 
                         key={day} 
-                        className={`bg-slate-950/40 min-h-[140px] p-3 border-t border-l border-slate-800/80 flex flex-col gap-2 transition-all duration-300 group/day relative
-                          ${isWeekend ? 'bg-slate-950/10' : 'bg-slate-950/30'} 
+                        className={`bg-slate-950/85 min-h-[140px] p-3 border-t border-l border-slate-800/80 flex flex-col gap-2 transition-all duration-300 group/day relative
+                          ${isWeekend ? 'bg-slate-950/10' : 'bg-slate-950/70'} 
                           ${isToday ? 'ring-2 ring-inset ring-indigo-500/30 z-10' : ''}
                           hover:bg-indigo-500/5`}
                       >
@@ -593,7 +593,7 @@ export default function GestionCongesPage() {
                               key={idx}
                               title={`${abs.employee} - ${abs.type}`}
                               className={`px-2.5 py-1.5 rounded-xl text-[9px] font-black truncate border-l-4 shadow-sm transition-all hover:translate-x-1 cursor-pointer
-                                ${abs.isApproved ? 'shadow-[0_0_10px_rgba(99,102,241,0.05)]' : 'opacity-60 border-dashed bg-slate-950/40 border shadow-none italic'}`}
+                                ${abs.isApproved ? 'shadow-[0_0_10px_rgba(99,102,241,0.05)]' : 'opacity-60 border-dashed bg-slate-950/85 border shadow-none italic'}`}
                               style={{ 
                                 backgroundColor: abs.isApproved ? `${abs.color}15` : 'transparent', 
                                 color: abs.color, 
@@ -637,7 +637,7 @@ export default function GestionCongesPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-slate-900/40 border-b border-slate-800/80">
+                  <tr className="bg-slate-900/85 border-b border-slate-800/80">
                     <th className="p-4 text-[10px] font-black uppercase text-slate-400">Matricule</th>
                     <th className="p-4 text-[10px] font-black uppercase text-slate-400">Collaborateur</th>
                     <th className="p-4 text-[10px] font-black uppercase text-slate-400">Département</th>
@@ -686,7 +686,7 @@ export default function GestionCongesPage() {
               </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {leaveTypes.map((rule, idx) => (
-                  <div key={idx} className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-6 hover:shadow-xl transition-all border-l-8" style={{ borderLeftColor: rule.couleurHex }}>
+                  <div key={idx} className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-6 hover:shadow-xl transition-all border-l-8" style={{ borderLeftColor: rule.couleurHex }}>
                      <div className="flex justify-between items-start mb-4">
                         <span className="font-black text-white uppercase text-xs">{rule.nom}</span>
                         <div className="px-3 py-1 bg-slate-900 rounded-full text-[8px] font-black text-slate-400 uppercase tracking-widest border border-slate-800/80">
@@ -799,3 +799,4 @@ export default function GestionCongesPage() {
     </div>
   );
 }
+

@@ -768,10 +768,20 @@ export default function EmployeeDashboard() {
                                   {daysArray.map((d) => {
                                     const x = paddingLeft + ((d - 0.5) / daysInMonth) * gridWidth;
                                     const intervals = getDayPresenceIntervals(d);
-                                    const barWidth = 10;
+                                    const barWidth = 8;
 
                                     return (
                                       <g key={d} className="group/day">
+                                        {/* Soft Column Spotlight Background on Hover */}
+                                        <rect
+                                          x={x - 13}
+                                          y={paddingTop - 6}
+                                          width={26}
+                                          height={gridHeight + 12}
+                                          rx={6}
+                                          className="fill-transparent group-hover/day:fill-slate-500/[0.04] transition-all duration-300 pointer-events-none"
+                                        />
+
                                         {intervals.map((int, idx) => {
                                           const clamp = (val: number, minVal: number, maxVal: number) => Math.max(minVal, Math.min(maxVal, val));
                                           const yStart = paddingTop + ((endHour - clamp(int.startDecimal, startHour, endHour)) / range) * gridHeight;
@@ -779,6 +789,11 @@ export default function EmployeeDashboard() {
                                           const barHeight = Math.max(8, yStart - yEnd);
 
                                           const gradientId = int.isOngoing ? "url(#ongoingGrad)" : int.isAnomaly ? "url(#anomalyGrad)" : "url(#normalGrad)";
+                                          const glowClass = int.isOngoing 
+                                            ? "group-hover/day:drop-shadow-[0_2px_8px_rgba(52,211,153,0.45)]" 
+                                            : int.isAnomaly 
+                                              ? "group-hover/day:drop-shadow-[0_2px_8px_rgba(251,191,36,0.45)]" 
+                                              : "group-hover/day:drop-shadow-[0_2px_8px_rgba(56,189,248,0.45)]";
 
                                           return (
                                             <rect
@@ -789,7 +804,7 @@ export default function EmployeeDashboard() {
                                               height={barHeight}
                                               fill={gradientId}
                                               rx={barWidth / 2}
-                                              className="transition-all duration-300 group-hover/day:scale-x-125 origin-center shadow-sm"
+                                              className={`transition-all duration-300 group-hover/day:brightness-105 ${glowClass}`}
                                             />
                                           );
                                         })}

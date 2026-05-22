@@ -50,7 +50,7 @@ export default function ProfilPage() {
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 text-slate-100">
       
       {/* ═══ Header with Integrated Action ═══ */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[3.5rem] mb-12">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[3.5rem] mb-12">
         <div>
           <div className="bg-indigo-500/10 text-indigo-400 px-4 py-1.5 rounded-full w-fit text-[10px] font-black uppercase tracking-widest mb-3 border border-slate-800">
              Digital HR Identity
@@ -71,7 +71,7 @@ export default function ProfilPage() {
         
         {/* ═══ Left Column: Identity Sidebar ═══ */}
         <div className="lg:col-span-4 space-y-8">
-           <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] p-10 text-center relative overflow-hidden">
+           <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] p-10 text-center relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-indigo-500/5 to-transparent"></div>
               
               <div className="relative mb-6">
@@ -106,7 +106,7 @@ export default function ProfilPage() {
               </div>
            </div>
 
-           <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] p-8 text-white relative overflow-hidden">
+           <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] p-8 text-white relative overflow-hidden">
               <UserCheck size={120} className="absolute -right-8 -bottom-8 opacity-5 text-indigo-400" />
               <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-6">Management Direct</p>
               {profil.managerDirect ? (
@@ -130,7 +130,7 @@ export default function ProfilPage() {
            
            {/* Summary Cards Row */}
            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-8 rounded-[2.5rem] flex items-center gap-6">
+              <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-8 rounded-[2.5rem] flex items-center gap-6">
                  <div className="w-16 h-16 bg-indigo-500/10 border border-slate-800 text-indigo-400 rounded-3xl flex items-center justify-center">
                     <Calendar size={28} />
                  </div>
@@ -139,7 +139,7 @@ export default function ProfilPage() {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ancienneté Somepharm</p>
                  </div>
               </div>
-              <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-8 rounded-[2.5rem] flex items-center gap-6">
+              <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-8 rounded-[2.5rem] flex items-center gap-6">
                  <div className="w-16 h-16 bg-indigo-500/10 border border-slate-800 text-indigo-400 rounded-3xl flex items-center justify-center">
                     <Heart size={28} />
                  </div>
@@ -151,7 +151,7 @@ export default function ProfilPage() {
            </div>
 
            {/* Professional & Personal Data Blocks */}
-           <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] overflow-hidden">
+           <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] overflow-hidden">
               <div className="p-10 border-b border-slate-800/80 flex items-center gap-4">
                  <div className="w-2.5 h-8 bg-indigo-600 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.4)]"></div>
                  <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Informations Détaillées</h3>

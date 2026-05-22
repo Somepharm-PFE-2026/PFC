@@ -165,6 +165,14 @@ public class DocumentService {
             // Primes
             if (bp.getPrimePanier() > 0) addSalaryRow(table, "Prime Panier", 0, 0, bp.getPrimePanier(), 0);
             if (bp.getPrimeTransport() > 0) addSalaryRow(table, "Prime Transport", 0, 0, bp.getPrimeTransport(), 0);
+            
+            if (bp.getAutresPrimes() != 0) {
+                if (bp.getAutresPrimes() < 0) {
+                    addSalaryRow(table, "Déduction Absence / Sous-heures", Math.abs(bp.getAutresPrimes()), 0, 0, Math.abs(bp.getAutresPrimes()));
+                } else {
+                    addSalaryRow(table, "Autres Primes", 0, 0, bp.getAutresPrimes(), 0);
+                }
+            }
 
             // Blank line
             addSalaryRow(table, " ", 0, 0, 0, 0);

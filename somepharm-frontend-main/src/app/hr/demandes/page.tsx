@@ -156,7 +156,7 @@ export default function DemandesPage() {
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 text-slate-100">
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[3.5rem]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[3.5rem]">
          <div className="flex items-center gap-6">
             <div className="w-20 h-20 bg-indigo-500/10 border border-slate-800 text-indigo-400 rounded-[2rem] flex items-center justify-center shadow-2xl">
                <FileText size={40} />
@@ -172,7 +172,7 @@ export default function DemandesPage() {
             </div>
          </div>
 
-         <div className="flex items-center gap-4 bg-slate-900/60 border border-slate-800/80 px-6 py-4 rounded-[2rem] text-slate-300 font-bold text-xs uppercase tracking-wider backdrop-blur-md">
+         <div className="flex items-center gap-4 bg-slate-900/85 border border-slate-800/80 px-6 py-4 rounded-[2rem] text-slate-300 font-bold text-xs uppercase tracking-wider backdrop-blur-md">
             <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
             {user?.sub} <span className="text-indigo-400">({user?.role})</span>
          </div>
@@ -180,14 +180,14 @@ export default function DemandesPage() {
 
       {/* STATS HUD */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[2.5rem] relative overflow-hidden group">
+        <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[2.5rem] relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-all duration-500"></div>
           <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">Solde de Congé Actuel</p>
           <p className="text-6xl font-black text-white flex items-baseline gap-2">
             {typeof userSolde === 'number' ? userSolde.toFixed(2) : userSolde} <span className="text-xl font-bold text-indigo-400 italic uppercase">Jours</span>
           </p> 
         </div>
-        <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[2.5rem] relative overflow-hidden group">
+        <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[2.5rem] relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-all duration-500"></div>
           <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">Dossiers Affichés</p>
           <p className="text-6xl font-black text-white flex items-baseline gap-2">
@@ -197,7 +197,7 @@ export default function DemandesPage() {
       </div>
 
       {/* LIST TABLE CONTAINER */}
-      <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_20px_rgba(99,102,241,0.05)] rounded-[3rem] overflow-hidden">
+      <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_20px_rgba(99,102,241,0.05)] rounded-[3rem] overflow-hidden">
         
         {/* --- PREMIUM COMMAND CENTER --- */}
         <div className="p-10 bg-slate-950/50 border-b border-slate-800/80 relative">
@@ -234,7 +234,7 @@ export default function DemandesPage() {
               )}
 
               {/* --- ADAPTIVE FILTER HUD --- */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 bg-slate-900/60 backdrop-blur-md p-2 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-800/80 w-full xl:w-auto">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 bg-slate-900/85 backdrop-blur-md p-2 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-800/80 w-full xl:w-auto">
                 
                 {/* Type Filter */}
                 <div className="relative w-full sm:w-auto">
@@ -291,7 +291,7 @@ export default function DemandesPage() {
         
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-slate-900/40 border-b border-slate-800/80 text-slate-400 font-black uppercase text-[10px] tracking-widest">
+            <thead className="bg-slate-900/85 border-b border-slate-800/80 text-slate-400 font-black uppercase text-[10px] tracking-widest">
               <tr>
                 <th className="p-8">Détails de la Demande</th>
                 <th className="p-8">Période / Motif</th>
@@ -454,3 +454,4 @@ export default function DemandesPage() {
     </div>
   );
 }
+

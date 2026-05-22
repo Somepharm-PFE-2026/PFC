@@ -691,7 +691,7 @@ export default function HRSettingsPage() {
       </div>
 
       {/* TABS NAVIGATION */}
-      <div className="flex flex-wrap items-center gap-2 bg-slate-950/60 p-2 rounded-[2.5rem] border border-slate-800/80 backdrop-blur-md w-fit">
+      <div className="flex flex-wrap items-center gap-2 bg-slate-950/85 p-2 rounded-[2.5rem] border border-slate-800/80 backdrop-blur-md w-fit">
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -707,7 +707,7 @@ export default function HRSettingsPage() {
       </div>
 
       {/* CONTENT AREA */}
-      <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[4rem] p-12">
+      <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[4rem] p-12">
         
         {activeTab === "conges" && (
           <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-500">
@@ -808,7 +808,7 @@ export default function HRSettingsPage() {
                                 </div>
                               </div>
 
-                              <label className="flex items-center justify-between p-2 cursor-pointer bg-slate-950/40 rounded-2xl border border-slate-800/80 group">
+                              <label className="flex items-center justify-between p-2 cursor-pointer bg-slate-950/85 rounded-2xl border border-slate-800/80 group">
                                  <span className="text-xs font-bold text-slate-300 group-hover:text-indigo-400 transition-colors">Justificatif Obligatoire</span>
                                  <div className="relative inline-flex items-center cursor-pointer">
                                     <input 
@@ -922,7 +922,7 @@ export default function HRSettingsPage() {
                                 </div>
                               </div>
 
-                              <label className="flex items-center justify-between p-2 cursor-pointer bg-slate-950/40 rounded-2xl border border-slate-800/80 group">
+                              <label className="flex items-center justify-between p-2 cursor-pointer bg-slate-950/85 rounded-2xl border border-slate-800/80 group">
                                  <span className="text-xs font-bold text-slate-300 group-hover:text-indigo-400 transition-colors">Justificatif Obligatoire</span>
                                  <div className="relative inline-flex items-center cursor-pointer">
                                     <input 
@@ -978,7 +978,7 @@ export default function HRSettingsPage() {
                    </div>
                 </div>
 
-                <div className="space-y-8 bg-slate-950/40 p-10 rounded-[3rem] border border-slate-800/80">
+                <div className="space-y-8 bg-slate-950/85 p-10 rounded-[3rem] border border-slate-800/80">
                    <h3 className="text-xl font-black text-slate-100 uppercase italic flex items-center gap-3">
                       <ShieldCheck className="text-indigo-400" size={24} /> Règles de Validation
                    </h3>
@@ -1002,7 +1002,7 @@ export default function HRSettingsPage() {
         {activeTab === "temps" && (
           <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-500">
              {/* EXPLANATION BOX */}
-             <div className="bg-slate-950/40 border border-slate-800/80 p-8 rounded-[2.5rem] flex items-start gap-6 shadow-[0_0_15px_rgba(99,102,241,0.05)]">
+             <div className="bg-slate-950/85 border border-slate-800/80 p-8 rounded-[2.5rem] flex items-start gap-6 shadow-[0_0_15px_rgba(99,102,241,0.05)]">
                  <div className="bg-gradient-to-r from-indigo-600 to-sky-600 p-4 rounded-2xl text-slate-950 shadow-lg">
                     <Clock3 size={24} />
                  </div>
@@ -1023,7 +1023,7 @@ export default function HRSettingsPage() {
                       <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest pl-8">Normes SomePharm Distribution</p>
                    </div>
                    
-                   <div className="bg-slate-950/40 border border-slate-800/80 p-8 rounded-[3rem] shadow-sm space-y-8">
+                   <div className="bg-slate-950/85 border border-slate-800/80 p-8 rounded-[3rem] shadow-sm space-y-8">
                       <div className="space-y-4">
                          <TimeInput 
                            label="Heure d&apos;entrée (Début retard)" 
@@ -1093,8 +1093,8 @@ export default function HRSettingsPage() {
                        )}
                     </div>
                     
-                    <div className="bg-slate-950/40 border border-slate-800/80 rounded-[3rem] p-8 space-y-8">
-                       <p className="text-xs text-slate-400 font-medium mb-4 bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+                    <div className="bg-slate-950/85 border border-slate-800/80 rounded-[3rem] p-8 space-y-8">
+                       <p className="text-xs text-slate-400 font-medium mb-4 bg-slate-950/85 p-4 rounded-2xl border border-slate-800/80">
                          Le bouton &quot;Importer&quot; permet de charger les fêtes nationales. Vous pouvez également ajouter des dates spécifiques manuellement.
                        </p>
 
@@ -1149,7 +1149,7 @@ export default function HRSettingsPage() {
                        
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {holidays.map((h: any) => (
-                            <div key={h.id} className="flex items-center justify-between bg-slate-950/40 p-5 rounded-2xl border border-slate-800/60 hover:border-slate-800 transition-all group">
+                            <div key={h.id} className="flex items-center justify-between bg-slate-950/85 p-5 rounded-2xl border border-slate-800/60 hover:border-slate-800 transition-all group">
                                <div className="flex items-center gap-4">
                                   <div className="bg-indigo-500/10 p-3 rounded-xl text-indigo-400 shadow-sm"><Calendar size={18} /></div>
                                   <div>
@@ -1204,10 +1204,10 @@ export default function HRSettingsPage() {
                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest pl-8">Structure Organisationnelle SomePharm</p>
                     </div>
 
-                    <div className="bg-slate-950/40 border border-slate-800/80 p-8 rounded-[3rem] space-y-4">
+                    <div className="bg-slate-950/85 border border-slate-800/80 p-8 rounded-[3rem] space-y-4">
                        <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                           {departments.length > 0 ? departments.filter((d: any) => d && d.nomDept).map((dept: any) => (
-                             <div key={dept.idDept} className="bg-slate-950/40 p-5 rounded-2xl border border-slate-800/60 flex items-center justify-between group hover:border-slate-800 transition-all">
+                             <div key={dept.idDept} className="bg-slate-950/85 p-5 rounded-2xl border border-slate-800/60 flex items-center justify-between group hover:border-slate-800 transition-all">
                                 <div className="flex items-center gap-4">
                                    <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 shadow-inner">
                                       <Users size={18} />
@@ -1255,10 +1255,10 @@ export default function HRSettingsPage() {
                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest pl-8">Implantations Géographiques</p>
                     </div>
 
-                    <div className="bg-slate-950/40 border border-slate-800/80 p-8 rounded-[3rem] space-y-4">
+                    <div className="bg-slate-950/85 border border-slate-800/80 p-8 rounded-[3rem] space-y-4">
                        <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                           {sites.length > 0 ? sites.map((s: any) => (
-                             <div key={s.idSite} className="bg-slate-950/40 p-5 rounded-2xl border border-slate-800/60 flex items-center justify-between group hover:border-slate-800 transition-all shadow-sm">
+                             <div key={s.idSite} className="bg-slate-950/85 p-5 rounded-2xl border border-slate-800/60 flex items-center justify-between group hover:border-slate-800 transition-all shadow-sm">
                                 <div className="flex items-center gap-4">
                                    <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400">
                                       <MapPin size={18} />
@@ -1326,11 +1326,11 @@ export default function HRSettingsPage() {
                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest pl-8">Catalogue (Mapping Dept)</p>
                     </div>
 
-                    <div className="bg-slate-950/40 border border-slate-800/80 p-8 rounded-[3rem] space-y-4">
+                    <div className="bg-slate-950/85 border border-slate-800/80 p-8 rounded-[3rem] space-y-4">
                        <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                           {postes.length > 0 ? 
                             postes.map((poste: any) => (
-                             <div key={poste.idPoste} className="bg-slate-950/40 p-5 rounded-2xl border border-slate-800/60 flex items-center justify-between group hover:border-slate-800 transition-all">
+                             <div key={poste.idPoste} className="bg-slate-950/85 p-5 rounded-2xl border border-slate-800/60 flex items-center justify-between group hover:border-slate-800 transition-all">
                                 <div className="flex items-center gap-4">
                                    <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400">
                                       <FileCode size={18} />
@@ -1397,7 +1397,7 @@ export default function HRSettingsPage() {
                  </div>
 
                  {/* HIERARCHY & ROLES */}
-                 <div className="lg:col-span-2 space-y-12 bg-slate-950/30 p-10 rounded-[4rem] border border-slate-800/80">
+                 <div className="lg:col-span-2 space-y-12 bg-slate-950/70 p-10 rounded-[4rem] border border-slate-800/80">
                     <div className="flex items-center justify-between">
                        <div className="space-y-2">
                           <h3 className="text-xl font-black text-slate-100 uppercase italic flex items-center gap-3">
@@ -1482,7 +1482,7 @@ export default function HRSettingsPage() {
                  
                  {/* 🔗 COLUMN 1: VARIABLES DICTIONARY */}
                  <div className="col-span-12 lg:col-span-3 space-y-6">
-                    <div className="bg-slate-950/40 p-8 rounded-[3rem] text-slate-100 border border-slate-800/80 shadow-xl relative overflow-hidden">
+                    <div className="bg-slate-950/85 p-8 rounded-[3rem] text-slate-100 border border-slate-800/80 shadow-xl relative overflow-hidden">
                        <div className="absolute -right-4 -top-4 opacity-10">
                           <GitMerge size={120} />
                        </div>
@@ -1503,7 +1503,7 @@ export default function HRSettingsPage() {
                              { tag: "{{date_jour}}", label: "Aujourd'hui" },
                              { tag: "{{nom_societe}}", label: "SomePharm" }
                           ].map(v => (
-                             <div key={v.tag} className="bg-slate-900/40 backdrop-blur-md p-3 rounded-xl border border-slate-800/80 group hover:bg-slate-900/80 transition-all cursor-copy" onClick={() => navigator.clipboard.writeText(v.tag)}>
+                             <div key={v.tag} className="bg-slate-900/85 backdrop-blur-md p-3 rounded-xl border border-slate-800/80 group hover:bg-slate-900/80 transition-all cursor-copy" onClick={() => navigator.clipboard.writeText(v.tag)}>
                                 <p className="font-mono text-[10px] font-bold text-indigo-400">{v.tag}</p>
                                 <p className="text-[8px] text-indigo-400/60 font-bold uppercase tracking-tighter">{v.label}</p>
                              </div>
@@ -1521,7 +1521,7 @@ export default function HRSettingsPage() {
                     </div>
 
                     {/* 👥 Dynamic Test Collaborator Selector */}
-                    <div className="bg-slate-950/40 border border-slate-800/80 p-6 rounded-[2rem] space-y-4 shadow-sm">
+                    <div className="bg-slate-950/85 border border-slate-800/80 p-6 rounded-[2rem] space-y-4 shadow-sm">
                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                           <div>
                              <h4 className="text-xs font-black text-slate-200 uppercase tracking-wider flex items-center gap-2">
@@ -1548,7 +1548,7 @@ export default function HRSettingsPage() {
 
                     <div className="grid grid-cols-1 gap-4">
                        {templates.map((tmpl: any) => (
-                          <div key={tmpl.id} className="bg-slate-950/40 border border-slate-800/80 p-6 rounded-[2.5rem] flex items-center justify-between hover:shadow-lg hover:border-slate-800 transition-all group">
+                          <div key={tmpl.id} className="bg-slate-950/85 border border-slate-800/80 p-6 rounded-[2.5rem] flex items-center justify-between hover:shadow-lg hover:border-slate-800 transition-all group">
                              <div className="flex items-center gap-6">
                                 <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-indigo-500/10 group-hover:text-indigo-400 transition-all">
                                    <FileText size={24} />
@@ -1662,7 +1662,7 @@ export default function HRSettingsPage() {
 
                     <div className="space-y-6">
                        {/* SIGNATURE CARD */}
-                       <div className="bg-slate-950/40 border border-slate-800/80 p-8 rounded-[3rem] shadow-sm space-y-6">
+                       <div className="bg-slate-950/85 border border-slate-800/80 p-8 rounded-[3rem] shadow-sm space-y-6">
                           <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
                              <ImageIcon size={14} /> Signature DRH
                           </p>
@@ -1685,7 +1685,7 @@ export default function HRSettingsPage() {
                        </div>
 
                        {/* STAMP CARD */}
-                       <div className="bg-slate-950/40 border border-slate-800/80 p-8 rounded-[3rem] shadow-sm space-y-6">
+                       <div className="bg-slate-950/85 border border-slate-800/80 p-8 rounded-[3rem] shadow-sm space-y-6">
                           <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
                              <Shield size={14} /> Cachet Entreprise
                           </p>
@@ -1707,7 +1707,7 @@ export default function HRSettingsPage() {
                        </div>
 
                        {/* PLACEMENT SETTINGS */}
-                       <div className="bg-slate-950/60 border border-slate-800/80 border p-8 rounded-[3rem] text-slate-100 space-y-6">
+                       <div className="bg-slate-950/85 border border-slate-800/80 border p-8 rounded-[3rem] text-slate-100 space-y-6">
                           <h4 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
                              <Settings2 size={14} className="text-indigo-400" /> Placement Signature
                           </h4>
@@ -1735,7 +1735,7 @@ export default function HRSettingsPage() {
               </div>
 
               {/* ⚙️ FINAL SECTION: GENERATION PARAMS */}
-              <div className="bg-slate-950/40 border border-slate-800/80 p-10 rounded-[4rem] grid grid-cols-1 md:grid-cols-3 gap-12">
+              <div className="bg-slate-950/85 border border-slate-800/80 p-10 rounded-[4rem] grid grid-cols-1 md:grid-cols-3 gap-12">
                  <div className="space-y-4">
                     <div className="flex items-center gap-3 text-indigo-400">
                        <ShieldCheck size={24} />
@@ -1784,10 +1784,10 @@ export default function HRSettingsPage() {
 
                  <div className="grid grid-cols-1 gap-6">
                     {circuits.map((circuit: any) => (
-                       <div key={circuit.idCircuit} className="bg-slate-950/40 border border-slate-800/80 rounded-[2.5rem] overflow-hidden hover:border-indigo-500/30 transition-all">
+                       <div key={circuit.idCircuit} className="bg-slate-950/85 border border-slate-800/80 rounded-[2.5rem] overflow-hidden hover:border-indigo-500/30 transition-all">
                           <div className="p-8 flex items-center justify-between cursor-pointer" onClick={() => setExpandedCircuit(expandedCircuit === circuit.idCircuit ? null : circuit.idCircuit)}>
                              <div className="flex items-center gap-6">
-                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${circuit.actif ? "bg-indigo-500/10 text-indigo-400 border border-slate-800" : "bg-slate-900/50 text-slate-500 border border-slate-800/60"}`}>
+                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${circuit.actif ? "bg-indigo-500/10 text-indigo-400 border border-slate-800" : "bg-slate-900/85 text-slate-500 border border-slate-800/60"}`}>
                                    <GitMerge size={24} />
                                 </div>
                                 <div>
@@ -1835,7 +1835,7 @@ export default function HRSettingsPage() {
 
                                 {/* Add Step Form */}
                                 {!isReadOnly && (
-                                   <div className="bg-slate-950/60 border-2 border-dashed border-slate-800 p-6 rounded-2xl space-y-4">
+                                   <div className="bg-slate-950/85 border-2 border-dashed border-slate-800 p-6 rounded-2xl space-y-4">
                                       <h5 className="text-[9px] font-black text-indigo-400/60 uppercase tracking-widest mb-4 flex items-center gap-2"><Plus size={12} /> Ajouter une étape</h5>
                                       <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
                                         <div className="space-y-1">
@@ -1904,7 +1904,7 @@ export default function HRSettingsPage() {
 
                     {/* New Circuit Form */}
                     {!isReadOnly && (
-                      <div className="bg-slate-950/40 border-2 border-dashed border-slate-800/80 p-8 rounded-[2.5rem] space-y-4">
+                      <div className="bg-slate-950/85 border-2 border-dashed border-slate-800/80 p-8 rounded-[2.5rem] space-y-4">
                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2"><Plus size={14} /> Nouveau Circuit</h4>
                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <input type="text" placeholder="Nom (ex: Circuit Complet)" className="bg-slate-900 border border-slate-800/80 p-4 rounded-2xl text-xs font-bold text-slate-100 placeholder-slate-500 outline-none focus:border-indigo-500/40" value={newCircuit.nom} onChange={(e) => setNewCircuit({...newCircuit, nom: e.target.value})} />
@@ -1924,7 +1924,7 @@ export default function HRSettingsPage() {
 
                  <div className="space-y-3">
                     {mappings.map((m: any) => (
-                       <div key={m.idMapping} className="bg-slate-900/60 backdrop-blur-md p-4 rounded-xl border border-slate-800/80 flex items-center justify-between">
+                       <div key={m.idMapping} className="bg-slate-900/85 backdrop-blur-md p-4 rounded-xl border border-slate-800/80 flex items-center justify-between">
                           <div className="flex items-center gap-4">
                              <span className="font-black text-sm text-slate-100">{REQUEST_TYPES.find(t => t.value === m.typeRequete)?.label || m.typeRequete}</span>
                              <ArrowRight size={16} className="text-indigo-400/40" />
@@ -1968,7 +1968,7 @@ export default function HRSettingsPage() {
 
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {bypassRules.map((rule: any) => (
-                       <div key={rule.idRule} className={`p-6 rounded-[2rem] border transition-all ${rule.actif ? "bg-slate-950/60 border-sky-500/20 shadow-lg shadow-indigo-500/5" : "bg-slate-900/40 border-slate-800/60 opacity-60"}`}>
+                       <div key={rule.idRule} className={`p-6 rounded-[2rem] border transition-all ${rule.actif ? "bg-slate-950/85 border-sky-500/20 shadow-lg shadow-indigo-500/5" : "bg-slate-900/85 border-slate-800/60 opacity-60"}`}>
                           <div className="flex items-center justify-between mb-4">
                              <h4 className="font-black text-sm text-slate-100 uppercase">{rule.nom}</h4>
                              <div className="flex items-center gap-2">
@@ -2008,13 +2008,13 @@ export default function HRSettingsPage() {
               </div>
 
               {/* ═══════ SECTION 4: SLA OVERVIEW ═══════ */}
-              <div className="bg-slate-950/40 border border-slate-800/80 p-10 rounded-[3rem] text-white space-y-8">
+              <div className="bg-slate-950/85 border border-slate-800/80 p-10 rounded-[3rem] text-white space-y-8">
                  <h3 className="text-lg font-black uppercase italic tracking-tighter flex items-center gap-2"><Clock3 size={20} className="text-indigo-400" /> Délais &amp; Escalades (SLA)</h3>
                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Vue consolidée des délais par circuit</p>
 
                  <div className="space-y-6">
                     {circuits.map((circuit: any) => (
-                       <div key={circuit.idCircuit} className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl space-y-4">
+                       <div key={circuit.idCircuit} className="bg-slate-900/85 border border-slate-800/80 p-6 rounded-2xl space-y-4">
                           <h4 className="font-black text-sm text-slate-200 uppercase">{circuit.nom}</h4>
                           <div className="flex items-center gap-2 flex-wrap">
                              {(circuit.etapes || []).map((etape: any, i: number) => (
@@ -2044,7 +2044,7 @@ export default function HRSettingsPage() {
 
                  <div className="grid grid-cols-1 gap-4">
                     {delegations.map((d: any) => (
-                       <div key={d.idDelegation} className="bg-slate-950/40 border border-slate-800/80 p-6 rounded-[2rem] flex items-center justify-between hover:border-indigo-500/30 transition-all group">
+                       <div key={d.idDelegation} className="bg-slate-950/85 border border-slate-800/80 p-6 rounded-[2rem] flex items-center justify-between hover:border-indigo-500/30 transition-all group">
                           <div className="flex items-center gap-6">
                              <div className="w-12 h-12 bg-indigo-500/10 border border-slate-800 rounded-xl flex items-center justify-center text-indigo-400"><RefreshCw size={20} /></div>
                              <div>
@@ -2062,7 +2062,7 @@ export default function HRSettingsPage() {
 
                     {/* New Delegation Form */}
                     {!isReadOnly && (
-                      <div className="bg-slate-950/40 border-2 border-dashed border-slate-800/80 p-8 rounded-[2rem] space-y-4">
+                      <div className="bg-slate-950/85 border-2 border-dashed border-slate-800/80 p-8 rounded-[2rem] space-y-4">
                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2"><Plus size={14} /> Nouvelle Délégation</h4>
                          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                             <select className="bg-slate-900 border border-slate-800/80 p-4 rounded-2xl text-[10px] font-black uppercase text-slate-100 outline-none" value={newDelegation.titulaireId} onChange={(e) => setNewDelegation({...newDelegation, titulaireId: e.target.value})}>
@@ -2123,3 +2123,4 @@ function TimeInput({ label, value, readOnly, onChange }: any) {
     </div>
   );
 }
+

@@ -210,7 +210,7 @@ export default function CommunicationPage() {
    return (
       <div className="space-y-10 animate-in fade-in duration-700 pb-20 text-slate-100">
          {/* HEADER */}
-         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[3.5rem]">
+         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[3.5rem]">
             <div className="flex items-center gap-6">
                <div className="w-20 h-20 bg-indigo-500/10 border border-slate-800 text-indigo-400 rounded-[2rem] flex items-center justify-center shadow-2xl">
                   <Megaphone size={40} />
@@ -239,7 +239,7 @@ export default function CommunicationPage() {
             {annonces.map((annonce: any) => (
                <div
                   key={annonce.idAnnonce}
-                  className={`bg-slate-950/40 backdrop-blur-xl border shadow-[0_0_15px_rgba(99,102,241,0.05)] p-12 transition-all hover:shadow-[0_0_30px_rgba(99,102,241,0.1)] relative group flex flex-col rounded-[4rem]
+                  className={`bg-slate-950/85 backdrop-blur-xl border shadow-[0_0_15px_rgba(99,102,241,0.05)] p-12 transition-all hover:shadow-[0_0_30px_rgba(99,102,241,0.1)] relative group flex flex-col rounded-[4rem]
                ${annonce.pinned ? "border-indigo-500/30 bg-indigo-600/[0.03]" : "border-slate-800/80"}
                ${annonce.priority === "URGENT" ? "border-rose-500/30 ring-8 ring-rose-500/10 bg-rose-950/5" : ""}`}
                >
@@ -276,7 +276,7 @@ export default function CommunicationPage() {
                   />
 
                   {/* INTERNAL STATS & INFO WIDGET */}
-                  <div className="bg-slate-950/60 rounded-[3rem] border border-slate-800/60 p-8 mb-8 space-y-6">
+                  <div className="bg-slate-950/85 rounded-[3rem] border border-slate-800/60 p-8 mb-8 space-y-6">
                      <div className="flex items-center justify-between">
                         <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
                            <BarChart3 size={14} className="text-indigo-400" /> Métriques & Audience
@@ -289,7 +289,7 @@ export default function CommunicationPage() {
 
                      <div className="grid grid-cols-2 gap-4">
                         {/* Targeting Info */}
-                        <div className="bg-slate-950/40 p-5 rounded-[2rem] border border-slate-800/80 flex items-center gap-4">
+                        <div className="bg-slate-950/85 p-5 rounded-[2rem] border border-slate-800/80 flex items-center gap-4">
                            <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 border border-slate-800">
                               <TargetSizeIcon type={annonce.targetType} />
                            </div>
@@ -305,7 +305,7 @@ export default function CommunicationPage() {
 
                         {/* File Info */}
                         <div className={`p-5 rounded-[2rem] border flex items-center gap-4 transition-all
-                          ${annonce.attachmentUrl ? "bg-slate-950/40 border-indigo-500/15" : "bg-slate-950/20 border-slate-800/60 opacity-40"}`}>
+                          ${annonce.attachmentUrl ? "bg-slate-950/85 border-indigo-500/15" : "bg-slate-950/20 border-slate-800/60 opacity-40"}`}>
                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border
                              ${annonce.attachmentUrl ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-slate-900 text-slate-600 border-slate-950"}`}>
                               <Paperclip size={18} />
@@ -438,7 +438,7 @@ export default function CommunicationPage() {
 
                         <div className="space-y-8">
                            {/* TYPE & PRIO */}
-                           <div className="bg-slate-950/40 p-8 rounded-[3rem] border border-slate-800/80 space-y-8">
+                           <div className="bg-slate-950/85 p-8 rounded-[3rem] border border-slate-800/80 space-y-8">
                               <h4 className="text-[10px] font-black uppercase text-indigo-400 tracking-widest flex items-center gap-2">
                                  <Info size={16} /> Configuration
                               </h4>
@@ -573,7 +573,7 @@ export default function CommunicationPage() {
                                                    >
                                                       <div>
                                                          <p className="text-[10px] font-black text-slate-200 uppercase italic">{u.prenom} {u.nom}</p>
-                                                         <p className="text-[8px] font-black text-slate-500 uppercase">#{u.matricule} • {u.departement}</p>
+                                                         <p className="text-[8px] font-black text-slate-500 uppercase">#{u.matricule} • {u.departement && typeof u.departement === 'object' ? u.departement.nomDept || u.departement.nom : u.departement}</p>
                                                       </div>
                                                       <Plus size={14} className="text-slate-500 group-hover:text-indigo-400" />
                                                    </div>
@@ -684,3 +684,4 @@ function formatRoleName(role: string) {
       .replace("SECURITE", "SÉCURITÉ")
       .replace("_", " ");
 }
+

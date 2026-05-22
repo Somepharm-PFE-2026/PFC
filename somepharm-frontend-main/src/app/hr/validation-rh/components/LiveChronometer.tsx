@@ -58,3 +58,4 @@ export default function LiveChronometer({ startTime, isStopped }: LiveChronomete
         </div>
     );
 }
+

@@ -282,7 +282,7 @@ export default function TempsPresencePage() {
                <button
                   onClick={handleGlobalExport}
                   title="Exporter le registre du jour"
-                  className="bg-slate-950/40 border border-slate-800/80 p-4 rounded-2xl shadow-sm hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-all text-slate-400 hover:text-indigo-400 active:scale-95"
+                  className="bg-slate-950/85 border border-slate-800/80 p-4 rounded-2xl shadow-sm hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-all text-slate-400 hover:text-indigo-400 active:scale-95"
                >
                   <Download size={20} />
                </button>
@@ -299,7 +299,7 @@ export default function TempsPresencePage() {
          </div>
 
          {/* TABS NAVIGATION */}
-         <div className="flex items-center gap-2 bg-slate-950/60 p-2 rounded-[2.5rem] border border-slate-800/80 backdrop-blur-sm w-fit">
+         <div className="flex items-center gap-2 bg-slate-950/85 p-2 rounded-[2.5rem] border border-slate-800/80 backdrop-blur-sm w-fit">
             {tabs.map(tab => (
                <button
                   key={tab.id}
@@ -342,7 +342,7 @@ export default function TempsPresencePage() {
                         color="amber"
                         icon={<Clock size={24} />}
                      />
-                     <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-6 rounded-[3rem] flex flex-col justify-between hover:border-slate-800 transition-all">
+                     <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-6 rounded-[3rem] flex flex-col justify-between hover:border-slate-800 transition-all">
                         <div className="flex items-center justify-between mb-4">
                            <div className="bg-indigo-500/10 text-indigo-400 p-3 rounded-2xl border border-slate-800/80">
                               <TrendingUp size={24} />
@@ -357,7 +357,7 @@ export default function TempsPresencePage() {
                   </div>
 
                   {/* LIVE FEED TABLE */}
-                  <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] overflow-hidden">
+                  <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] overflow-hidden">
                      <div className="px-10 py-8 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/50">
                         <div className="flex items-center gap-4">
                            <div className="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></div>
@@ -371,7 +371,7 @@ export default function TempsPresencePage() {
                                  placeholder="Chercher un collaborateur..."
                                  value={searchTerm}
                                  onChange={(e) => setSearchTerm(e.target.value)}
-                                 className="pl-12 pr-6 py-3 bg-slate-950/60 border border-slate-800/80 focus:border-indigo-500/30 text-white rounded-2xl text-xs outline-none transition-all w-64 placeholder:text-slate-500"
+                                 className="pl-12 pr-6 py-3 bg-slate-950/85 border border-slate-800/80 focus:border-indigo-500/30 text-white rounded-2xl text-xs outline-none transition-all w-64 placeholder:text-slate-500"
                               />
                            </div>
                         </div>
@@ -379,7 +379,7 @@ export default function TempsPresencePage() {
 
                      <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                           <thead className="bg-slate-950/30 text-[10px] font-black text-indigo-400/70 uppercase tracking-widest border-b border-slate-800/80">
+                           <thead className="bg-slate-950/70 text-[10px] font-black text-indigo-400/70 uppercase tracking-widest border-b border-slate-800/80">
                               <tr>
                                  <th className="px-10 py-6">Collaborateur</th>
                                  <th className="px-10 py-6">Événement</th>
@@ -444,7 +444,7 @@ export default function TempsPresencePage() {
                      <div className="relative">
                         <button
                            onClick={() => setShowCalendarDropdown(!showCalendarDropdown)}
-                           className="bg-slate-950/40 border border-slate-800/80 hover:border-indigo-500/30 p-6 rounded-[2rem] shadow-sm flex items-center gap-4 transition-all group min-w-[280px]"
+                           className="bg-slate-950/85 border border-slate-800/80 hover:border-indigo-500/30 p-6 rounded-[2rem] shadow-sm flex items-center gap-4 transition-all group min-w-[280px]"
                         >
                            <Calendar size={20} className="text-indigo-400 ml-2" />
                            <div className="text-left flex-1">
@@ -551,7 +551,7 @@ export default function TempsPresencePage() {
                      {anomalies.map((ano, i) => {
                         const lastLog = ano.logs[ano.logs.length - 1];
                         return (
-                           <div key={i} className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] p-8 space-y-6 hover:border-slate-800 transition-all border-l-8 border-l-indigo-500">
+                           <div key={i} className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] p-8 space-y-6 hover:border-slate-800 transition-all border-l-8 border-l-indigo-500">
                               <div className="flex items-center justify-between">
                                  <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-indigo-500/10 border border-slate-800 rounded-2xl flex items-center justify-center font-black text-indigo-400 uppercase">
@@ -564,7 +564,7 @@ export default function TempsPresencePage() {
                                  </div>
                                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{selectedDate}</span>
                               </div>
-                              <div className="bg-slate-950/60 border border-slate-800/60 p-6 rounded-2xl space-y-3">
+                              <div className="bg-slate-950/85 border border-slate-800/60 p-6 rounded-2xl space-y-3">
                                  <div className="flex justify-between text-xs">
                                     <span className="text-slate-400 font-bold">Type d'erreur</span>
                                     <span className="text-indigo-400 font-black">{ano.type.replace(/_/g, ' ')}</span>
@@ -645,14 +645,14 @@ export default function TempsPresencePage() {
 
             {activeTab === "historique" && (
                <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-                  <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-8 rounded-[3rem] space-y-8">
+                  <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-8 rounded-[3rem] space-y-8">
                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
                            <h3 className="text-xl font-black text-white tracking-tight uppercase italic">Registre Historique</h3>
                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Audit complet des pointages et présences</p>
                         </div>
                         <div className="flex items-center gap-4">
-                           <div className="bg-slate-950/60 p-2 rounded-2xl border border-slate-800/80 flex items-center gap-2">
+                           <div className="bg-slate-950/85 p-2 rounded-2xl border border-slate-800/80 flex items-center gap-2">
                               <Search className="ml-3 text-slate-500" size={16} />
                               <input
                                  type="text"
@@ -662,7 +662,7 @@ export default function TempsPresencePage() {
                                  className="bg-transparent border-none outline-none font-black text-[10px] uppercase tracking-widest text-white p-2 w-32 placeholder:text-slate-500"
                               />
                            </div>
-                           <div className="bg-slate-950/60 p-2 rounded-2xl border border-slate-800/80 flex items-center gap-2">
+                           <div className="bg-slate-950/85 p-2 rounded-2xl border border-slate-800/80 flex items-center gap-2">
                               <Calendar className="ml-3 text-slate-500" size={16} />
                               <input
                                  type="date"
@@ -689,7 +689,7 @@ export default function TempsPresencePage() {
 
                      <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                           <thead className="bg-slate-950/30 text-[10px] font-black text-indigo-400/70 uppercase tracking-widest border-b border-slate-800/80">
+                           <thead className="bg-slate-950/70 text-[10px] font-black text-indigo-400/70 uppercase tracking-widest border-b border-slate-800/80">
                               <tr>
                                  <th className="px-10 py-6">Date</th>
                                  <th className="px-10 py-6">Collaborateur</th>
@@ -756,7 +756,7 @@ export default function TempsPresencePage() {
             {activeTab === "calcul" && (
                <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
                   {/* FILTERS */}
-                  <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-8 rounded-[3rem] flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-8 rounded-[3rem] flex flex-col md:flex-row md:items-center justify-between gap-6">
                      <div className="flex items-center gap-6">
                         <div className="w-14 h-14 bg-indigo-500/10 border border-slate-800 rounded-2xl flex items-center justify-center text-indigo-400 shadow-lg">
                            <Calculator size={28} />
@@ -768,7 +768,7 @@ export default function TempsPresencePage() {
                      </div>
 
                      <div className="flex items-center gap-4">
-                        <div className="bg-slate-950/60 p-2 rounded-2xl border border-slate-800/80 flex items-center gap-2">
+                        <div className="bg-slate-950/85 p-2 rounded-2xl border border-slate-800/80 flex items-center gap-2">
                            <Search className="ml-3 text-slate-500" size={16} />
                            <input
                               type="text"
@@ -778,7 +778,7 @@ export default function TempsPresencePage() {
                               className="bg-transparent border-none outline-none font-black text-[10px] uppercase tracking-widest text-white p-2 w-32 placeholder:text-slate-500"
                            />
                         </div>
-                        <div className="bg-slate-950/60 p-2 rounded-2xl border border-slate-800/80 flex items-center gap-2">
+                        <div className="bg-slate-950/85 p-2 rounded-2xl border border-slate-800/80 flex items-center gap-2">
                            <Calendar className="ml-3 text-slate-500" size={16} />
                            <select
                               value={calculMonth}
@@ -811,7 +811,7 @@ export default function TempsPresencePage() {
                      <div className="space-y-8">
                         {/* SUMMARY CARDS */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                           <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-8 rounded-[3rem] space-y-4 hover:border-slate-800 transition-all">
+                           <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-8 rounded-[3rem] space-y-4 hover:border-slate-800 transition-all">
                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Temps de Travail Net</p>
                               <div className="flex items-baseline gap-2">
                                  <h4 className="text-4xl font-black text-white tracking-tighter">{calculReport.totalHours}</h4>
@@ -842,7 +842,7 @@ export default function TempsPresencePage() {
                         </div>
 
                         {/* DAILY DETAILS TABLE */}
-                        <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] overflow-hidden">
+                        <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] overflow-hidden">
                            <div className="p-8 border-b border-slate-800/80 bg-slate-950/50 flex items-center justify-between">
                               <h4 className="text-sm font-black text-slate-100 uppercase italic tracking-tight">Détails Journaliers : {calculReport.nomComplet}</h4>
                               <div className="flex items-center gap-4">
@@ -862,7 +862,7 @@ export default function TempsPresencePage() {
                            </div>
                            <div className="overflow-x-auto">
                               <table className="w-full text-left">
-                                  <thead className="bg-slate-950/30 text-[10px] font-black text-indigo-400/70 uppercase tracking-widest border-b border-slate-800/80">
+                                  <thead className="bg-slate-950/70 text-[10px] font-black text-indigo-400/70 uppercase tracking-widest border-b border-slate-800/80">
                                      <tr>
                                         <th className="px-10 py-6">Date</th>
                                         <th className="px-10 py-6">Entrée</th>
@@ -926,7 +926,7 @@ export default function TempsPresencePage() {
                      <button
                         onClick={fetchAnalytics}
                         title="Rafraîchir les données"
-                        className="bg-slate-950/40 border border-slate-800/80 p-4 rounded-2xl hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-all shadow-sm active:rotate-180 duration-500 text-indigo-400"
+                        className="bg-slate-950/85 border border-slate-800/80 p-4 rounded-2xl hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-all shadow-sm active:rotate-180 duration-500 text-indigo-400"
                      >
                         <TrendingUp size={20} className="text-indigo-400" />
                      </button>
@@ -934,7 +934,7 @@ export default function TempsPresencePage() {
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                      {/* ABSENTEEISM TREND ENHANCED */}
-                     <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[4rem] space-y-10 relative overflow-hidden group">
+                     <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[4rem] space-y-10 relative overflow-hidden group">
                         <div className="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000 blur-3xl"></div>
 
                         <div className="flex items-center justify-between relative">
@@ -952,15 +952,15 @@ export default function TempsPresencePage() {
                         </div>
 
                         <div className="grid grid-cols-3 gap-6 relative">
-                           <div className="bg-slate-950/60 p-6 rounded-3xl border border-slate-800/80">
+                           <div className="bg-slate-950/85 p-6 rounded-3xl border border-slate-800/80">
                               <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Moyenne</p>
                               <p className="text-2xl font-black text-indigo-400 italic">4.2%</p>
                            </div>
-                           <div className="bg-slate-950/60 p-6 rounded-3xl border border-slate-800/80">
+                           <div className="bg-slate-950/85 p-6 rounded-3xl border border-slate-800/80">
                               <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Impact</p>
                               <p className="text-2xl font-black text-slate-200 italic">-{stats.absentCount} <span className="text-[10px]">pax</span></p>
                            </div>
-                           <div className="bg-slate-950/60 p-6 rounded-3xl border border-slate-800/80">
+                           <div className="bg-slate-950/85 p-6 rounded-3xl border border-slate-800/80">
                               <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Risque</p>
                               <p className="text-[10px] font-black text-emerald-400 uppercase tracking-tight mt-2">Faible</p>
                            </div>
@@ -984,7 +984,7 @@ export default function TempsPresencePage() {
                      </div>
 
                      {/* LATENESS BY DEPT ENHANCED */}
-                     <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[4rem] space-y-10 relative overflow-hidden group">
+                     <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[4rem] space-y-10 relative overflow-hidden group">
                         <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-indigo-500/5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000 blur-3xl"></div>
 
                         <div className="flex items-center justify-between relative">
@@ -1034,7 +1034,7 @@ export default function TempsPresencePage() {
                   </div>
 
                   {/* TOP LEAVE BALANCES */}
-                  <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[4rem] p-12 space-y-10 relative overflow-hidden">
+                  <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[4rem] p-12 space-y-10 relative overflow-hidden">
                      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] -mr-32 -mt-32"></div>
 
                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 relative">
@@ -1088,7 +1088,7 @@ export default function TempsPresencePage() {
 
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 relative">
                         {analyticsData?.topLeaveBalances.map((u: any, i: number) => (
-                           <div key={i} className="bg-slate-900/50 border border-slate-800/80 p-8 rounded-[3rem] backdrop-blur-sm space-y-4 hover:bg-indigo-500/5 transition-all group">
+                           <div key={i} className="bg-slate-900/85 border border-slate-800/80 p-8 rounded-[3rem] backdrop-blur-sm space-y-4 hover:bg-indigo-500/5 transition-all group">
                               <div className="w-12 h-12 bg-indigo-500/10 border border-slate-800 rounded-2xl flex items-center justify-center text-indigo-400 font-black text-sm">
                                  {u.soldeConges}
                               </div>
@@ -1108,7 +1108,7 @@ export default function TempsPresencePage() {
 
             {/* Sync placeholder */}
             {activeTab === "sync" && (
-               <div className="bg-slate-950/40 border border-dashed border-slate-800/80 p-24 rounded-[4rem] flex flex-col items-center justify-center text-center gap-6 animate-in fade-in duration-500">
+               <div className="bg-slate-950/85 border border-dashed border-slate-800/80 p-24 rounded-[4rem] flex flex-col items-center justify-center text-center gap-6 animate-in fade-in duration-500">
                   <div className="w-24 h-24 bg-slate-900 rounded-[3rem] flex items-center justify-center text-indigo-400 border border-slate-800/80">
                      <RefreshCw size={48} className="animate-spin-slow" />
                   </div>
@@ -1136,7 +1136,7 @@ function PresenceCard({ label, value, total, color, icon }: any) {
    };
 
    return (
-      <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-6 rounded-[3rem] space-y-4 hover:border-slate-800 transition-all">
+      <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-6 rounded-[3rem] space-y-4 hover:border-slate-800 transition-all">
          <div className="flex items-center justify-between">
             <div className={`p-4 rounded-2xl ${colorMap[color]}`}>
                {icon}
@@ -1155,3 +1155,4 @@ function PresenceCard({ label, value, total, color, icon }: any) {
       </div>
    );
 }
+

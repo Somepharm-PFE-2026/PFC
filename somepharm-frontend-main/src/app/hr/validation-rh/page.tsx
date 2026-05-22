@@ -126,7 +126,7 @@ export default function ValidationRHPage() {
            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-2">Suivi global et validation finale des dossiers</p>
         </div>
         <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-slate-950/60 border border-slate-800/80 rounded-2xl px-4 py-1.5">
+            <div className="flex items-center gap-2 bg-slate-950/85 border border-slate-800/80 rounded-2xl px-4 py-1.5">
                <Filter className="text-slate-500" size={16} />
                <select 
                  value={typeFilter}
@@ -146,7 +146,7 @@ export default function ValidationRHPage() {
                  placeholder="Rechercher Matricule..."
                  value={searchTerm}
                  onChange={(e) => setSearchTerm(e.target.value)}
-                 className="w-full pl-12 pr-6 py-4 bg-slate-950/60 border border-slate-800/80 rounded-2xl outline-none focus:border-indigo-500/30 text-sm text-white placeholder:text-slate-500 transition-all font-bold"
+                 className="w-full pl-12 pr-6 py-4 bg-slate-950/85 border border-slate-800/80 rounded-2xl outline-none focus:border-indigo-500/30 text-sm text-white placeholder:text-slate-500 transition-all font-bold"
                />
             </div>
             <button 
@@ -158,7 +158,7 @@ export default function ValidationRHPage() {
         </div>
       </div>
 
-      <div className="flex gap-2 mb-10 bg-slate-950/60 p-2 rounded-3xl w-fit border border-slate-800/80 backdrop-blur-sm">
+      <div className="flex gap-2 mb-10 bg-slate-950/85 p-2 rounded-3xl w-fit border border-slate-800/80 backdrop-blur-sm">
         {[
           { id: "A_TRAITER", label: "À Traiter", icon: <Check size={16}/>, count: requests.filter(r => ["VALIDE_MANAGER", "EN_ATTENTE_RH"].includes(r.statutCycleVie?.toUpperCase()?.trim())).length, activeBg: "bg-gradient-to-r from-indigo-600 to-sky-600 text-white shadow-md font-black" },
           { id: "EN_COURS", label: "En cours (Suivi)", icon: <Clock size={16}/>, count: requests.filter(r => ["EN_ATTENTE_MANAGER", "EN_ATTENTE_CHEF_DEPT", "ATTENTE"].includes(r.statutCycleVie?.toUpperCase()?.trim())).length, activeBg: "bg-gradient-to-r from-indigo-600 to-sky-600 text-white shadow-md font-black" },
@@ -168,7 +168,7 @@ export default function ValidationRHPage() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${
-              activeTab === tab.id ? tab.activeBg : "text-slate-400 hover:text-slate-200 hover:bg-slate-950/40"
+              activeTab === tab.id ? tab.activeBg : "text-slate-400 hover:text-slate-200 hover:bg-slate-950/85"
             }`}
           >
             {tab.icon} {tab.label}
@@ -179,9 +179,9 @@ export default function ValidationRHPage() {
         ))}
       </div>
 
-      <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] overflow-hidden">
+      <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] overflow-hidden">
         <table className="w-full text-left">
-          <thead className="bg-slate-950/30 text-indigo-400/70 text-[10px] uppercase font-black tracking-widest border-b border-slate-800/80">
+          <thead className="bg-slate-950/70 text-indigo-400/70 text-[10px] uppercase font-black tracking-widest border-b border-slate-800/80">
             <tr>
               <th className="px-10 py-6">ID & Type</th>
               <th className="px-10 py-6">Demandeur</th>
@@ -231,3 +231,4 @@ export default function ValidationRHPage() {
     </div>
   );
 }
+

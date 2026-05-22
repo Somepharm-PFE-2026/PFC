@@ -36,16 +36,6 @@ public class DataInitializer {
                 createTestUser(userRepo, roleRepo, encoder, "SP-HRMGR", "HR", "Manager", "hrmanager@somepharm.dz", "HR_MANAGER");
             }
 
-            // 3. Initialize General Manager
-            if (userRepo.findByMatricule("SP-MGR01").isEmpty()) {
-                createTestUser(userRepo, roleRepo, encoder, "SP-MGR01", "Jean", "Manager", "manager01@somepharm.dz", "MANAGER");
-            }
-
-            // 4. Initialize Employee
-            if (userRepo.findByMatricule("SP-EMP01").isEmpty()) {
-                createTestUser(userRepo, roleRepo, encoder, "SP-EMP01", "Alice", "Employee", "employee01@somepharm.dz", "EMPLOYE");
-            }
-
             // 5. Initialize Super Admin
             if (userRepo.findByMatricule("SP-ADMIN").isEmpty()) {
                 createTestUser(userRepo, roleRepo, encoder, "SP-ADMIN", "Admin", "System", "admin@somepharm.dz", "SUPER_ADMIN");

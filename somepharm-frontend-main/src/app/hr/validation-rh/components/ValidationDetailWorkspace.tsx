@@ -85,7 +85,7 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction, 
                   <h3 className="font-black text-xs uppercase tracking-widest">Recapitulatif de la demande</h3>
                </div>
 
-               <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-3xl p-6">
+               <div className="bg-slate-950/85 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-3xl p-6">
                  <div className="flex items-center gap-4 mb-6">
                     <div className="w-16 h-16 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center font-black text-2xl border border-slate-800">
                        {request.demandeur?.matricule?.substring(0, 2) || "??"}
@@ -124,7 +124,7 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction, 
 
                <div className="space-y-4">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Justification Employé</label>
-                  <div className="bg-slate-950/60 border border-slate-800/60 rounded-3xl p-6 italic text-slate-300 text-sm leading-relaxed">
+                  <div className="bg-slate-950/85 border border-slate-800/60 rounded-3xl p-6 italic text-slate-300 text-sm leading-relaxed">
                      {request.description || request.motif || "Aucun commentaire additionnel fourni."}
                   </div>
                </div>
@@ -236,7 +236,7 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction, 
                          </div>
                       </div>
 
-                      <div className="bg-slate-950/60 p-8 rounded-[2rem] border border-slate-800/80 space-y-4">
+                      <div className="bg-slate-950/85 p-8 rounded-[2rem] border border-slate-800/80 space-y-4">
                          <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest border-b border-slate-800/80 pb-4">
                             <span className="text-slate-400">Date de Traitement</span>
                             <span className="text-slate-200 text-right">{new Date().toLocaleString("fr-FR")}</span>
@@ -257,7 +257,7 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction, 
                    </div>
                  ) : (
                    <>
-                     <p className="text-sm font-medium text-slate-300 bg-slate-950/40 p-6 rounded-3xl border border-slate-800/80">
+                     <p className="text-sm font-medium text-slate-300 bg-slate-950/85 p-6 rounded-3xl border border-slate-800/80">
                        En cliquant sur Valider, vous declenchez la cloture du dossier et la generation automatique du document PDF iText.
                      </p>
 
@@ -283,7 +283,7 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction, 
                              <button 
                                onClick={() => setCommentModalConfig({ isOpen: true, type: "ATTENTE" })}
                                disabled={request.statutCycleVie === "ATTENTE"}
-                               className="w-full bg-slate-950/60 text-indigo-400 border border-slate-800/80 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-500/10 transition-all flex items-center justify-center gap-2"
+                               className="w-full bg-slate-950/85 text-indigo-400 border border-slate-800/80 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-500/10 transition-all flex items-center justify-center gap-2"
                              >
                                <Clock size={18} /> Mettre en attente
                              </button>
@@ -301,7 +301,7 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction, 
                  )}
                </div>
 
-               <div className="bg-slate-950/60 border border-slate-800/80 p-6 rounded-[2rem] flex items-center gap-4">
+               <div className="bg-slate-950/85 border border-slate-800/80 p-6 rounded-[2rem] flex items-center gap-4">
                   <Info className="text-indigo-400 shrink-0" size={24} />
                   <p className="text-[10px] font-bold text-slate-400 leading-normal">
                     La validation finale synchronisera automatiquement les donnees individuelles de l'employe dans le systeme central.
@@ -354,3 +354,4 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction, 
     </div>
   );
 }
+

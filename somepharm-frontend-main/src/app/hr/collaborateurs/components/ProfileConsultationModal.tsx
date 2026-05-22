@@ -30,7 +30,7 @@ export default function ProfileConsultationModal({ user, onClose }: ProfileConsu
         {/* Close Button */}
         <button 
           onClick={onClose}
-          className="absolute top-8 right-8 p-3 bg-slate-950/60 border border-slate-800/80 rounded-2xl text-slate-400 hover:text-red-500 hover:bg-slate-900/80 hover:border-red-500/20 hover:shadow-lg transition-all z-10"
+          className="absolute top-8 right-8 p-3 bg-slate-950/85 border border-slate-800/80 rounded-2xl text-slate-400 hover:text-red-500 hover:bg-slate-900/80 hover:border-red-500/20 hover:shadow-lg transition-all z-10"
         >
           <X size={20} />
         </button>
@@ -50,7 +50,7 @@ export default function ProfileConsultationModal({ user, onClose }: ProfileConsu
             
             {/* Left Column: Identity Sidebar */}
             <div className="lg:col-span-4 space-y-8">
-               <div className="bg-slate-950/40 rounded-[3rem] p-10 border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)] text-center relative overflow-hidden">
+               <div className="bg-slate-950/85 rounded-[3rem] p-10 border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)] text-center relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-indigo-500/5 to-transparent"></div>
                   
                   <div className="relative mb-6">
@@ -84,7 +84,7 @@ export default function ProfileConsultationModal({ user, onClose }: ProfileConsu
                   </div>
                </div>
 
-               <div className="bg-slate-950/60 rounded-[3rem] p-8 text-white relative overflow-hidden shadow-2xl border border-slate-800/80">
+               <div className="bg-slate-950/85 rounded-[3rem] p-8 text-white relative overflow-hidden shadow-2xl border border-slate-800/80">
                   <UserCheck size={120} className="absolute -right-8 -bottom-8 opacity-[0.03] text-indigo-400" />
                   <p className="text-[10px] font-black text-indigo-400/80 uppercase tracking-[0.2em] mb-6">Management Direct</p>
                   {user.managerDirect ? (
@@ -107,7 +107,7 @@ export default function ProfileConsultationModal({ user, onClose }: ProfileConsu
             <div className="lg:col-span-8 space-y-8">
                
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="bg-slate-950/40 p-8 rounded-[2.5rem] border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)] flex items-center gap-6">
+                  <div className="bg-slate-950/85 p-8 rounded-[2.5rem] border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)] flex items-center gap-6">
                      <div className="w-16 h-16 bg-indigo-500/10 border border-slate-800 text-indigo-300 rounded-3xl flex items-center justify-center">
                         <Calendar size={28} />
                      </div>
@@ -116,7 +116,7 @@ export default function ProfileConsultationModal({ user, onClose }: ProfileConsu
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ancienneté Somepharm</p>
                      </div>
                   </div>
-                  <div className="bg-slate-950/40 p-8 rounded-[2.5rem] border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)] flex items-center gap-6">
+                  <div className="bg-slate-950/85 p-8 rounded-[2.5rem] border border-slate-800/80 shadow-[0_0_15px_rgba(99,102,241,0.05)] flex items-center gap-6">
                      <div className="w-16 h-16 bg-indigo-500/10 border border-slate-800 text-indigo-300 rounded-3xl flex items-center justify-center">
                         <Heart size={28} />
                      </div>
@@ -127,7 +127,7 @@ export default function ProfileConsultationModal({ user, onClose }: ProfileConsu
                   </div>
                </div>
 
-               <div className="bg-slate-950/40 rounded-[3rem] border border-slate-800/80 shadow-sm overflow-hidden">
+               <div className="bg-slate-950/85 rounded-[3rem] border border-slate-800/80 shadow-sm overflow-hidden">
                   <div className="p-10 border-b border-slate-800/80 flex items-center gap-4">
                      <div className="w-2 h-8 bg-gradient-to-b from-indigo-600 to-sky-600 rounded-full"></div>
                      <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Détails Administratifs</h3>
@@ -175,3 +175,4 @@ function InfoItem({ icon, label, value }: { icon: any, label: string, value: str
     </div>
   );
 }
+
