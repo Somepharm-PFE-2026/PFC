@@ -1,8 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUI } from "../../../context/UIContext";
 import Modal from "../../../components/ui/Modal";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Calendar, ChevronDown } from "lucide-react";
 
 interface DemandeModalProps {
   isOpen: boolean;
@@ -16,6 +16,18 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
   const [category, setCategory] = useState(initialCategory || "CONGE");
   const { addToast } = useUI();
 
+  const today = new Date();
+  const [startMonth, setStartMonth] = useState(today.getMonth() + 1);
+  const [startYear, setStartYear] = useState(today.getFullYear());
+  const [endMonth, setEndMonth] = useState(today.getMonth() + 1);
+  const [endYear, setEndYear] = useState(today.getFullYear());
+
+  const [showStartCalendar, setShowStartCalendar] = useState(false);
+  const [showEndCalendar, setShowEndCalendar] = useState(false);
+
+  const startCalendarRef = useRef<HTMLDivElement>(null);
+  const endCalendarRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (initialCategory) setCategory(initialCategory);
   }, [initialCategory]);
@@ -26,6 +38,186 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
     dateFin: "",
     motif: "",
   });
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (startCalendarRef.current && !startCalendarRef.current.contains(event.target as Node)) {
+        setShowStartCalendar(false);
+      }
+      if (endCalendarRef.current && !endCalendarRef.current.contains(event.target as Node)) {
+        setShowEndCalendar(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (formDataConge.dateDebut) {
+      const d = new Date(formDataConge.dateDebut);
+      if (!isNaN(d.getTime())) {
+        setStartMonth(d.getMonth() + 1);
+        setStartYear(d.getFullYear());
+      }
+    }
+  }, [formDataConge.dateDebut]);
+
+  useEffect(() => {
+    if (formDataConge.dateFin) {
+      const d = new Date(formDataConge.dateFin);
+      if (!isNaN(d.getTime())) {
+        setEndMonth(d.getMonth() + 1);
+        setEndYear(d.getFullYear());
+      }
+    }
+  }, [formDataConge.dateFin]);
+
+  const formatDateFrench = (dateStr: string) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+  };
+
+  const renderCalendarDropdown = (
+    type: "start" | "end",
+    viewMonth: number,
+    viewYear: number,
+    setViewMonth: (m: number) => void,
+    setViewYear: (y: number) => void,
+    selectedDate: string,
+    onSelectDate: (d: string) => void,
+    minDateStr?: string,
+    maxDateStr?: string
+  ) => {
+    const handlePrevMonth = () => {
+      if (viewMonth === 1) {
+        setViewMonth(12);
+        setViewYear(viewYear - 1);
+      } else {
+        setViewMonth(viewMonth - 1);
+      }
+    };
+
+    const handleNextMonth = () => {
+      if (viewMonth === 12) {
+        setViewMonth(1);
+        setViewYear(viewYear + 1);
+      } else {
+        setViewMonth(viewMonth + 1);
+      }
+    };
+
+    const monthName = new Date(viewYear, viewMonth - 1).toLocaleDateString("fr-FR", {
+      month: "long",
+      year: "numeric",
+    });
+
+    const firstDay = new Date(viewYear, viewMonth - 1, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+    const offset = firstDay === 0 ? 6 : firstDay - 1;
+
+    const dayCells = [];
+    for (let i = 0; i < offset; i++) {
+      dayCells.push(<div key={`empty-${i}`} className="aspect-square" />);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const padMonth = String(viewMonth).padStart(2, "0");
+      const padDay = String(d).padStart(2, "0");
+      const dateStr = `${viewYear}-${padMonth}-${padDay}`;
+      const dateObj = new Date(viewYear, viewMonth - 1, d);
+
+      let isSelectable = true;
+      if (minDateStr && dateStr < minDateStr) {
+        isSelectable = false;
+      }
+      if (maxDateStr && dateStr > maxDateStr) {
+        isSelectable = false;
+      }
+
+      const isWeekend = dateObj.getDay() === 5 || dateObj.getDay() === 6;
+      const isHoliday = checkIsHoliday(dateObj);
+      const isWorkingDay = !isWeekend && !isHoliday;
+      const isSelected = selectedDate === dateStr;
+
+      let cellStyle = "";
+      if (!isSelectable) {
+        cellStyle = "bg-slate-50 text-slate-300 opacity-30 cursor-not-allowed";
+      } else if (isSelected) {
+        cellStyle = "bg-sky-600 text-white border-2 border-sky-400 scale-110 shadow-md shadow-sky-600/30 z-10 font-bold";
+      } else if (isWorkingDay) {
+        cellStyle = "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 border border-emerald-100/30 hover:scale-105 active:scale-95";
+      } else {
+        cellStyle = "bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 border border-slate-100";
+      }
+
+      dayCells.push(
+        <button
+          key={d}
+          type="button"
+          disabled={!isSelectable}
+          onClick={() => {
+            onSelectDate(dateStr);
+            if (type === "start") {
+              setShowStartCalendar(false);
+            } else {
+              setShowEndCalendar(false);
+            }
+          }}
+          className={`aspect-square rounded-full flex items-center justify-center text-[10px] font-bold transition-all border-2 border-transparent ${cellStyle}`}
+        >
+          {d}
+        </button>
+      );
+    }
+
+    return (
+      <div className="absolute top-full mt-2 left-0 right-0 sm:right-auto sm:w-[320px] z-[150] bg-white border border-slate-100 shadow-[0_15px_50px_rgba(0,0,0,0.12)] rounded-[2rem] p-5 text-slate-800 animate-in zoom-in-95 fade-in duration-200">
+        <div className="flex items-center justify-between mb-4">
+          <button
+            type="button"
+            onClick={handlePrevMonth}
+            className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-400 hover:text-slate-800"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <h4 className="font-bold text-[10px] uppercase tracking-widest text-sky-700">
+            {monthName}
+          </h4>
+          <button
+            type="button"
+            onClick={handleNextMonth}
+            className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-400 hover:text-slate-800"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-7 gap-2">
+          {["L", "M", "M", "J", "V", "S", "D"].map((dayName, idx) => (
+            <div key={idx} className="text-[9px] font-bold text-slate-400 text-center mb-1">
+              {dayName}
+            </div>
+          ))}
+          {dayCells}
+        </div>
+
+        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[8px] font-bold uppercase text-slate-400">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+            <span>Jour ouvrable</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 bg-slate-200 rounded-full"></div>
+            <span>Week-end / Férié</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const [formDataDoc, setFormDataDoc] = useState({ 
     typeDocument: "ATTESTATION_TRAVAIL", 
@@ -298,29 +490,62 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative" ref={startCalendarRef}>
                 <label className="block text-sm font-medium text-slate-700">Du (Inclus)</label>
-                <input
-                  type="date"
-                  required
-                  min={minDate}
-                  className="w-full bg-white border border-slate-200 rounded-xl p-3 font-medium text-slate-900 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all"
-                  value={formDataConge.dateDebut}
-                  onChange={(e) => setFormDataConge({ ...formDataConge, dateDebut: e.target.value, dateFin: "" })}
-                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowStartCalendar(!showStartCalendar);
+                    setShowEndCalendar(false);
+                  }}
+                  className="w-full bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between font-medium text-slate-900 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all text-left"
+                >
+                  <span className={formDataConge.dateDebut ? "text-slate-900" : "text-slate-400"}>
+                    {formDataConge.dateDebut ? formatDateFrench(formDataConge.dateDebut) : "Choisir la date..."}
+                  </span>
+                  <Calendar size={18} className="text-slate-400" />
+                </button>
+                {showStartCalendar &&
+                  renderCalendarDropdown(
+                    "start",
+                    startMonth,
+                    startYear,
+                    setStartMonth,
+                    setStartYear,
+                    formDataConge.dateDebut,
+                    (d) => setFormDataConge({ ...formDataConge, dateDebut: d, dateFin: "" }),
+                    minDate
+                  )}
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative" ref={endCalendarRef}>
                 <label className="block text-sm font-medium text-slate-700">Au (Inclus)</label>
-                <input
-                  type="date"
-                  required
+                <button
+                  type="button"
                   disabled={!formDataConge.dateDebut}
-                  max={maxEndDate || undefined}
-                  className={`w-full bg-white border rounded-xl p-3 font-medium outline-none transition-all disabled:opacity-50 ${isBalanceExceeded ? 'border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/30 text-rose-900' : 'border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 text-slate-900'}`}
-                  value={formDataConge.dateFin}
-                  onChange={(e) => setFormDataConge({ ...formDataConge, dateFin: e.target.value })}
-                />
+                  onClick={() => {
+                    setShowEndCalendar(!showEndCalendar);
+                    setShowStartCalendar(false);
+                  }}
+                  className={`w-full bg-white border rounded-xl p-3 flex items-center justify-between font-medium outline-none transition-all text-left disabled:opacity-50 ${isBalanceExceeded ? 'border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/30 text-rose-900' : 'border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 text-slate-900'}`}
+                >
+                  <span className={formDataConge.dateFin ? "text-slate-900" : "text-slate-400"}>
+                    {formDataConge.dateFin ? formatDateFrench(formDataConge.dateFin) : "Choisir la date..."}
+                  </span>
+                  <Calendar size={18} className="text-slate-400" />
+                </button>
+                {showEndCalendar &&
+                  renderCalendarDropdown(
+                    "end",
+                    endMonth,
+                    endYear,
+                    setEndMonth,
+                    setEndYear,
+                    formDataConge.dateFin,
+                    (d) => setFormDataConge({ ...formDataConge, dateFin: d }),
+                    formDataConge.dateDebut,
+                    maxEndDate || undefined
+                  )}
               </div>
             </div>
 

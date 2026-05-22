@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "workflow_etape")
 @Data
 @NoArgsConstructor
-@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(value = {"hibernateLazyInitializer", "handler"}, ignoreUnknown = true)
 public class WorkflowEtape {
 
     @Id

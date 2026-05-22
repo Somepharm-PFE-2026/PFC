@@ -115,7 +115,7 @@ export default function SidebarManager() {
   return (
     <>
       {/* Mobile Top Bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-950/70 backdrop-blur-md border-b border-emerald-500/10 z-40 flex items-center justify-between px-4">
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-950/80 backdrop-blur-md border-b border-white/10 z-40 flex items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsMobileOpen(true)}
@@ -126,7 +126,7 @@ export default function SidebarManager() {
           <img src="/logo.png" alt="SomePharm" className="h-8 object-contain brightness-0 invert drop-shadow-sm" />
         </div>
         <div className="flex items-center gap-2">
-           <User size={20} className="text-emerald-400/80" />
+           <User size={20} className="text-emerald-400" />
         </div>
       </div>
 
@@ -139,7 +139,7 @@ export default function SidebarManager() {
       )}
 
       {/* Sidebar Container */}
-      <div className={`fixed top-0 bottom-0 left-0 lg:top-6 lg:bottom-6 lg:left-6 bg-gradient-to-br from-teal-600 via-emerald-600 to-teal-800 text-white shadow-2xl lg:shadow-[0_12px_40px_rgba(20,184,166,0.3)] border-r lg:border border-white/20 lg:rounded-[3rem] p-6 pt-6 flex flex-col z-50 transition-all duration-500 ease-in-out
+      <div className={`fixed top-0 bottom-0 left-0 lg:top-6 lg:bottom-6 lg:left-6 bg-slate-950/90 backdrop-blur-2xl text-slate-100 shadow-2xl lg:shadow-[0_12px_40px_rgba(20,184,166,0.1)] border-r lg:border border-white/10 lg:rounded-[3rem] p-6 pt-6 flex flex-col z-50 transition-all duration-500 ease-in-out
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         ${isSidebarRetracted ? "lg:w-28 shadow-none border-white/10" : "w-[280px] lg:w-80"}
         ${activeModalCount > 0 ? "lg:blur-[2px] lg:opacity-40 lg:pointer-events-none lg:scale-[0.98]" : "blur-0 opacity-100"}
@@ -181,7 +181,7 @@ export default function SidebarManager() {
           {!isSidebarRetracted && (
             <button 
               onClick={() => setSidebarRetracted(true)}
-              className="hidden lg:block absolute -right-2 top-8 p-2 bg-teal-800 border border-teal-600 rounded-xl text-teal-200 hover:text-white hover:bg-teal-700 hover:shadow-lg transition-all z-20 group"
+              className="hidden lg:block absolute -right-2 top-8 p-2 bg-slate-900 border border-white/10 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 hover:shadow-lg transition-all z-20 group"
             >
               <QrCode size={16} className="group-hover:rotate-12 transition-transform opacity-40" />
             </button>
@@ -193,7 +193,7 @@ export default function SidebarManager() {
           
           <div>
             {(!isSidebarRetracted || isMobileOpen) && (
-              <p className="text-[10px] font-bold text-emerald-100/60 uppercase tracking-widest mb-4 ml-4 animate-in fade-in duration-500">Pilotage d'Équipe</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 ml-4 animate-in fade-in duration-500">Pilotage d'Équipe</p>
             )}
             <nav className="space-y-2">
               {teamItems.map((item:any) => {
@@ -205,8 +205,8 @@ export default function SidebarManager() {
                     className={`flex items-center rounded-2xl font-bold text-sm transition-all duration-300 relative group
                       ${(isSidebarRetracted && !isMobileOpen) ? "justify-center p-4" : "gap-4 px-6 py-4"}
                       ${isActive 
-                        ? "bg-white text-teal-700 shadow-lg shadow-black/10 hover:translate-x-1" 
-                        : "text-emerald-50 hover:bg-white/10 hover:text-white hover:shadow-sm hover:translate-x-1"}`}
+                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 shadow-md shadow-emerald-500/5 hover:translate-x-1" 
+                        : "text-slate-400 hover:bg-white/5 hover:text-white hover:translate-x-1"}`}
                   >
                     <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
                     {(!isSidebarRetracted || isMobileOpen) && (
@@ -230,7 +230,7 @@ export default function SidebarManager() {
 
           <div>
              {(!isSidebarRetracted || isMobileOpen) && (
-               <p className="text-[10px] font-bold text-emerald-100/60 uppercase tracking-widest mb-4 ml-4 animate-in fade-in duration-500">Espace Personnel</p>
+               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 ml-4 animate-in fade-in duration-500">Espace Personnel</p>
              )}
             <nav className="space-y-2">
               {personalItems.map((item:any) => {
@@ -242,8 +242,8 @@ export default function SidebarManager() {
                     className={`flex items-center rounded-2xl font-bold text-sm transition-all duration-300 relative group
                       ${(isSidebarRetracted && !isMobileOpen) ? "justify-center p-4" : "gap-4 px-6 py-4"}
                       ${isActive 
-                        ? "bg-white text-teal-700 shadow-lg shadow-black/10 hover:translate-x-1" 
-                        : "text-emerald-50 hover:bg-white/10 hover:text-white hover:shadow-sm hover:translate-x-1"}`}
+                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 shadow-md shadow-emerald-500/5 hover:translate-x-1" 
+                        : "text-slate-400 hover:bg-white/5 hover:text-white hover:translate-x-1"}`}
                   >
                     <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
                     {(!isSidebarRetracted || isMobileOpen) && (
@@ -267,10 +267,10 @@ export default function SidebarManager() {
         </div>
 
         {/* Footer Actions */}
-        <div className="pt-6 mt-2 border-t border-white/20 shrink-0">
+        <div className="pt-6 mt-2 border-t border-white/10 shrink-0">
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center text-rose-200 font-bold text-sm hover:bg-rose-500/20 hover:text-rose-100 rounded-2xl transition-all
+            className={`w-full flex items-center text-rose-400 font-bold text-sm hover:bg-rose-500/10 hover:text-rose-300 rounded-2xl transition-all
               ${(isSidebarRetracted && !isMobileOpen) ? "justify-center p-4" : "gap-4 px-6 py-4"}`}
           >
             <LogOut size={20} className="shrink-0" />

@@ -19,7 +19,7 @@ public class HrportalApplication {
 	}
 
 	@Bean
-	CommandLineRunner initDatabase(JdbcTemplate jdbcTemplate) {
+	public CommandLineRunner initDatabase(JdbcTemplate jdbcTemplate) {
 		return args -> {
 			try {
 				System.out.println("Checking database schema for 'balance_deducted' column...");

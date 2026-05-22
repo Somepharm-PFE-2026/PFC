@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useUI } from "../../../context/UIContext";
+import { AlertCircle, Calendar, Clock, FileText, CheckCircle2, ShieldAlert } from "lucide-react";
 
 interface DemandeModalProps {
   isOpen: boolean;
@@ -264,31 +265,33 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[100] p-4">
-      <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-        <div className="bg-blue-600 p-8 text-white relative">
-          <h2 className="text-2xl font-black italic uppercase tracking-widest">Nouvelle Demande</h2>
-          <p className="text-blue-100 text-xs font-bold mt-1">Sélectionnez le type de requête</p>
+    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex justify-center items-center z-[100] p-4 animate-in fade-in duration-300">
+      <div className="bg-slate-900 border border-slate-800 shadow-[0_0_50px_rgba(99,102,241,0.15)] text-white w-full max-w-lg rounded-[3rem] overflow-hidden animate-in zoom-in duration-300 backdrop-blur-xl flex flex-col">
+        
+        {/* HEADER */}
+        <div className="bg-slate-950/80 p-8 border-b border-slate-800/80 text-white relative">
+          <h2 className="text-2xl font-black italic uppercase tracking-widest text-white">Nouvelle Demande</h2>
+          <p className="text-slate-400 text-xs font-bold mt-1">Sélectionnez le type de requête</p>
           
-          <div className="absolute -bottom-5 left-8 right-8 flex gap-2">
+          <div className="absolute -bottom-5 left-8 right-8 flex gap-2 z-10">
              <button 
                 type="button"
                 onClick={() => setCategory("CONGE")}
-                className={`flex-1 py-3 px-4 rounded-xl font-black text-xs uppercase tracking-widest border-2 transition-all shadow-md ${category === 'CONGE' ? 'bg-white text-blue-600 border-white' : 'bg-blue-700/50 text-blue-100 border-transparent hover:bg-blue-700'}`}
+                className={`flex-1 py-3 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest border transition-all shadow-md ${category === 'CONGE' ? 'bg-gradient-to-r from-indigo-600 to-sky-600 text-white border-transparent' : 'bg-slate-900 border-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800'}`}
              >
                 Absence / Congé
              </button>
              <button 
                 type="button"
                 onClick={() => setCategory("ATTESTATION")}
-                className={`flex-1 py-3 px-4 rounded-xl font-black text-xs uppercase tracking-widest border-2 transition-all shadow-md ${category === 'ATTESTATION' ? 'bg-white text-blue-600 border-white' : 'bg-blue-700/50 text-blue-100 border-transparent hover:bg-blue-700'}`}
+                className={`flex-1 py-3 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest border transition-all shadow-md ${category === 'ATTESTATION' ? 'bg-gradient-to-r from-indigo-600 to-sky-600 text-white border-transparent' : 'bg-slate-900 border-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800'}`}
              >
                 Document RH
              </button>
           </div>
 
           {category === "CONGE" && userBalance !== null && (
-            <div className="absolute top-4 right-8 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/30">
+            <div className="absolute top-4 right-8 bg-indigo-500/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-800 text-indigo-400">
               <span className="text-[10px] font-black uppercase tracking-tighter">Solde: {userBalance}j</span>
             </div>
           )}
@@ -300,14 +303,14 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
           {category === "CONGE" ? (
              <>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Nature de l'absence</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Nature de l'absence</label>
                   <select
-                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-bold text-gray-700 focus:border-blue-500 outline-none transition-all"
+                    className="w-full bg-slate-950 border border-slate-800/80 rounded-2xl p-4 font-bold text-white focus:border-indigo-500/40 outline-none transition-all cursor-pointer"
                     value={formDataConge.typeConge}
                     onChange={(e) => setFormDataConge({ ...formDataConge, typeConge: e.target.value })}
                   >
                     {leaveTypes.map((type) => (
-                      <option key={type.idTypeConge} value={type.nom}>
+                      <option key={type.idTypeConge} value={type.nom} className="bg-slate-900 text-white">
                          {type.nom}
                       </option>
                     ))}
@@ -316,26 +319,26 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Du (Inclus)</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Du (Inclus)</label>
                     <input
                       type="date"
                       required
                       min={minDate}
-                      className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-bold text-gray-700 outline-none focus:border-blue-500"
+                      className="w-full bg-slate-950 border border-slate-800/80 rounded-2xl p-4 font-bold text-white outline-none focus:border-indigo-500/40"
                       value={formDataConge.dateDebut}
                       onChange={(e) => setFormDataConge({ ...formDataConge, dateDebut: e.target.value, dateFin: "" })}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Au (Inclus)</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Au (Inclus)</label>
                     <input
                       type="date"
                       required
                       disabled={!formDataConge.dateDebut}
                       min={formDataConge.dateDebut || minDate}
                       max={maxEndDate || undefined}
-                      className={`w-full bg-gray-50 border-2 ${isBalanceExceeded ? 'border-red-500 bg-red-50' : 'border-gray-100'} rounded-2xl p-4 font-bold text-gray-700 outline-none focus:border-blue-500 disabled:opacity-50`}
+                      className={`w-full bg-slate-950 border ${isBalanceExceeded ? 'border-rose-500 bg-rose-500/5' : 'border-slate-800/80'} rounded-2xl p-4 font-bold text-white outline-none focus:border-indigo-500/40 disabled:opacity-50`}
                       value={formDataConge.dateFin}
                       onChange={(e) => setFormDataConge({ ...formDataConge, dateFin: e.target.value })}
                     />
@@ -343,26 +346,26 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
                 </div>
 
                 {formDataConge.dateDebut && formDataConge.dateFin && (
-                  <div className={`p-4 rounded-2xl flex items-center justify-between ${isBalanceExceeded ? 'bg-red-50 border-2 border-red-100' : 'bg-blue-50 border-2 border-blue-100'}`}>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Durée calculée:</span>
-                    <span className={`text-sm font-black ${isBalanceExceeded ? 'text-red-600' : 'text-blue-600'}`}>
+                  <div className={`p-4 rounded-2xl flex items-center justify-between border ${isBalanceExceeded ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' : 'bg-indigo-500/5 border-slate-800/80 text-indigo-400'}`}>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Durée calculée:</span>
+                    <span className="text-sm font-black">
                       {requestedDays} jour{requestedDays > 1 ? 's' : ''} ouvrable{requestedDays > 1 ? 's' : ''}
                     </span>
                   </div>
                 )}
 
                 {isBalanceExceeded && (
-                  <p className="text-red-500 text-[10px] font-bold uppercase text-center animate-bounce">
-                    ⚠️ Votre solde est insuffisant ({userBalance} jours max)
-                  </p>
+                  <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex items-center justify-center gap-2 text-rose-400 text-[10px] font-black uppercase animate-bounce">
+                    <ShieldAlert size={14} />
+                    <span>Votre solde est insuffisant ({userBalance} jours max)</span>
+                  </div>
                 )}
 
-
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Justification / Motif</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Justification / Motif</label>
                   <textarea
                     placeholder="Expliquez brièvement la raison de votre demande..."
-                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-medium text-gray-700 outline-none focus:border-blue-500 min-h-[80px] resize-none"
+                    className="w-full bg-slate-950 border border-slate-800/80 rounded-2xl p-4 font-medium text-white placeholder:text-slate-600 outline-none focus:border-indigo-500/40 min-h-[80px] resize-none"
                     value={formDataConge.motif}
                     onChange={(e) => setFormDataConge({ ...formDataConge, motif: e.target.value })}
                   />
@@ -371,24 +374,23 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
           ) : (
              <>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Type de Document</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Type de Document</label>
                   <select
-                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-bold text-gray-700 focus:border-blue-500 outline-none transition-all"
+                    className="w-full bg-slate-950 border border-slate-800/80 rounded-2xl p-4 font-bold text-white focus:border-indigo-500/40 outline-none transition-all cursor-pointer"
                     value={formDataDoc.typeDocument}
                     onChange={(e) => setFormDataDoc({ ...formDataDoc, typeDocument: e.target.value })}
                   >
-                    <option value="ATTESTATION_TRAVAIL">Attestation de Travail</option>
-                    <option value="ATTESTATION_SALAIRE">Attestation de Salaire</option>
-                    <option value="RELEVE_EMOLUMENTS">Relevé des Émoluments</option>
+                    <option value="ATTESTATION_TRAVAIL" className="bg-slate-900 text-white">Attestation de Travail</option>
+                    <option value="ATTESTATION_SALAIRE" className="bg-slate-900 text-white">Attestation de Salaire</option>
+                    <option value="RELEVE_EMOLUMENTS" className="bg-slate-900 text-white">Relevé des Émoluments</option>
                   </select>
                 </div>
 
-                
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Remarques (Optionnel)</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Remarques (Optionnel)</label>
                   <textarea
                     placeholder="Précisez toute information utile pour le service RH..."
-                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-medium text-gray-700 outline-none focus:border-blue-500 min-h-[100px] resize-none"
+                    className="w-full bg-slate-950 border border-slate-800/80 rounded-2xl p-4 font-medium text-white placeholder:text-slate-600 outline-none focus:border-indigo-500/40 min-h-[100px] resize-none"
                     value={formDataDoc.motif}
                     onChange={(e) => setFormDataDoc({ ...formDataDoc, motif: e.target.value })}
                   />
@@ -397,18 +399,18 @@ export default function DemandeModal({ isOpen, onClose, onSuccess, token, initia
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-4 pt-4 border-t border-gray-100">
+          <div className="flex gap-4 pt-6 border-t border-slate-800/80">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-4 rounded-2xl font-black text-gray-400 uppercase text-xs hover:bg-gray-100 transition"
+              className="flex-1 bg-slate-800 text-slate-400 hover:text-white py-4 rounded-xl font-black uppercase text-xs transition"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={loading || (category === "CONGE" && isBalanceExceeded)}
-              className="flex-[2] bg-blue-600 text-white px-6 py-4 rounded-2xl font-black uppercase text-xs shadow-lg shadow-blue-200 hover:bg-blue-700 transition disabled:opacity-50"
+              className="flex-[2] bg-gradient-to-r from-indigo-600 to-sky-600 text-white py-4 rounded-xl font-black uppercase text-xs shadow-lg hover:opacity-90 transition disabled:opacity-30"
             >
               {loading ? "Envoi en cours..." : "Soumettre la demande"}
             </button>

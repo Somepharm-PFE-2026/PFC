@@ -23,6 +23,7 @@ public class Annonce {
 
     @ManyToOne
     @JoinColumn(name = "id_auteur")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "motDePasse", "authorities"})
     private Utilisateur auteur;
 
     private LocalDateTime datePublication;

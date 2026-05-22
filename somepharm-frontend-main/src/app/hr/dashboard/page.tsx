@@ -15,12 +15,12 @@ const LayoutDashboard = ({ size }: { size: number }) => (
 
 const StatCard = ({ title, value, label, icon: Icon, trend, href }: any) => {
   const content = (
-    <div className="h-full bg-slate-950/40 backdrop-blur-xl p-8 rounded-[2.5rem] border border-yellow-500/10 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-yellow-500/30 hover:shadow-[0_12px_40px_rgba(234,179,8,0.06)] hover:-translate-y-1 transition-all duration-500 relative overflow-hidden group">
+    <div className="h-full bg-slate-950/40 backdrop-blur-xl p-8 rounded-[2.5rem] border border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] hover:-translate-y-1 transition-all duration-500 relative overflow-hidden group">
       {/* Decorative Gold Radial Glow on hover */}
-      <div className="absolute -right-20 -bottom-20 w-48 h-48 rounded-full bg-yellow-500/5 blur-3xl group-hover:bg-yellow-500/10 transition-all duration-700 pointer-events-none" />
+      <div className="absolute -right-20 -bottom-20 w-48 h-48 rounded-full bg-indigo-500/5 blur-3xl group-hover:bg-indigo-500/10 transition-all duration-700 pointer-events-none" />
       
       <div className="flex justify-between items-center mb-6 z-10 relative">
-        <div className="p-4 rounded-2xl bg-yellow-500/10 text-yellow-400 shadow-sm border border-yellow-500/10 group-hover:scale-105 transition-transform">
+        <div className="p-4 rounded-2xl bg-indigo-500/10 text-indigo-300 shadow-sm border border-slate-800/80 group-hover:scale-105 transition-transform">
           <Icon size={24} />
         </div>
         <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{title}</span>
@@ -29,7 +29,7 @@ const StatCard = ({ title, value, label, icon: Icon, trend, href }: any) => {
       <div className="flex items-baseline gap-3 z-10 relative">
         <p className="text-4xl font-extrabold text-white tracking-tight tabular-nums">{value}</p>
         {trend && (
-          <span className="text-[10px] font-bold text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-1 rounded-lg">
+          <span className="text-[10px] font-bold text-indigo-300 bg-indigo-500/10 border border-slate-800 px-2.5 py-1 rounded-lg">
             {trend}
           </span>
         )}
@@ -71,12 +71,12 @@ export default function HRDashboard() {
     <div className="space-y-10">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-yellow-500 rounded-2xl flex items-center justify-center text-slate-950 shadow-xl shadow-yellow-500/20 shrink-0">
+          <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-slate-950 shadow-xl shadow-indigo-500/10 shrink-0">
              <LayoutDashboard size={24} />
           </div>
           <div>
             <h1 className="text-3xl sm:text-4xl font-black text-white italic uppercase tracking-tighter leading-none">Command Center</h1>
-            <p className="text-yellow-500/80 font-bold uppercase text-[10px] tracking-widest mt-2">Supervision SomePharm — {stats.dateDuJour || new Date().toLocaleDateString()}</p>
+            <p className="text-indigo-400/80 font-bold uppercase text-[10px] tracking-widest mt-2">Supervision SomePharm — {stats.dateDuJour || new Date().toLocaleDateString()}</p>
           </div>
         </div>
         <div className="w-full sm:w-auto flex justify-end">
@@ -86,14 +86,14 @@ export default function HRDashboard() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
         <StatCard title="Effectif" value={adminData.totalHeadcount || 0} label="Collaborateurs Actifs" icon={Users} trend="+2.4%" href="/hr/collaborateurs" />
-        <StatCard title="Absentéisme" value={`${adminData.absenteeismRate || "0.0"}%`} label="Taux de Présence Global" icon={Activity} href="/hr/temps-presence" />
+        <StatCard title="Absentéisme" value={`${adminData.absenteeismRate || "0.0"}%`} label="Taux d'Absentéisme Global" icon={Activity} href="/hr/temps-presence" />
 
         
         {/* NEW: ATTENDANCE ANOMALIES WIDGET */}
-        <Link href="/hr/temps-presence" className="bg-slate-950/40 backdrop-blur-xl p-8 rounded-[2.5rem] border border-yellow-500/10 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-yellow-500/30 hover:shadow-[0_12px_40px_rgba(234,179,8,0.06)] hover:-translate-y-1 transition-all duration-500 relative overflow-hidden group">
-           <div className="absolute -right-20 -bottom-20 w-48 h-48 rounded-full bg-yellow-500/5 blur-3xl group-hover:bg-yellow-500/10 transition-all duration-700 pointer-events-none" />
+        <Link href="/hr/temps-presence" className="bg-slate-950/40 backdrop-blur-xl p-8 rounded-[2.5rem] border border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] hover:-translate-y-1 transition-all duration-500 relative overflow-hidden group">
+           <div className="absolute -right-20 -bottom-20 w-48 h-48 rounded-full bg-indigo-500/5 blur-3xl group-hover:bg-indigo-500/10 transition-all duration-700 pointer-events-none" />
            <div className="flex justify-between items-center mb-6 z-10 relative">
-              <div className="p-4 rounded-2xl bg-yellow-500/10 text-yellow-400 shadow-sm border border-yellow-500/10 group-hover:scale-105 transition-transform">
+              <div className="p-4 rounded-2xl bg-indigo-500/10 text-indigo-300 shadow-sm border border-slate-800/80 group-hover:scale-105 transition-transform">
                  <AlertTriangle size={24} />
               </div>
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Anomalies Temps</span>
@@ -107,11 +107,11 @@ export default function HRDashboard() {
            <p className="text-slate-400 text-[10px] font-bold uppercase mt-3 tracking-widest z-10 relative">Erreurs de pointage à régler</p>
         </Link>
 
-        <Link href="/hr/validation-rh" className="bg-slate-950/40 backdrop-blur-xl p-8 rounded-[2.5rem] border border-yellow-500/10 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-yellow-500/30 hover:shadow-[0_12px_40px_rgba(234,179,8,0.06)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group overflow-hidden relative block">
-          <div className="absolute -right-10 -bottom-10 text-yellow-500/5 group-hover:scale-110 transition-transform duration-700 pointer-events-none"><ShieldCheck size={160} /></div>
+        <Link href="/hr/validation-rh" className="bg-slate-950/40 backdrop-blur-xl p-8 rounded-[2.5rem] border border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group overflow-hidden relative block">
+          <div className="absolute -right-10 -bottom-10 text-indigo-400/5 group-hover:scale-110 transition-transform duration-700 pointer-events-none"><ShieldCheck size={160} /></div>
           <div className="z-10 relative">
              <div className="flex justify-between items-center mb-6">
-                <div className="p-4 rounded-2xl bg-yellow-500/10 text-yellow-400 shadow-sm border border-yellow-500/10"><Zap size={24} /></div>
+                <div className="p-4 rounded-2xl bg-indigo-500/10 text-indigo-300 shadow-sm border border-slate-800/80"><Zap size={24} /></div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Flux RH</span>
              </div>
              <div className="flex items-baseline gap-3">
@@ -122,11 +122,11 @@ export default function HRDashboard() {
         </Link>
       </div>
 
-      <Link href="/hr/validation-rh" className="bg-slate-950/40 backdrop-blur-xl rounded-[2.5rem] p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.15)] relative overflow-hidden text-white border border-yellow-500/10 hover:border-yellow-500/30 hover:shadow-[0_12px_40px_rgba(234,179,8,0.06)] hover:-translate-y-1 transition-all duration-500 block group">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none"></div>
+      <Link href="/hr/validation-rh" className="bg-slate-950/40 backdrop-blur-xl rounded-[2.5rem] p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.15)] relative overflow-hidden text-white border border-slate-800/80 hover:border-indigo-500/30 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] hover:-translate-y-1 transition-all duration-500 block group">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
         <div className="relative z-10 flex flex-col xl:flex-row items-center justify-between gap-8">
            <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-6">
-              <div className="bg-yellow-500/10 p-5 rounded-[1.8rem] border border-yellow-500/20 text-yellow-400 group-hover:scale-105 transition-transform duration-500 shrink-0">
+              <div className="bg-indigo-500/10 p-5 rounded-[1.8rem] border border-slate-800 text-indigo-300 group-hover:scale-105 transition-transform duration-500 shrink-0">
                  <ShieldAlert size={40} className="sm:w-12 sm:h-12" />
               </div>
               <div>
@@ -135,11 +135,11 @@ export default function HRDashboard() {
               </div>
            </div>
            <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto">
-              <div className="flex-1 xl:flex-none bg-yellow-500/5 backdrop-blur-md px-6 sm:px-10 py-4 sm:py-6 rounded-[1.8rem] sm:rounded-[2rem] border border-yellow-500/10 text-center">
+              <div className="flex-1 xl:flex-none bg-indigo-500/5 backdrop-blur-md px-6 sm:px-10 py-4 sm:py-6 rounded-[1.8rem] sm:rounded-[2rem] border border-slate-800/80 text-center">
                  <p className="text-2xl sm:text-3xl font-extrabold text-rose-500">{adminData.globalUrgentPendingCount}</p>
                  <p className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-500 mt-1 tracking-wider">Alertes &gt; 48h</p>
               </div>
-              <div className="flex-1 xl:flex-none flex items-center justify-center gap-3 bg-yellow-500 hover:bg-yellow-600 text-slate-950 px-6 sm:px-10 py-4 sm:py-6 rounded-[1.8rem] sm:rounded-[2rem] font-black uppercase text-[10px] sm:text-xs tracking-widest transition-all shadow-xl shadow-yellow-500/10">
+              <div className="flex-1 xl:flex-none flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white px-6 sm:px-10 py-4 sm:py-6 rounded-[1.8rem] sm:rounded-[2rem] font-black uppercase text-[10px] sm:text-xs tracking-widest transition-all shadow-xl shadow-indigo-500/5">
                  Accéder au flux <ArrowRight size={16} />
               </div>
            </div>
@@ -150,17 +150,17 @@ export default function HRDashboard() {
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-6 border-t border-white/5">
             <div className="lg:col-span-2 bg-gray-900/40 p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border border-white/5 backdrop-blur-md">
                <h3 className="text-white font-black text-lg flex items-center gap-3 mb-8 italic uppercase">
-                  <Database size={20} className="text-yellow-500" /> System Audit Logs
+                  <Database size={20} className="text-indigo-400" /> System Audit Logs
                </h3>
                <div className="space-y-3 font-mono">
                   {(superData.recentLogs || []).map((log: any, i: number) => (
                     <div key={i} className="bg-white/5 p-4 rounded-2xl text-[10px] flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 border border-white/5">
                        <div className="flex gap-2 shrink-0">
-                          <span className="text-yellow-400 font-bold">[{log.timestamp?.split('T')[1].substring(0,8)}]</span>
+                          <span className="text-indigo-300 font-bold">[{log.timestamp?.split('T')[1].substring(0,8)}]</span>
                           <span className={`font-black uppercase ${log.typeAction.includes('FAILURE') ? 'text-red-500' : 'text-green-500'}`}>{log.typeAction}</span>
                        </div>
                        <span className="text-gray-300 truncate sm:tracking-tight flex-1">{log.description}</span>
-                       <span className="sm:ml-auto text-yellow-500/50 font-black uppercase tracking-wider">{log.auteur}</span>
+                       <span className="sm:ml-auto text-indigo-400/50 font-black uppercase tracking-wider">{log.auteur}</span>
                     </div>
                   ))}
                </div>
@@ -175,10 +175,10 @@ export default function HRDashboard() {
                       </div>
                       <div className="flex justify-between items-center text-xs font-bold text-gray-400">
                          <span>Storage Usage</span>
-                         <span className="text-yellow-500">{superData.storageUsage} / 50 GB</span>
+                         <span className="text-indigo-400">{superData.storageUsage} / 50 GB</span>
                       </div>
                       <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                         <div className="bg-yellow-500 h-full" style={{ width: `${(superData.storageUsage / 50) * 100}%` }}></div>
+                         <div className="bg-indigo-600 h-full" style={{ width: `${(superData.storageUsage / 50) * 100}%` }}></div>
                       </div>
                    </div>
                 </div>

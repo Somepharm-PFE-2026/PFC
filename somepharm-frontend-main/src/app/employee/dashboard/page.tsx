@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { 
   Calendar, Clock, FileText, Fingerprint, Timer, 
-  RotateCcw, Briefcase, ShieldAlert, ChevronRight, Megaphone,
+  RotateCcw, Briefcase, ShieldAlert, ChevronRight, ChevronLeft, Megaphone,
   TrendingUp, TrendingDown, ArrowUpRight, Activity, CheckCircle2, XCircle, AlertCircle,
   Loader2, Plus
 } from "lucide-react";
@@ -155,6 +155,18 @@ export default function EmployeeDashboard() {
   const [annonces, setAnnonces] = useState<any[]>([]);
   const router = useRouter();
 
+  // Unified sliding component and presence chart states
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  const [activeSlide, setActiveSlide] = useState<number>(0);
+  const [monthlyPointages, setMonthlyPointages] = useState<any[]>([]);
+  const [systemConfig, setSystemConfig] = useState<any>(null);
+  const [loadingMonthly, setLoadingMonthly] = useState(false);
+  const [hoveredDay, setHoveredDay] = useState<any>(null);
+
+  // Touch Swipe for mobile carousel
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return router.push("/login");
@@ -162,10 +174,86 @@ export default function EmployeeDashboard() {
     fetchDashboardData(token);
     fetchPointageStatus(token);
     fetchAnnonces(token);
+    fetchSystemConfig(token);
     
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    fetchMonthlyPointages(token, selectedMonth);
+  }, [selectedMonth]);
+
+  const fetchSystemConfig = async (token: string) => {
+    try {
+      const res = await fetch("http://localhost:8080/api/config/system", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSystemConfig(data);
+      }
+    } catch (err) {
+      console.error("Error fetching system config:", err);
+    }
+  };
+
+  const fetchMonthlyPointages = async (token: string, date: Date) => {
+    setLoadingMonthly(true);
+    try {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const startDate = new Date(year, month, 1, 0, 0, 0);
+      const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+      
+      const startStr = startDate.toISOString();
+      const endStr = endDate.toISOString();
+      
+      const res = await fetch(`http://localhost:8080/api/pointage/my-pointages?start=${startStr}&end=${endStr}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMonthlyPointages(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error("Error fetching monthly pointages:", err);
+    } finally {
+      setLoadingMonthly(false);
+    }
+  };
+
+  const handlePrevMonth = () => {
+    setSelectedMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setSelectedMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+    
+    if (isLeftSwipe && activeSlide === 0) {
+      setActiveSlide(1);
+    } else if (isRightSwipe && activeSlide === 1) {
+      setActiveSlide(0);
+    }
+  };
 
   const fetchAnnonces = async (token: string) => {
     try {
@@ -315,71 +403,454 @@ export default function EmployeeDashboard() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
         
-        {/* Main Content Area */}
+        {/* Main Content Area - Swipeable Carousel Component */}
         <div className="xl:col-span-2 space-y-6 lg:space-y-8">
-          <PunchWidget pointage={pointage} handlePointage={handlePointage} loadingPointage={loadingPointage} timeString={timeString} />
           
-          {/* Recent Activity Table */}
-          <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 overflow-hidden">
-            <div className="px-8 py-6 border-b border-white flex justify-between items-center bg-white/40">
-              <div>
-                <h3 className="font-heading font-black text-slate-800 text-lg drop-shadow-sm">Dernières Requêtes</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Suivi de vos dossiers</p>
+          <div 
+            className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 overflow-hidden relative p-4 md:p-6"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
+            
+            {/* Unified Header with Month Navigation and Slide Selector Switch */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-100/50 mb-6">
+              
+              {/* Dynamic Month Selector */}
+              <div className="flex items-center gap-3 bg-slate-50/80 px-4 py-2 rounded-2xl border border-slate-100 shadow-inner w-full sm:w-auto justify-between sm:justify-start">
+                <button 
+                  onClick={handlePrevMonth}
+                  className="p-2 hover:bg-white rounded-xl hover:shadow-sm text-slate-500 hover:text-sky-600 active:scale-95 transition-all"
+                  title="Mois précédent"
+                >
+                  <ChevronLeft size={18} strokeWidth={2.5} />
+                </button>
+                <span className="text-xs font-black text-slate-700 min-w-[130px] text-center uppercase tracking-wider select-none">
+                  {selectedMonth.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
+                </span>
+                <button 
+                  onClick={handleNextMonth}
+                  className="p-2 hover:bg-white rounded-xl hover:shadow-sm text-slate-500 hover:text-sky-600 active:scale-95 transition-all"
+                  title="Mois suivant"
+                >
+                  <ChevronRight size={18} strokeWidth={2.5} />
+                </button>
               </div>
-              <Link href="/employee/demandes" className="text-xs text-sky-600 font-bold uppercase tracking-widest hover:text-sky-700 flex items-center gap-1">
-                Tout voir <ChevronRight size={14} />
-              </Link>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[500px]">
-                <thead>
-                  <tr className="bg-white/20 text-[10px] uppercase tracking-widest text-slate-400 font-bold border-b border-white">
-                    <th className="p-4 pl-8">Type</th>
-                    <th className="p-4">Détails</th>
-                    <th className="p-4">Date</th>
-                    <th className="p-4 pr-8 text-right">Statut</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm">
-                  {(data.recentRequests || []).length > 0 ? data.recentRequests.map((req: any, i: number) => {
-                    const isDoc = req._group === 'DOCUMENT';
-                    const isApproved = req.statutCycleVie === 'APPROUVE' || req.statutCycleVie === 'APPROUVÉ';
-                    const isRefused = req.statutCycleVie?.includes('REFUSE');
-                    
-                    const label = isDoc 
-                      ? (req.typeDocument || "Document").replace(/_/g, " ").toLowerCase()
-                      : (req.typeConge || "Congé").replace(/_/g, " ").toLowerCase();
 
-                    return (
-                    <tr key={i} className="border-b border-white/50 last:border-0 hover:bg-white/60 transition-colors">
-                      <td className="p-4 pl-8">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase shadow-sm border border-white ${isDoc ? 'bg-purple-50 text-purple-700' : 'bg-sky-50 text-sky-700'}`}>
-                          {isDoc ? <FileText size={12} /> : <Calendar size={12} />}
-                          {isDoc ? 'Doc' : 'Congé'}
-                        </span>
-                      </td>
-                      <td className="p-4 text-slate-700 font-bold capitalize">{label}</td>
-                      <td className="p-4 text-slate-500 font-bold">{new Date(req.dateSoumission).toLocaleDateString()}</td>
-                      <td className="p-4 pr-8 text-right">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase shadow-sm border border-white ${
-                          isApproved ? 'bg-emerald-50 text-emerald-700' : 
-                          isRefused ? 'bg-rose-50 text-rose-700' : 
-                          'bg-amber-50 text-amber-700'
-                        }`}>
-                          {isApproved ? <CheckCircle2 size={12} /> : isRefused ? <XCircle size={12} /> : <AlertCircle size={12} />}
-                          {req.statutCycleVie.replace(/_/g, " ")}
-                        </span>
-                      </td>
-                    </tr>
-                  )}) : (
-                    <tr>
-                      <td colSpan={4} className="p-12 text-center text-slate-400 text-sm font-bold italic">Aucune requête récente trouvée.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+              {/* Slider Toggle (Pill Switcher) */}
+              <div className="bg-slate-100/80 p-1.5 rounded-2xl flex gap-1 relative border border-slate-200/50 w-full sm:w-auto shrink-0 shadow-inner">
+                <button
+                  onClick={() => setActiveSlide(0)}
+                  className={`px-5 py-2.5 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all duration-300 w-1/2 sm:w-auto ${
+                    activeSlide === 0 
+                      ? "bg-white text-sky-600 shadow-md border border-slate-100" 
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  Aujourd'hui
+                </button>
+                <button
+                  onClick={() => setActiveSlide(1)}
+                  className={`px-5 py-2.5 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all duration-300 w-1/2 sm:w-auto ${
+                    activeSlide === 1 
+                      ? "bg-white text-sky-600 shadow-md border border-slate-100" 
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  Présence Mensuelle
+                </button>
+              </div>
             </div>
+
+            {/* Horizontal Slides Container */}
+            <div className="relative overflow-hidden w-full">
+              <div 
+                className="flex w-[200%] transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                style={{ transform: `translateX(-${activeSlide * 50}%)` }}
+              >
+                
+                {/* SLIDE 1: Access Control & Recent Requests */}
+                <div className="w-1/2 px-1 md:px-3 space-y-6">
+                  
+                  {/* Punch widget */}
+                  <PunchWidget pointage={pointage} handlePointage={handlePointage} loadingPointage={loadingPointage} timeString={timeString} />
+                  
+                  {/* Recent Activity Table (Filtered by selected month) */}
+                  <div className="bg-white/90 rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
+                    <div className="px-6 py-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/20">
+                      <div>
+                        <h3 className="font-heading font-black text-slate-800 text-base drop-shadow-sm">Dernières Requêtes</h3>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                          Suivi au {selectedMonth.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
+                        </p>
+                      </div>
+                      <Link href="/employee/demandes" className="text-[10px] text-sky-600 font-black uppercase tracking-widest hover:text-sky-700 flex items-center gap-1">
+                        Tout voir <ChevronRight size={12} />
+                      </Link>
+                    </div>
+                    
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[500px]">
+                        <thead>
+                          <tr className="bg-slate-50/40 text-[9px] uppercase tracking-widest text-slate-400 font-bold border-b border-slate-100">
+                            <th className="p-4 pl-6">Type</th>
+                            <th className="p-4">Détails</th>
+                            <th className="p-4">Date</th>
+                            <th className="p-4 pr-6 text-right">Statut</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-sm">
+                          {(() => {
+                            const filteredRequests = (data.recentRequests || []).filter((req: any) => {
+                              const reqDate = new Date(req.dateSoumission);
+                              return reqDate.getFullYear() === selectedMonth.getFullYear() && reqDate.getMonth() === selectedMonth.getMonth();
+                            });
+
+                            if (filteredRequests.length > 0) {
+                              return filteredRequests.map((req: any, i: number) => {
+                                const isDoc = req._group === 'DOCUMENT';
+                                const isApproved = req.statutCycleVie === 'APPROUVE' || req.statutCycleVie === 'APPROUVÉ';
+                                const isRefused = req.statutCycleVie?.includes('REFUSE');
+                                
+                                const label = isDoc 
+                                  ? (req.typeDocument || "Document").replace(/_/g, " ").toLowerCase()
+                                  : (req.typeConge || "Congé").replace(/_/g, " ").toLowerCase();
+
+                                return (
+                                  <tr key={i} className="border-b border-slate-100/50 last:border-0 hover:bg-slate-50/30 transition-colors">
+                                    <td className="p-4 pl-6">
+                                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase shadow-sm border border-white ${isDoc ? 'bg-purple-50 text-purple-700' : 'bg-sky-50 text-sky-700'}`}>
+                                        {isDoc ? <FileText size={10} /> : <Calendar size={10} />}
+                                        {isDoc ? 'Doc' : 'Congé'}
+                                      </span>
+                                    </td>
+                                    <td className="p-4 text-slate-700 font-bold capitalize">{label}</td>
+                                    <td className="p-4 text-slate-500 font-bold">{new Date(req.dateSoumission).toLocaleDateString()}</td>
+                                    <td className="p-4 pr-6 text-right">
+                                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase shadow-sm border border-white ${
+                                        isApproved ? 'bg-emerald-50 text-emerald-700' : 
+                                        isRefused ? 'bg-rose-50 text-rose-700' : 
+                                        'bg-amber-50 text-amber-700'
+                                      }`}>
+                                        {isApproved ? <CheckCircle2 size={10} /> : isRefused ? <XCircle size={10} /> : <AlertCircle size={10} />}
+                                        {req.statutCycleVie.replace(/_/g, " ")}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              });
+                            } else {
+                              return (
+                                <tr>
+                                  <td colSpan={4} className="p-10 text-center text-slate-400 text-xs font-bold italic">
+                                    Aucune requête soumise en {selectedMonth.toLocaleDateString("fr-FR", { month: "long" })}.
+                                  </td>
+                                </tr>
+                              );
+                            }
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* SLIDE 2: Presence Bar Chart */}
+                <div className="w-1/2 px-1 md:px-3">
+                  <div className="bg-white/95 rounded-[2rem] border border-slate-100 p-6 md:p-8 shadow-sm">
+                    <div className="flex justify-between items-center mb-6">
+                      <div>
+                        <h3 className="text-xl font-heading font-black text-slate-800">Calendrier de Présence</h3>
+                        <p className="text-sm font-bold text-slate-500 mt-1">Vos pointages enregistrés</p>
+                      </div>
+                      <div className="bg-slate-50 p-4 rounded-2xl text-sky-600 border border-slate-100 shadow-sm shrink-0">
+                        <Activity size={24} />
+                      </div>
+                    </div>
+
+                    {/* Chart Core logic */}
+                    {(() => {
+                      const startHour = parseInt(systemConfig?.workingHoursStart?.split(":")[0]) || 8;
+                      const endHour = (parseInt(systemConfig?.workingHoursEnd?.split(":")[0]) || 17) + 3;
+                      const range = endHour - startHour;
+                      
+                      const hoursArray = [];
+                      for (let h = startHour; h <= endHour; h++) {
+                        hoursArray.push(h);
+                      }
+
+                      const year = selectedMonth.getFullYear();
+                      const month = selectedMonth.getMonth();
+                      const daysInMonth = new Date(year, month + 1, 0).getDate();
+                      const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+                      const getDayPresenceIntervals = (dayNum: number) => {
+                        const dayPointages = monthlyPointages.filter(p => {
+                          const pDate = new Date(p.horodatage);
+                          return pDate.getFullYear() === year && pDate.getMonth() === month && pDate.getDate() === dayNum;
+                        }).sort((a, b) => new Date(a.horodatage).getTime() - new Date(b.horodatage).getTime());
+
+                        const intervals: { startDecimal: number, endDecimal: number, isAnomaly: boolean, rawStart: string, rawEnd: string, isOngoing: boolean }[] = [];
+                        
+                        for (let i = 0; i < dayPointages.length; i++) {
+                          if (dayPointages[i].typePointage === 'ENTREE') {
+                            const entryTime = new Date(dayPointages[i].horodatage);
+                            const isAnomaly = dayPointages[i].statut === 'RETARD' || dayPointages[i].statut === 'ANOMALIE';
+                            
+                            const startDecimal = entryTime.getHours() + entryTime.getMinutes() / 60;
+                            const rawStart = entryTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                            
+                            let exitDecimal = startDecimal;
+                            let rawEnd = "--:--";
+                            let exitFound = false;
+                            let isOngoing = false;
+                            
+                            for (let j = i + 1; j < dayPointages.length; j++) {
+                              if (dayPointages[j].typePointage === 'SORTIE') {
+                                const exitTime = new Date(dayPointages[j].horodatage);
+                                exitDecimal = exitTime.getHours() + exitTime.getMinutes() / 60;
+                                rawEnd = exitTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                                i = j;
+                                exitFound = true;
+                                break;
+                              }
+                            }
+                            
+                            if (!exitFound) {
+                              const isToday = new Date().toDateString() === entryTime.toDateString();
+                              if (isToday) {
+                                const now = new Date();
+                                exitDecimal = now.getHours() + now.getMinutes() / 60;
+                                rawEnd = "En cours";
+                                isOngoing = true;
+                              } else {
+                                exitDecimal = Math.min(endHour, startDecimal + 8);
+                                rawEnd = "--:--";
+                                isOngoing = true;
+                              }
+                            }
+                            
+                            intervals.push({ 
+                              startDecimal, 
+                              endDecimal: Math.max(startDecimal + 0.1, exitDecimal), 
+                              isAnomaly,
+                              rawStart,
+                              rawEnd,
+                              isOngoing
+                            });
+                          }
+                        }
+                        return intervals;
+                      };
+
+                      const chartHeight = 350;
+                      const paddingTop = 25;
+                      const paddingBottom = 30;
+                      const gridHeight = chartHeight - paddingTop - paddingBottom;
+
+                      const svgWidth = 850;
+                      const paddingLeft = 20;
+                      const paddingRight = 20;
+                      const gridWidth = svgWidth - paddingLeft - paddingRight;
+
+                      return (
+                        <div className="space-y-4">
+                          
+                          {/* Legend */}
+                          <div className="flex flex-wrap items-center gap-6 text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">
+                            <div className="flex items-center gap-2">
+                              <span className="w-3 h-3 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 shadow-sm" />
+                              <span>Présence</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="w-3 h-3 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-sm" />
+                              <span>Retard / Anomalie</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="w-3 h-3 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 shadow-sm" />
+                              <span>En cours</span>
+                            </div>
+                          </div>
+
+                          {/* Graphical container */}
+                          <div className="flex relative bg-slate-50/50 rounded-3xl border border-slate-100 p-4 overflow-hidden">
+                            
+                            {/* Fixed Hours Y-Axis */}
+                            <div className="relative w-12 shrink-0 py-1 border-r border-slate-100" style={{ height: `${chartHeight}px` }}>
+                              {hoursArray.map((h) => {
+                                const y = paddingTop + ((endHour - h) / range) * gridHeight;
+                                return (
+                                  <div 
+                                    key={h} 
+                                    className="absolute right-3 -translate-y-1/2 text-[9px] font-black text-slate-400/80 tracking-tight"
+                                    style={{ top: `${y}px` }}
+                                  >
+                                    {h < 10 ? `0${h}` : h}h
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Scrollable grid layout */}
+                            <div className="overflow-x-auto scrollbar-thin grow relative pl-2">
+                              <div className="relative" style={{ width: `${svgWidth}px` }}>
+                                
+                                {/* Absolute Floating Tooltip inside scroll container */}
+                                {hoveredDay && (
+                                  <div 
+                                    className="absolute bg-slate-900 text-white text-[10px] font-bold px-3 py-2.5 rounded-2xl shadow-xl border border-slate-800 pointer-events-none z-30 transition-all duration-150 animate-in fade-in zoom-in-95"
+                                    style={{
+                                      left: `${Math.max(10, Math.min(svgWidth - 170, hoveredDay.x - 80))}px`,
+                                      top: `${Math.max(5, hoveredDay.y - 85)}px`,
+                                      width: '160px'
+                                    }}
+                                  >
+                                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-x-6 border-x-transparent border-t-6 border-t-slate-900" />
+                                    <p className="font-heading font-black text-slate-200 border-b border-slate-800 pb-1 mb-1 text-[11px]">
+                                      Jour {hoveredDay.dayNum}
+                                    </p>
+                                    {hoveredDay.intervals.length === 0 ? (
+                                      <p className="text-slate-500 italic font-bold">Aucune entrée</p>
+                                    ) : (
+                                      <div className="space-y-1">
+                                        {hoveredDay.intervals.map((int: any, idx: number) => (
+                                          <div key={idx} className="flex flex-col">
+                                            <span className="flex items-center gap-1.5 text-slate-300 font-extrabold">
+                                              <span className={`w-1.5 h-1.5 rounded-full ${int.isOngoing ? 'bg-emerald-400' : int.isAnomaly ? 'bg-amber-400' : 'bg-sky-400'}`} />
+                                              {int.rawStart} - {int.rawEnd}
+                                            </span>
+                                            {int.isAnomaly && (
+                                              <span className="text-[8px] text-amber-400 font-extrabold uppercase mt-0.5 pl-3">
+                                                En retard
+                                              </span>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                <svg viewBox={`0 0 ${svgWidth} ${chartHeight}`} className="w-full h-[350px]">
+                                  <defs>
+                                    <linearGradient id="normalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                      <stop offset="0%" stopColor="#38bdf8" />
+                                      <stop offset="100%" stopColor="#2563eb" />
+                                    </linearGradient>
+                                    <linearGradient id="anomalyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                      <stop offset="0%" stopColor="#fbbf24" />
+                                      <stop offset="100%" stopColor="#ea580c" />
+                                    </linearGradient>
+                                    <linearGradient id="ongoingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                      <stop offset="0%" stopColor="#34d399" />
+                                      <stop offset="100%" stopColor="#059669" />
+                                    </linearGradient>
+                                  </defs>
+
+                                  {/* Grid Lines */}
+                                  {hoursArray.map((h) => {
+                                    const y = paddingTop + ((endHour - h) / range) * gridHeight;
+                                    return (
+                                      <line
+                                        key={h}
+                                        x1={paddingLeft}
+                                        y1={y}
+                                        x2={svgWidth - paddingRight}
+                                        y2={y}
+                                        stroke="#f8fafc"
+                                        strokeWidth="1.5"
+                                      />
+                                    );
+                                  })}
+
+                                  {/* Render bars and hover hotspots */}
+                                  {daysArray.map((d) => {
+                                    const x = paddingLeft + ((d - 0.5) / daysInMonth) * gridWidth;
+                                    const intervals = getDayPresenceIntervals(d);
+                                    const barWidth = 10;
+
+                                    return (
+                                      <g key={d} className="group/day">
+                                        {intervals.map((int, idx) => {
+                                          const clamp = (val: number, minVal: number, maxVal: number) => Math.max(minVal, Math.min(maxVal, val));
+                                          const yStart = paddingTop + ((endHour - clamp(int.startDecimal, startHour, endHour)) / range) * gridHeight;
+                                          const yEnd = paddingTop + ((endHour - clamp(int.endDecimal, startHour, endHour)) / range) * gridHeight;
+                                          const barHeight = Math.max(8, yStart - yEnd);
+
+                                          const gradientId = int.isOngoing ? "url(#ongoingGrad)" : int.isAnomaly ? "url(#anomalyGrad)" : "url(#normalGrad)";
+
+                                          return (
+                                            <rect
+                                              key={idx}
+                                              x={x - barWidth / 2}
+                                              y={yEnd}
+                                              width={barWidth}
+                                              height={barHeight}
+                                              fill={gradientId}
+                                              rx={barWidth / 2}
+                                              className="transition-all duration-300 group-hover/day:scale-x-125 origin-center shadow-sm"
+                                            />
+                                          );
+                                        })}
+
+                                        {/* Invisible Column Hotspot for Hover and Touch */}
+                                        <rect
+                                          x={x - 12}
+                                          y={paddingTop}
+                                          width={24}
+                                          height={gridHeight}
+                                          fill="transparent"
+                                          className="cursor-pointer"
+                                          onMouseEnter={() => {
+                                            const maxEndDecimal = intervals.length > 0 ? Math.max(...intervals.map(i => i.endDecimal)) : 0;
+                                            const topY = intervals.length > 0 
+                                              ? paddingTop + ((endHour - Math.min(endHour, maxEndDecimal)) / range) * gridHeight
+                                              : paddingTop + gridHeight / 2;
+                                            setHoveredDay({ dayNum: d, intervals, x, y: topY });
+                                          }}
+                                          onMouseLeave={() => setHoveredDay(null)}
+                                          onTouchStart={() => {
+                                            const maxEndDecimal = intervals.length > 0 ? Math.max(...intervals.map(i => i.endDecimal)) : 0;
+                                            const topY = intervals.length > 0 
+                                              ? paddingTop + ((endHour - Math.min(endHour, maxEndDecimal)) / range) * gridHeight
+                                              : paddingTop + gridHeight / 2;
+                                            setHoveredDay({ dayNum: d, intervals, x, y: topY });
+                                          }}
+                                        />
+
+                                        {/* Axis Tick labels */}
+                                        <text
+                                          x={x}
+                                          y={chartHeight - 8}
+                                          textAnchor="middle"
+                                          className={`text-[9px] font-black text-slate-400 fill-slate-400 transition-colors ${
+                                            intervals.length > 0 ? "group-hover/day:fill-sky-500 group-hover/day:font-black" : ""
+                                          }`}
+                                        >
+                                          {d}
+                                        </text>
+                                      </g>
+                                    );
+                                  })}
+                                </svg>
+
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
           </div>
+
         </div>
 
         {/* Sidebar Actions */}
@@ -412,16 +883,7 @@ export default function EmployeeDashboard() {
             </div>
           </div>
 
-          <div className="bg-slate-900 rounded-[2rem] p-6 lg:p-8 text-white relative overflow-hidden group shadow-[0_8px_30px_rgb(0,0,0,0.1)] border border-slate-800">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700" />
-            <h4 className="text-xl font-heading font-black mb-2 drop-shadow-sm">Centre d'aide</h4>
-            <p className="text-slate-400 text-xs font-bold leading-relaxed mb-6">
-              Besoin d'assistance avec vos outils digitaux ou vos requêtes RH ?
-            </p>
-            <button className="w-full bg-white text-slate-900 py-4 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-slate-50 transition-all active:scale-95 shadow-sm">
-              Support Technique
-            </button>
-          </div>
+
         </div>
 
       </div>

@@ -8,6 +8,7 @@ import com.somepharm.hrportal.entity.DocumentTemplate;
 import com.somepharm.hrportal.entity.SystemConfig;
 import com.somepharm.hrportal.entity.Utilisateur;
 import com.somepharm.hrportal.repository.SystemConfigRepository;
+import com.somepharm.hrportal.repository.UtilisateurRepository;
 import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
 import fr.opensagres.poi.xwpf.converter.pdf.PdfOptions;
 import org.apache.poi.xwpf.usermodel.*;
@@ -39,15 +40,25 @@ public class DocumentService {
     private final PayrollService payrollService;
     private final SystemConfigRepository systemConfigRepository;
     private final com.somepharm.hrportal.repository.BonDeSortieRepository bonDeSortieRepository;
+    private final UtilisateurRepository utilisateurRepository;
 
-    public DocumentService(PayrollService payrollService, SystemConfigRepository systemConfigRepository, com.somepharm.hrportal.repository.BonDeSortieRepository bonDeSortieRepository) {
+    public DocumentService(PayrollService payrollService, SystemConfigRepository systemConfigRepository, com.somepharm.hrportal.repository.BonDeSortieRepository bonDeSortieRepository, UtilisateurRepository utilisateurRepository) {
         this.payrollService = payrollService;
         this.systemConfigRepository = systemConfigRepository;
         this.bonDeSortieRepository = bonDeSortieRepository;
+        this.utilisateurRepository = utilisateurRepository;
+    }
+
+    private Utilisateur getAttachedEmployee(Utilisateur employe) {
+        if (employe != null && employe.getIdUser() != null) {
+            return utilisateurRepository.findById(employe.getIdUser()).orElse(employe);
+        }
+        return employe;
     }
 
     // --- 1. ATTESTATION DE TRAVAIL ---
     public byte[] genererAttestationTravail(Utilisateur employe) {
+        Utilisateur attachedEmploye = getAttachedEmployee(employe);
         com.itextpdf.text.Document document = new com.itextpdf.text.Document();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -69,11 +80,11 @@ public class DocumentService {
             body.add(new Chunk("SOMEPHARM", boldFont));
             body.add(", attestons par la présente que :\n\n");
             body.add("L'employé(e) identifié(e) par le matricule : ");
-            body.add(new Chunk(employe.getMatricule(), boldFont));
+            body.add(new Chunk(attachedEmploye.getMatricule(), boldFont));
             body.add("\nDépartement : ");
-            body.add(new Chunk(employe.getDepartement() != null ? employe.getDepartement().getNomDept() : "", boldFont));
+            body.add(new Chunk(attachedEmploye.getDepartement() != null ? attachedEmploye.getDepartement().getNomDept() : "", boldFont));
 
-            String roleNom = employe.getRole() != null ? employe.getRole().getNomRole() : "Employé";
+            String roleNom = attachedEmploye.getRole() != null ? attachedEmploye.getRole().getNomRole() : "Employé";
             body.add("\nFonction occupée : ");
             body.add(new Chunk(roleNom, boldFont));
 
@@ -93,12 +104,13 @@ public class DocumentService {
 
     // --- 2. FICHE DE PAIE (PAYSLIP) ---
     public byte[] genererFicheDePaie(Utilisateur employe, Integer mois, Integer annee) {
+        Utilisateur attachedEmploye = getAttachedEmployee(employe);
         if (mois == null || annee == null) {
             mois = LocalDate.now().getMonthValue();
             annee = LocalDate.now().getYear();
         }
 
-        BulletinPaie bp = payrollService.getOrCreateBulletin(employe, mois, annee);
+        BulletinPaie bp = payrollService.getOrCreateBulletin(attachedEmploye, mois, annee);
 
         com.itextpdf.text.Document document = new com.itextpdf.text.Document();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -124,10 +136,10 @@ public class DocumentService {
             PdfPTable infoTable = new PdfPTable(2);
             infoTable.setWidthPercentage(100);
             infoTable.setSpacingAfter(20f);
-            infoTable.addCell(createCell("Matricule: " + employe.getMatricule(), false));
-            infoTable.addCell(createCell("Département: " + (employe.getDepartement() != null ? employe.getDepartement().getNomDept() : ""), false));
-            infoTable.addCell(createCell("Nom & Prénom: " + employe.getNom() + " " + employe.getPrenom(), false));
-            String roleNom = employe.getRole() != null ? employe.getRole().getNomRole() : "Employé";
+            infoTable.addCell(createCell("Matricule: " + attachedEmploye.getMatricule(), false));
+            infoTable.addCell(createCell("Département: " + (attachedEmploye.getDepartement() != null ? attachedEmploye.getDepartement().getNomDept() : ""), false));
+            infoTable.addCell(createCell("Nom & Prénom: " + attachedEmploye.getNom() + " " + attachedEmploye.getPrenom(), false));
+            String roleNom = attachedEmploye.getRole() != null ? attachedEmploye.getRole().getNomRole() : "Employé";
             infoTable.addCell(createCell("Fonction: " + roleNom, false));
             document.add(infoTable);
 
@@ -215,6 +227,7 @@ public class DocumentService {
 
     // --- 3. ATTESTATION DE SALAIRE (Pour Banques / Visas) ---
     public byte[] genererAttestationSalaire(Utilisateur employe) {
+        Utilisateur attachedEmploye = getAttachedEmployee(employe);
         com.itextpdf.text.Document document = new com.itextpdf.text.Document();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
@@ -235,8 +248,8 @@ public class DocumentService {
             body.add(", attestons que :\n\n");
 
             body.add("M/Mme : ");
-            body.add(new Chunk(employe.getNameForDocuments(), boldFont));
-            body.add("\nFonction : " + (employe.getRole() != null ? employe.getRole().getNomRole() : "Employé"));
+            body.add(new Chunk(attachedEmploye.getNameForDocuments(), boldFont));
+            body.add("\nFonction : " + (attachedEmploye.getRole() != null ? attachedEmploye.getRole().getNomRole() : "Employé"));
 
             body.add("\n\nPerçoit un salaire mensuel net de : ");
             // We use the most recent payslip net if available, or a default
@@ -256,6 +269,7 @@ public class DocumentService {
 
     // --- 4. TITRE DE CONGÉ (Preuve de vacances) ---
     public byte[] genererTitreConge(Utilisateur employe) {
+        Utilisateur attachedEmploye = getAttachedEmployee(employe);
         com.itextpdf.text.Document document = new com.itextpdf.text.Document();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
@@ -274,12 +288,12 @@ public class DocumentService {
 
             body.add("Il est accordé à l'employé(e) soussigné(e) :\n\n");
             body.add("Matricule : ");
-            body.add(new Chunk(employe.getMatricule(), boldFont));
-            body.add("\nDépartement : " + (employe.getDepartement() != null ? employe.getDepartement().getNomDept() : ""));
+            body.add(new Chunk(attachedEmploye.getMatricule(), boldFont));
+            body.add("\nDépartement : " + (attachedEmploye.getDepartement() != null ? attachedEmploye.getDepartement().getNomDept() : ""));
 
             body.add("\n\nUn congé réglementaire de l'année en cours.");
             body.add("\nSolde de congé actuel restant : ");
-            body.add(new Chunk(employe.getSoldeConges() + " Jours", boldFont));
+            body.add(new Chunk(attachedEmploye.getSoldeConges() + " Jours", boldFont));
 
             body.add("\n\nL'employé(e) est tenu(e) de reprendre son poste de travail à l'expiration exacte de la période de congé validée sur le portail numérique Somepharm.");
 
@@ -309,12 +323,14 @@ public class DocumentService {
             body.setFont(textFont);
             body.setLeading(25f);
 
+            Utilisateur attachedDemandeur = getAttachedEmployee(dd.getDemandeur());
+
             body.add("Il est accordé à l'employé(e) :\n\n");
             body.add("Nom & Prénom : ");
-            body.add(new Chunk(dd.getDemandeur().getNom() + " " + dd.getDemandeur().getPrenom(), boldFont));
+            body.add(new Chunk(attachedDemandeur.getNom() + " " + attachedDemandeur.getPrenom(), boldFont));
             body.add("\nMatricule : ");
-            body.add(new Chunk(dd.getDemandeur().getMatricule(), boldFont));
-            body.add("\nDépartement : " + (dd.getDemandeur().getDepartement() != null ? dd.getDemandeur().getDepartement().getNomDept() : ""));
+            body.add(new Chunk(attachedDemandeur.getMatricule(), boldFont));
+            body.add("\nDépartement : " + (attachedDemandeur.getDepartement() != null ? attachedDemandeur.getDepartement().getNomDept() : ""));
 
             body.add("\n\nL'autorisation de s'absenter pour un motif personnel le : ");
             String dateSoumission = dd.getDateSoumission() != null ? dd.getDateSoumission().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
@@ -361,14 +377,17 @@ public class DocumentService {
             InputStream is = Files.newInputStream(templatePath);
             XWPFDocument doc = new XWPFDocument(is);
 
+            Utilisateur attachedEmploye = getAttachedEmployee(employe);
+
             // 1. Map Variables
             Map<String, String> variables = new HashMap<>();
-            variables.put("nom_employe", employe.getNom());
-            variables.put("prenom_employe", employe.getPrenom());
-            variables.put("matricule", employe.getMatricule());
-            variables.put("poste", employe.getPoste() != null ? employe.getPoste().getTitre() : "Employé");
-            variables.put("departement", employe.getDepartement() != null ? employe.getDepartement().getNomDept() : "");
-            variables.put("date_entree", employe.getDateEmbauche() != null ? employe.getDateEmbauche().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-");
+            variables.put("nom_employe", attachedEmploye.getNom());
+            variables.put("prenom_employe", attachedEmploye.getPrenom());
+            variables.put("matricule", attachedEmploye.getMatricule());
+            variables.put("poste", attachedEmploye.getPoste() != null ? attachedEmploye.getPoste().getTitre() : "Employé");
+            variables.put("role_employe", attachedEmploye.getRole() != null ? attachedEmploye.getRole().getNomRole() : "EMPLOYE");
+            variables.put("departement", attachedEmploye.getDepartement() != null ? attachedEmploye.getDepartement().getNomDept() : "");
+            variables.put("date_entree", attachedEmploye.getDateEmbauche() != null ? attachedEmploye.getDateEmbauche().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-");
             variables.put("date_jour", LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
             variables.put("nom_societe", "SomePharm Distribution");
 
@@ -404,6 +423,7 @@ public class DocumentService {
     }
 
     private void replaceInParagraph(XWPFParagraph p, Map<String, String> variables) {
+        // 1. Try single-run replacement to preserve local formatting
         for (XWPFRun r : p.getRuns()) {
             String text = r.getText(0);
             if (text != null) {
@@ -414,6 +434,34 @@ public class DocumentService {
                         r.setText(text, 0);
                     }
                 }
+            }
+        }
+
+        // 2. If some placeholders are split across runs, merge/replace them globally at the paragraph level
+        String paragraphText = p.getText();
+        boolean hasSplitPlaceholder = false;
+        for (String key : variables.keySet()) {
+            if (paragraphText.contains("{{" + key + "}}")) {
+                hasSplitPlaceholder = true;
+                break;
+            }
+        }
+
+        if (hasSplitPlaceholder) {
+            for (Map.Entry<String, String> entry : variables.entrySet()) {
+                String placeholder = "{{" + entry.getKey() + "}}";
+                paragraphText = paragraphText.replace(placeholder, entry.getValue());
+            }
+
+            // Clear all existing runs except the first one and put replaced text there
+            int runsSize = p.getRuns().size();
+            for (int i = runsSize - 1; i > 0; i--) {
+                p.removeRun(i);
+            }
+            if (!p.getRuns().isEmpty()) {
+                p.getRuns().get(0).setText(paragraphText, 0);
+            } else {
+                p.createRun().setText(paragraphText);
             }
         }
     }

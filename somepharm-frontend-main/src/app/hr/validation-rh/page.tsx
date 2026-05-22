@@ -10,7 +10,6 @@ import {
   ChevronRight
 } from "lucide-react";
 import { useUI } from "../../../context/UIContext";
-// ValidationDetailWorkspace is now handled by AdminLayout
 
 export default function ValidationRHPage() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -58,7 +57,7 @@ export default function ValidationRHPage() {
   };
 
   const handleAction = async (id: string, action: string, comment: string) => {
-    // 🛡️ Reliability FIX: Pull fresh token directly from localStorage to avoid stale closure
+    // Fresh token directly from localStorage to avoid stale closure
     const currentToken = localStorage.getItem("token");
     if (!currentToken) {
       alert("Votre session a expiré. Veuillez vous reconnecter.");
@@ -78,7 +77,7 @@ export default function ValidationRHPage() {
         // Clear the active request to close the detail panel
         setActiveHRRequest(null);
         
-        // 🔄 REFRESH: Fetch the queue again using the fresh token
+        // Refresh the queue
         await fetchData(currentToken);
         
         alert("Action enregistrée avec succès !");
@@ -117,72 +116,72 @@ export default function ValidationRHPage() {
     .sort((a, b) => new Date(b.dateSoumission).getTime() - new Date(a.dateSoumission).getTime());
 
   return (
-    <div className="p-10 bg-gray-50 min-h-screen relative">
-      <div className="flex justify-between items-end mb-10">
+    <div className="space-y-8 animate-in fade-in duration-700 text-slate-100">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-           <div className="bg-blue-600/10 text-blue-600 px-4 py-1.5 rounded-full w-fit text-[10px] font-black uppercase tracking-widest mb-3 border border-blue-200">
+           <div className="bg-indigo-500/10 text-indigo-400 px-4 py-1.5 rounded-full w-fit text-[10px] font-black uppercase tracking-widest mb-3 border border-slate-800">
              HR Administration Portal
            </div>
-           <h1 className="text-4xl font-black text-gray-800 italic uppercase leading-none">Validation & File d'attente</h1>
-           <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mt-2">Suivi global et validation finale des dossiers</p>
+           <h1 className="text-4xl font-black text-white italic uppercase tracking-tighter leading-none">Validation & <span className="text-indigo-400">File d'attente</span></h1>
+           <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-2">Suivi global et validation finale des dossiers</p>
         </div>
         <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-white border shadow-sm rounded-2xl px-4 py-1.5">
-               <Filter className="text-gray-400" size={16} />
+            <div className="flex items-center gap-2 bg-slate-950/60 border border-slate-800/80 rounded-2xl px-4 py-1.5">
+               <Filter className="text-slate-500" size={16} />
                <select 
                  value={typeFilter}
                  onChange={(e) => setTypeFilter(e.target.value)}
-                 className="bg-transparent outline-none font-black text-[10px] uppercase tracking-widest text-gray-700 py-2.5 cursor-pointer"
+                 className="bg-transparent outline-none font-black text-[10px] uppercase tracking-widest text-white py-2.5 cursor-pointer"
                >
-                 <option value="ALL">Tous les Types</option>
-                 <option value="CONGE">Congés</option>
-                 <option value="DOCUMENT">Documents</option>
-                 <option value="NUDGE">Rappels (Nudge)</option>
+                 <option value="ALL" className="bg-slate-900 text-white">Tous les Types</option>
+                 <option value="CONGE" className="bg-slate-900 text-white">Congés</option>
+                 <option value="DOCUMENT" className="bg-slate-900 text-white">Documents</option>
+                 <option value="NUDGE" className="bg-slate-900 text-white">Rappels (Nudge)</option>
                </select>
             </div>
             <div className="relative w-64">
-               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                <input 
                  type="text" 
                  placeholder="Rechercher Matricule..."
                  value={searchTerm}
                  onChange={(e) => setSearchTerm(e.target.value)}
-                 className="w-full pl-12 pr-6 py-4 bg-white border shadow-sm rounded-2xl outline-none focus:border-blue-500 transition-all font-bold text-sm text-gray-700"
+                 className="w-full pl-12 pr-6 py-4 bg-slate-950/60 border border-slate-800/80 rounded-2xl outline-none focus:border-indigo-500/30 text-sm text-white placeholder:text-slate-500 transition-all font-bold"
                />
             </div>
             <button 
               onClick={() => fetchData(token)}
-              className="bg-white hover:bg-gray-50 text-blue-600 px-10 py-4 rounded-2xl border shadow-sm font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2"
+              className="bg-gradient-to-r from-indigo-600 to-sky-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all hover:opacity-90 shadow-lg flex items-center gap-2"
             >
               <Clock size={16} /> Actualiser
             </button>
         </div>
       </div>
 
-      <div className="flex gap-2 mb-10 bg-white p-2 rounded-3xl w-fit shadow-sm border">
+      <div className="flex gap-2 mb-10 bg-slate-950/60 p-2 rounded-3xl w-fit border border-slate-800/80 backdrop-blur-sm">
         {[
-          { id: "A_TRAITER", label: "À Traiter", icon: <Check size={16}/>, count: requests.filter(r => ["VALIDE_MANAGER", "EN_ATTENTE_RH"].includes(r.statutCycleVie?.toUpperCase()?.trim())).length, color: "text-blue-600", activeBg: "bg-blue-600 text-white" },
-          { id: "EN_COURS", label: "En cours (Suivi)", icon: <Clock size={16}/>, count: requests.filter(r => ["EN_ATTENTE_MANAGER", "EN_ATTENTE_CHEF_DEPT", "ATTENTE"].includes(r.statutCycleVie?.toUpperCase()?.trim())).length, color: "text-amber-600", activeBg: "bg-amber-600 text-white" },
-          { id: "ARCHIVES", label: "Historique", icon: <AlertCircle size={16}/>, count: requests.filter(r => ["APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "ANNULE", "ANNULÉ"].includes(r.statutCycleVie?.toUpperCase()?.trim())).length, color: "text-gray-500", activeBg: "bg-gray-800 text-white" }
+          { id: "A_TRAITER", label: "À Traiter", icon: <Check size={16}/>, count: requests.filter(r => ["VALIDE_MANAGER", "EN_ATTENTE_RH"].includes(r.statutCycleVie?.toUpperCase()?.trim())).length, activeBg: "bg-gradient-to-r from-indigo-600 to-sky-600 text-white shadow-md font-black" },
+          { id: "EN_COURS", label: "En cours (Suivi)", icon: <Clock size={16}/>, count: requests.filter(r => ["EN_ATTENTE_MANAGER", "EN_ATTENTE_CHEF_DEPT", "ATTENTE"].includes(r.statutCycleVie?.toUpperCase()?.trim())).length, activeBg: "bg-gradient-to-r from-indigo-600 to-sky-600 text-white shadow-md font-black" },
+          { id: "ARCHIVES", label: "Historique", icon: <AlertCircle size={16}/>, count: requests.filter(r => ["APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "ANNULE", "ANNULÉ"].includes(r.statutCycleVie?.toUpperCase()?.trim())).length, activeBg: "bg-gradient-to-r from-indigo-600 to-sky-600 text-white shadow-md font-black" }
         ].map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-3 px-8 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${
-              activeTab === tab.id ? `${tab.activeBg} shadow-lg` : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+              activeTab === tab.id ? tab.activeBg : "text-slate-400 hover:text-slate-200 hover:bg-slate-950/40"
             }`}
           >
             {tab.icon} {tab.label}
-            <span className={`ml-2 px-2 py-0.5 rounded-lg text-[9px] ${activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'}`}>
+            <span className={`ml-2 px-2 py-0.5 rounded-lg text-[9px] ${activeTab === tab.id ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-900 border border-slate-800/80 text-indigo-400/85'}`}>
                {tab.count}
             </span>
           </button>
         ))}
       </div>
 
-      <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-gray-100">
+      <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3rem] overflow-hidden">
         <table className="w-full text-left">
-          <thead className="bg-gray-50/50 text-gray-400 text-[10px] uppercase font-black tracking-widest border-b">
+          <thead className="bg-slate-950/30 text-indigo-400/70 text-[10px] uppercase font-black tracking-widest border-b border-slate-800/80">
             <tr>
               <th className="px-10 py-6">ID & Type</th>
               <th className="px-10 py-6">Demandeur</th>
@@ -191,46 +190,44 @@ export default function ValidationRHPage() {
               <th className="px-10 py-6"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-slate-800">
             {loading ? (
-               <tr><td colSpan={5} className="py-20 text-center text-gray-400 font-bold animate-pulse">Initialisation...</td></tr>
+               <tr><td colSpan={5} className="py-20 text-center text-slate-400 font-bold animate-pulse">Initialisation...</td></tr>
             ) : filteredRequests.map((req) => (
                 <tr 
                   key={req.idRequete} 
                   onClick={() => setActiveHRRequest(req)}
-                  className="hover:bg-blue-50/30 cursor-pointer transition-all group"
+                  className="hover:bg-indigo-500/5 cursor-pointer transition-all group"
                 >
-                <td className="px-10 py-8 text-sm font-black text-gray-800">
-                   #{req.idRequete} <span className="ml-2 text-[10px] text-gray-400 font-bold uppercase">
+                <td className="px-10 py-8 text-sm font-black text-white">
+                   #{req.idRequete} <span className="ml-2 text-[10px] text-slate-400 font-bold uppercase">
                      {req.type === 'DOCUMENT' ? (req.typeDocument?.replace(/_/g, " ") || "DOCUMENT") :
                       req.type === 'CONGE' ? (req.typeConge?.nom || "CONGÉ") :
                       (req.typeDemande || "DOSSIER")}
                    </span>
                 </td>
                 <td className="px-10 py-8">
-                  <p className="font-black text-gray-800 uppercase tracking-tight">{req.demandeur?.matricule}</p>
+                  <p className="font-black text-slate-200 uppercase tracking-tight">{req.demandeur?.matricule}</p>
                 </td>
                 <td className="px-10 py-8">
                   <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter border ${
-                    req.statutCycleVie === "VALIDE_MANAGER" ? "bg-green-50 border-green-100 text-green-600" :
-                    "bg-gray-50 border-gray-200 text-gray-500"
+                    req.statutCycleVie === "VALIDE_MANAGER" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
+                    "bg-slate-900 border-slate-800/80 text-indigo-400"
                   }`}>
                     {req.statutCycleVie.replace(/_/g, " ")}
                   </div>
                 </td>
-                <td className="px-10 py-8 text-xs font-bold text-gray-500">
+                <td className="px-10 py-8 text-xs font-bold text-slate-400">
                    {new Date(req.dateSoumission).toLocaleDateString()}
                 </td>
                 <td className="px-10 py-8 text-right">
-                   <ChevronRight className="text-gray-300 group-hover:text-blue-600 transition-all" />
+                   <ChevronRight className="text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      {/* Global Workspace is now handled in AdminLayout at the root level */}
     </div>
   );
 }

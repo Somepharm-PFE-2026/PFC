@@ -188,11 +188,11 @@ export default function ManagerDashboard() {
           <Link href="/manager/mon-equipe" className="bg-white/80 backdrop-blur-xl p-6 lg:p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 flex flex-col items-center justify-center text-center hover:-translate-y-1 hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] transition-all duration-300 block">
              <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-6">Taux de Présence (Jour)</p>
              <div className="relative w-32 h-32 lg:w-40 lg:h-40 flex items-center justify-center mb-4">
-                <svg className="w-full h-full transform -rotate-90">
-                   <circle cx="50%" cy="50%" r="45%" stroke="currentColor" strokeWidth="10" fill="transparent" className="text-slate-100" />
-                   <circle cx="50%" cy="50%" r="45%" stroke="currentColor" strokeWidth="10" fill="transparent" 
-                      strokeDasharray={283} 
-                      strokeDashoffset={283 - (283 * (data.presenceRateToday || 0)) / 100}
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                   <circle cx="18" cy="18" r="15.9" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-slate-100" />
+                   <circle cx="18" cy="18" r="15.9" stroke="currentColor" strokeWidth="3" fill="transparent" 
+                      strokeDasharray="100" 
+                      strokeDashoffset={100 - (data.presenceRateToday || 0)}
                       strokeLinecap="round"
                       className="text-teal-500 transition-all duration-1000 ease-out" 
                    />

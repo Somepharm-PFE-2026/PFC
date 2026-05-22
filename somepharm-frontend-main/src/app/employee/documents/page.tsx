@@ -25,14 +25,34 @@ export default function DocumentsPage() {
   const [token, setToken] = useState("");
 
   const [publicDocs, setPublicDocs] = useState<any[]>([]);
+  const [publishedBulletins, setPublishedBulletins] = useState<any[]>([]);
 
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
     if (savedToken) {
       setToken(savedToken);
       fetchPublicDocs(savedToken);
+      fetchPublishedBulletins(savedToken);
     }
   }, []);
+
+  const fetchPublishedBulletins = async (t: string) => {
+    try {
+      const res = await fetch("http://localhost:8080/api/documents/fiche-paie/liste", {
+        headers: { "Authorization": `Bearer ${t}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPublishedBulletins(data);
+        if (data.length > 0) {
+          setSelectedMonth(data[0].mois);
+          setSelectedYear(data[0].annee);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching published bulletins:", err);
+    }
+  };
 
   const fetchPublicDocs = async (t: string) => {
     try {
@@ -192,7 +212,7 @@ export default function DocumentsPage() {
       </div>
       
       {/* Payslip Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Période du Bulletin">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Mes Bulletins de Salaire">
         <div className="space-y-6">
           <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex items-center gap-4">
             <div className="p-2 bg-amber-500 rounded-lg text-white">
@@ -200,9 +220,71 @@ export default function DocumentsPage() {
             </div>
             <div>
               <p className="text-amber-900 font-bold text-sm">Sélection de la période</p>
-              <p className="text-amber-700 text-xs font-medium">Choisissez le mois et l'année du bulletin</p>
+              <p className="text-amber-700 text-xs font-medium">Choisissez le mois et l'année du bulletin ou téléchargez un bulletin publié ci-dessous.</p>
             </div>
           </div>
+
+          {/* LIST OF PUBLISHED BULLETINS */}
+          {publishedBulletins.length > 0 && (
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bulletins Disponibles</label>
+              <div className="max-h-48 overflow-y-auto space-y-2 border border-slate-100 p-3 rounded-xl bg-slate-50/50">
+                {publishedBulletins.map((bp) => {
+                  const moisNoms = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+                  return (
+                    <div 
+                      key={bp.id} 
+                      className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-lg hover:border-amber-300 hover:shadow-sm transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center font-bold text-amber-700 text-xs">
+                          {bp.mois}
+                        </div>
+                        <div>
+                          <p className="font-bold text-xs text-slate-800">{moisNoms[bp.mois - 1]} {bp.annee}</p>
+                          <p className="text-[10px] font-semibold text-slate-400">{bp.netAPayer.toLocaleString()} DZD</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={async () => {
+                          setLoading(true);
+                          try {
+                            const res = await fetch(`http://localhost:8080/api/documents/fiche-paie?mois=${bp.mois}&annee=${bp.annee}`, {
+                              headers: { "Authorization": `Bearer ${token}` }
+                            });
+                            if (res.ok) {
+                              const blob = await res.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `Fiche_Paie_${bp.mois}_${bp.annee}.pdf`;
+                              document.body.appendChild(a);
+                              a.click();
+                              a.remove();
+                              window.URL.revokeObjectURL(url);
+                              addToast("success", "Fiche de paie téléchargée");
+                            } else {
+                              addToast("error", "Erreur lors du téléchargement");
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            addToast("error", "Erreur serveur");
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                        disabled={loading}
+                        className="p-2 hover:bg-amber-50 rounded-lg text-amber-600 hover:text-amber-700 transition"
+                        title="Télécharger"
+                      >
+                        <Download size={16} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">

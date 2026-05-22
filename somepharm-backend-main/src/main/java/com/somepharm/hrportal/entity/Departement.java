@@ -12,7 +12,7 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLRestriction("deleted = false")
 @Data
 @NoArgsConstructor
-@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(value = {"hibernateLazyInitializer", "handler"}, ignoreUnknown = true)
 @lombok.EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @lombok.ToString(onlyExplicitlyIncluded = true)
 public class Departement {

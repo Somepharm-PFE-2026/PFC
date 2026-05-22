@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -39,20 +40,37 @@ public class DocumentController {
     }
 
     @GetMapping("/fiche-paie")
-    public ResponseEntity<byte[]> downloadFichePaieDirect(@RequestParam int mois, @RequestParam int annee) {
+    public ResponseEntity<byte[]> downloadFichePaieDirect(
+            @RequestParam int mois, 
+            @RequestParam int annee,
+            @RequestParam(required = false) String matricule) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Utilisateur employe = utilisateurRepository.findByMatricule(auth.getName())
+        Utilisateur currentUser = utilisateurRepository.findByMatricule(auth.getName())
                 .orElseThrow(() -> new RuntimeException("Employé introuvable"));
 
-        BulletinPaie bp = bulletinRepository.findByEmployeAndMoisAndAnnee(employe, mois, annee)
-                .orElseThrow(() -> new RuntimeException("Bulletin de paie introuvable"));
+        String roleName = currentUser.getRole().getNomRole();
+        boolean isPrivileged = "RH_ADMIN".equals(roleName) || "SUPER_ADMIN".equals(roleName) || "HR_MANAGER".equals(roleName);
 
-        if (bp.getDatePublication() == null) {
-            return ResponseEntity.status(403).build(); // Forbidden if not published
+        Utilisateur targetEmploye;
+        if (matricule != null && !matricule.trim().isEmpty() && !matricule.equals(currentUser.getMatricule())) {
+            if (!isPrivileged) {
+                return ResponseEntity.status(403).build();
+            }
+            targetEmploye = utilisateurRepository.findByMatricule(matricule)
+                    .orElseThrow(() -> new RuntimeException("Employé ciblé introuvable"));
+        } else {
+            targetEmploye = currentUser;
         }
 
-        byte[] pdfBytes = documentService.genererFicheDePaie(employe, mois, annee);
-        String fileName = "Fiche_Paie_" + employe.getMatricule() + "_" + mois + "_" + annee + ".pdf";
+        BulletinPaie bp = bulletinRepository.findByEmployeAndMoisAndAnnee(targetEmploye, mois, annee)
+                .orElseThrow(() -> new RuntimeException("Bulletin de paie introuvable"));
+
+        if (bp.getDatePublication() == null && !isPrivileged) {
+            return ResponseEntity.status(403).build(); // Forbidden if not published and user is not HR/Admin
+        }
+
+        byte[] pdfBytes = documentService.genererFicheDePaie(targetEmploye, mois, annee);
+        String fileName = "Fiche_Paie_" + targetEmploye.getMatricule() + "_" + mois + "_" + annee + ".pdf";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
@@ -61,6 +79,16 @@ public class DocumentController {
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(pdfBytes);
+    }
+
+    @GetMapping("/fiche-paie/liste")
+    public ResponseEntity<List<BulletinPaie>> getMyBulletins() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Utilisateur employe = utilisateurRepository.findByMatricule(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Employé introuvable"));
+
+        List<BulletinPaie> bulletins = bulletinRepository.findByEmployeAndDatePublicationIsNotNullOrderByAnneeDescMoisDesc(employe);
+        return ResponseEntity.ok(bulletins);
     }
 
     @GetMapping("/download/{idRequete}")

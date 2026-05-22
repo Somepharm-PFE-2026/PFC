@@ -16,6 +16,18 @@ import {
   Database
 } from "lucide-react";
 
+const X = ({ size }: { size: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+);
+
+const Clock = ({ size }: { size: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+);
+
+const CheckCircle2 = ({ size }: { size: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+);
+
 export default function PaieDocumentsPage() {
   const [activeTab, setActiveTab] = useState("paie");
   const [bulletins, setBulletins] = useState([]);
@@ -161,6 +173,31 @@ export default function PaieDocumentsPage() {
     } catch (err) { console.error(err); }
   };
 
+  const handleDownloadFichePaie = async (matricule: string, mois: number, annee: number, nom: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:8080/api/documents/fiche-paie?mois=${mois}&annee=${annee}&matricule=${matricule}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Fiche_Paie_${nom.replace(/\s+/g, '_')}_${mois}_${annee}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } else {
+        alert("Erreur lors du téléchargement du bulletin de paie.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Une erreur est survenue lors de la communication avec le serveur.");
+    }
+  };
+
   const filteredDocs = docs.filter((doc: any) => {
     const matchesSearch = doc.titre.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          doc.description?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -173,24 +210,23 @@ export default function PaieDocumentsPage() {
     b.employe.prenom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     b.employe.matricule?.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20">
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tighter uppercase italic">
-            Paie & <span className="text-blue-600">Documents</span>
+          <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">
+            Paie & <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-sky-400">Documents</span>
           </h1>
-          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.3em] mt-2 flex items-center gap-2">
-            <Lock size={14} className="text-blue-500" />
+          <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em] mt-2 flex items-center gap-2">
+            <Lock size={14} className="text-indigo-400" />
             Espace sécurisé - Publication & Archivage Officiel
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-           <div className="bg-amber-50 text-amber-600 px-6 py-4 rounded-[2rem] border border-amber-100 flex items-center gap-3">
-              <ShieldCheck size={20} />
+           <div className="bg-indigo-500/10 text-indigo-300 px-6 py-4 rounded-[2rem] border border-slate-800 flex items-center gap-3">
+              <ShieldCheck size={20} className="text-indigo-400" />
               <span className="text-[10px] font-black uppercase tracking-widest text-center leading-tight">
                 Accès Restreint<br/>ADMIN RH / HR MGR
               </span>
@@ -199,13 +235,13 @@ export default function PaieDocumentsPage() {
       </div>
 
       {/* TABS NAVIGATION */}
-      <div className="flex items-center gap-2 bg-gray-100/50 p-2 rounded-[2.5rem] border border-gray-200/50 backdrop-blur-sm w-fit">
+      <div className="flex items-center gap-2 bg-slate-950/40 p-2 rounded-[2.5rem] border border-slate-800/80 backdrop-blur-sm w-fit">
         <button
           onClick={() => setActiveTab("paie")}
           className={`px-8 py-4 rounded-3xl flex items-center gap-3 transition-all duration-300 font-black text-[10px] uppercase tracking-widest
             ${activeTab === "paie" 
-              ? "bg-white text-blue-600 shadow-sm border border-gray-100" 
-              : "text-gray-400 hover:text-gray-600"}`}
+              ? "bg-gradient-to-r from-indigo-600 to-sky-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.15)] font-black" 
+              : "text-slate-400 hover:text-slate-200"}`}
         >
           <Database size={18}/> Gestion de la Paie
         </button>
@@ -213,8 +249,8 @@ export default function PaieDocumentsPage() {
           onClick={() => setActiveTab("biblio")}
           className={`px-8 py-4 rounded-3xl flex items-center gap-3 transition-all duration-300 font-black text-[10px] uppercase tracking-widest
             ${activeTab === "biblio" 
-              ? "bg-white text-blue-600 shadow-sm border border-gray-100" 
-              : "text-gray-400 hover:text-gray-600"}`}
+              ? "bg-gradient-to-r from-indigo-600 to-sky-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.15)] font-black" 
+              : "text-slate-400 hover:text-slate-200"}`}
         >
           <BookOpen size={18}/> Bibliothèque RH
         </button>
@@ -225,14 +261,14 @@ export default function PaieDocumentsPage() {
         
         {activeTab === "paie" && (
           <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-             <div className="bg-blue-600 text-white p-12 rounded-[4rem] shadow-2xl relative overflow-hidden group">
-                <div className="absolute -right-10 -bottom-10 text-white/10 group-hover:scale-110 transition-transform duration-700">
+             <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-12 rounded-[4rem] relative overflow-hidden group">
+                <div className="absolute -right-10 -bottom-10 text-indigo-400/5 group-hover:scale-110 transition-transform duration-700">
                    <Lock size={200} />
                 </div>
                 <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
                    <div>
-                      <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-4">Campagne de Paie</h2>
-                      <p className="text-blue-100 font-medium max-w-md">Importez les données de paie pour l'ensemble des collaborateurs ou générez les bulletins du mois en un clic.</p>
+                      <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-4 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-sky-400">Campagne de Paie</h2>
+                      <p className="text-slate-400 font-medium max-w-md">Importez les données de paie pour l'ensemble des collaborateurs ou générez les bulletins du mois en un clic.</p>
                       <div className="flex gap-4 mt-6">
                         <input 
                           type="file" 
@@ -244,13 +280,13 @@ export default function PaieDocumentsPage() {
                         <button 
                           onClick={() => fileInputRef.current?.click()}
                           disabled={importing}
-                          className="bg-white/20 backdrop-blur-md px-8 py-5 rounded-[2rem] border border-white/20 font-black text-[10px] uppercase tracking-widest hover:bg-white/30 transition-all disabled:opacity-50"
+                          className="bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/80 text-slate-300 hover:text-white px-8 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-50"
                         >
                           {importing ? "Import en cours..." : "Importer CSV"}
                         </button>
                         <button 
                           onClick={handlePublish}
-                          className="bg-white text-blue-600 px-8 py-5 rounded-[2rem] shadow-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all"
+                          className="bg-gradient-to-r from-indigo-600 to-sky-600 text-white font-bold shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:opacity-90 transition-all hover:scale-[1.02] px-8 py-5 rounded-[2rem] uppercase tracking-widest"
                         >
                           Générer Avril 2026
                         </button>
@@ -259,25 +295,25 @@ export default function PaieDocumentsPage() {
                 </div>
              </div>
 
-             <div className="bg-white rounded-[3.5rem] border border-gray-100 shadow-sm overflow-hidden">
-                <div className="p-10 border-b flex items-center justify-between">
-                   <h3 className="text-xl font-black text-gray-900 uppercase italic tracking-tighter">Registre des Bulletins</h3>
+             <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] rounded-[3.5rem] overflow-hidden">
+                <div className="p-10 border-b border-slate-800/80 flex items-center justify-between">
+                   <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Registre des Bulletins</h3>
                    <div className="flex gap-4">
                       <div className="relative">
-                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                          <input 
                             type="text" 
                             placeholder="Filtrer par employé..." 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-12 pr-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold outline-none w-64" 
+                            className="pl-12 pr-6 py-3 bg-slate-900/60 border border-slate-800/80 text-white placeholder:text-slate-500 focus:border-indigo-500/40 focus:bg-slate-950 focus:ring-4 focus:ring-indigo-500/10 outline-none rounded-2xl text-xs font-bold w-64 transition-all" 
                          />
                       </div>
                    </div>
                 </div>
                 <div className="overflow-x-auto">
                    <table className="w-full text-left">
-                      <thead className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">
+                      <thead className="bg-slate-900/40 border-b border-slate-800/80 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                          <tr>
                             <th className="px-10 py-6">Employé</th>
                             <th className="px-10 py-6">Période</th>
@@ -286,40 +322,43 @@ export default function PaieDocumentsPage() {
                             <th className="px-10 py-6 text-right">Actions</th>
                          </tr>
                       </thead>
-                      <tbody className="divide-y">
+                      <tbody className="divide-y divide-slate-800/80">
                          {filteredBulletins.map((bp: any) => (
-                           <tr key={bp.id} className="hover:bg-gray-50/50 transition-colors">
+                           <tr key={bp.id} className="hover:bg-indigo-500/5 transition-colors">
                               <td className="px-10 py-6">
                                  <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center font-black text-blue-600 text-xs">
+                                    <div className="w-10 h-10 bg-slate-900 border border-slate-800/80 rounded-xl flex items-center justify-center font-black text-indigo-300 text-xs">
                                        {bp.employe.matricule?.substring(0, 2)}
                                     </div>
                                     <div>
-                                       <p className="font-black text-gray-800 text-sm uppercase">{bp.employe.prenom} {bp.employe.nom}</p>
-                                       <p className="text-[10px] text-gray-400 font-bold uppercase">{bp.employe.matricule}</p>
+                                       <p className="font-black text-white text-sm uppercase">{bp.employe.prenom} {bp.employe.nom}</p>
+                                       <p className="text-[10px] text-slate-400 font-bold uppercase">{bp.employe.matricule}</p>
                                     </div>
                                  </div>
                               </td>
-                              <td className="px-10 py-6 font-mono font-black text-gray-800 uppercase text-xs">
+                              <td className="px-10 py-6 font-mono font-black text-slate-300 uppercase text-xs">
                                  {bp.mois}/{bp.annee}
                               </td>
-                              <td className="px-10 py-6 font-black text-emerald-600">
+                              <td className="px-10 py-6 font-black text-indigo-300">
                                  {bp.netAPayer.toLocaleString()} DZD
                               </td>
                               <td className="px-10 py-6">
                                  {bp.datePublication ? (
-                                    <span className={`px-3 py-1 ${bp.isDownloaded ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'} rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-2 w-fit`}>
-                                       {bp.isDownloaded ? <CheckCircle2 size={10} /> : <div className="w-2 h-2 bg-blue-500 rounded-full"></div>}
+                                    <span className={`px-3 py-1 ${bp.isDownloaded ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-indigo-500/10 border border-slate-800 text-indigo-300'} rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-2 w-fit`}>
+                                       {bp.isDownloaded ? <CheckCircle2 size={10} /> : <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse"></div>}
                                        {bp.isDownloaded ? "Reçu" : "Publié"}
                                     </span>
                                   ) : (
-                                    <span className="px-3 py-1 bg-gray-50 text-gray-400 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-2 w-fit">
+                                    <span className="px-3 py-1 bg-slate-900 border border-slate-800/80 text-slate-400 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-2 w-fit">
                                        Brouillon
                                     </span>
                                   )}
                               </td>
                               <td className="px-10 py-6 text-right">
-                                 <button className="p-3 text-gray-400 hover:text-blue-600 transition-colors">
+                                 <button 
+                                   onClick={() => handleDownloadFichePaie(bp.employe.matricule, bp.mois, bp.annee, `${bp.employe.prenom}_${bp.employe.nom}`)}
+                                   className="p-3 text-slate-400 hover:text-indigo-300 transition-colors"
+                                 >
                                     <Download size={18} />
                                  </button>
                               </td>
@@ -327,7 +366,7 @@ export default function PaieDocumentsPage() {
                          ))}
                          {filteredBulletins.length === 0 && !loading && (
                             <tr>
-                              <td colSpan={5} className="py-20 text-center text-gray-400 font-black uppercase text-xs">
+                              <td colSpan={5} className="py-20 text-center text-slate-500 font-black uppercase text-xs">
                                 Aucun bulletin trouvé
                               </td>
                             </tr>
@@ -342,24 +381,24 @@ export default function PaieDocumentsPage() {
         {activeTab === "biblio" && (
           <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-2">
-                <h3 className="text-2xl font-black text-gray-900 italic tracking-tighter uppercase">Documents de Référence</h3>
+                <h3 className="text-2xl font-black text-white italic tracking-tighter uppercase">Documents de Référence</h3>
                 
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                     <input 
                       type="text" 
                       placeholder="Rechercher un document..." 
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-12 pr-6 py-3 bg-white border border-gray-100 rounded-2xl text-xs font-bold outline-none w-64 shadow-sm" 
+                      className="pl-12 pr-6 py-3 bg-slate-900/60 border border-slate-800/80 text-white placeholder:text-slate-500 focus:border-indigo-500/40 focus:bg-slate-950 focus:ring-4 focus:ring-indigo-500/10 outline-none rounded-2xl text-xs font-bold w-64 transition-all" 
                     />
                   </div>
 
                   <select 
                     value={selectedCategoryFilter}
                     onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                    className="px-6 py-3 bg-white border border-gray-100 rounded-2xl text-xs font-bold outline-none shadow-sm cursor-pointer"
+                    className="px-6 py-3 bg-slate-900/60 border border-slate-800/80 text-white focus:border-indigo-500/40 outline-none rounded-2xl text-xs font-bold cursor-pointer transition-all"
                   >
                     <option value="ALL">Toutes les catégories</option>
                     <option value="REGLEMENT">Règlement Intérieur</option>
@@ -370,7 +409,7 @@ export default function PaieDocumentsPage() {
 
                   <button 
                     onClick={() => setShowAddDocModal(true)}
-                    className="bg-gray-900 text-white px-6 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center gap-3 shadow-lg"
+                    className="bg-gradient-to-r from-indigo-600 to-sky-600 text-white font-bold px-6 py-3.5 rounded-2xl text-[10px] uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-3 shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:scale-105"
                   >
                      <Plus size={16} /> Ajouter
                   </button>
@@ -379,31 +418,31 @@ export default function PaieDocumentsPage() {
 
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredDocs.map((doc: any) => (
-                  <div key={doc.id} className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all group">
-                     <div className="bg-gray-50 w-16 h-16 rounded-2xl flex items-center justify-center text-gray-400 mb-6 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                  <div key={doc.id} className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-8 rounded-[3rem] hover:border-indigo-500/30 transition-all group">
+                     <div className="bg-slate-900 w-16 h-16 rounded-2xl flex items-center justify-center text-slate-400 mb-6 group-hover:bg-gradient-to-r group-hover:from-indigo-600 group-hover:to-sky-600 group-hover:text-white transition-all border border-slate-800/60">
                         <FileText size={28} />
                      </div>
                      <div className="mb-8">
-                        <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-widest mb-3 inline-block">
+                        <span className="text-[9px] font-black text-indigo-300 bg-indigo-500/10 border border-slate-800 px-3 py-1 rounded-full uppercase tracking-widest mb-3 inline-block">
                            {doc.categorie}
                         </span>
-                        <h4 className="text-xl font-black text-gray-900 uppercase italic leading-tight">{doc.titre}</h4>
-                        <p className="text-gray-400 text-xs font-medium mt-2">{doc.description}</p>
+                        <h4 className="text-xl font-black text-white uppercase italic leading-tight">{doc.titre}</h4>
+                        <p className="text-slate-400 text-xs font-medium mt-2">{doc.description}</p>
                      </div>
-                     <div className="flex items-center justify-between pt-6 border-t border-gray-50">
-                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                     <div className="flex items-center justify-between pt-6 border-t border-slate-800/80">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                            <Clock size={12} /> v{doc.version || "1.0"}
                         </span>
                         <div className="flex gap-2">
                            <button 
                             onClick={() => handleDownloadDoc(doc.id, doc.titre + ".pdf")}
-                            className="p-3 text-gray-300 hover:text-blue-600 transition-colors"
+                            className="p-3 text-slate-400 hover:text-indigo-300 transition-colors"
                            >
                             <Download size={16} />
                            </button>
                            <button 
                             onClick={() => handleDeleteDoc(doc.id)}
-                            className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                            className="p-3 text-slate-400 hover:text-red-400 transition-colors"
                            >
                             <Trash2 size={16} />
                            </button>
@@ -413,10 +452,10 @@ export default function PaieDocumentsPage() {
                 ))}
                 
                 {docs.length === 0 && !loading && (
-                   <div className="lg:col-span-3 py-32 text-center bg-gray-50/50 rounded-[4rem] border-2 border-dashed border-gray-200">
-                      <BookOpen size={48} className="mx-auto text-gray-300 mb-6" />
-                      <p className="text-gray-400 font-black uppercase text-xs tracking-widest">La bibliothèque est vide.</p>
-                      <p className="text-gray-300 text-[10px] font-bold uppercase mt-2">Cliquez sur "Ajouter" pour numériser vos documents</p>
+                   <div className="lg:col-span-3 py-32 text-center bg-slate-950/20 rounded-[4rem] border border-dashed border-slate-800/80">
+                      <BookOpen size={48} className="mx-auto text-indigo-400/20 mb-6 animate-pulse" />
+                      <p className="text-slate-400 font-black uppercase text-xs tracking-widest">La bibliothèque est vide.</p>
+                      <p className="text-slate-500 text-[10px] font-bold uppercase mt-2">Cliquez sur "Ajouter" pour numériser vos documents</p>
                    </div>
                 )}
              </div>
@@ -427,35 +466,35 @@ export default function PaieDocumentsPage() {
 
       {/* ADD DOCUMENT MODAL */}
       {showAddDocModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-gray-900/40 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="bg-white w-full max-w-xl rounded-[3.5rem] shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-300">
-              <div className="bg-gray-900 p-10 text-white flex items-center justify-between">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+           <div className="bg-slate-900/95 w-full max-w-xl rounded-[3.5rem] shadow-[0_0_50px_rgba(99,102,241,0.15)] overflow-hidden border border-slate-800 animate-in zoom-in-95 duration-300 backdrop-blur-xl">
+              <div className="bg-slate-950 p-10 text-white flex items-center justify-between border-b border-slate-800/80">
                  <div>
-                    <h3 className="text-2xl font-black italic uppercase tracking-tighter">Nouveau Document</h3>
-                    <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">Numérisation de la bibliothèque RH</p>
+                    <h3 className="text-2xl font-black italic uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-sky-400">Nouveau Document</h3>
+                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Numérisation de la bibliothèque RH</p>
                  </div>
-                 <button onClick={() => setShowAddDocModal(false)} className="p-4 bg-white/10 rounded-2xl hover:bg-white/20 transition-all">
+                 <button onClick={() => setShowAddDocModal(false)} className="p-4 bg-slate-900 rounded-2xl hover:bg-slate-800 text-slate-400 hover:text-white transition-all border border-slate-800/80">
                     <X size={20} />
                  </button>
               </div>
-              <div className="p-10 space-y-6">
+              <div className="p-10 space-y-6 text-white">
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Titre du document</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Titre du document</label>
                     <input 
                       type="text" 
                       placeholder="Ex: Règlement Intérieur 2026"
                       value={newDoc.titre}
                       onChange={(e) => setNewDoc({...newDoc, titre: e.target.value})}
-                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 transition-all font-bold text-sm"
+                      className="w-full px-6 py-4 bg-slate-950 border border-slate-800/80 rounded-2xl outline-none focus:border-indigo-500/40 transition-all font-bold text-sm text-white placeholder:text-slate-600"
                     />
                  </div>
                  <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Catégorie</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Catégorie</label>
                         <select 
                           value={newDoc.categorie}
                           onChange={(e) => setNewDoc({...newDoc, categorie: e.target.value})}
-                          className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 transition-all font-bold text-sm"
+                          className="w-full px-6 py-4 bg-slate-950 border border-slate-800/80 rounded-2xl outline-none focus:border-indigo-500/40 transition-all font-bold text-sm text-white cursor-pointer"
                         >
                             <option value="REGLEMENT">Règlement Intérieur</option>
                             <option value="ORGANIGRAMME">Organigramme</option>
@@ -464,18 +503,18 @@ export default function PaieDocumentsPage() {
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Version</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Version</label>
                         <input 
                           type="text" 
                           placeholder="v1.0"
                           value={newDoc.version}
                           onChange={(e) => setNewDoc({...newDoc, version: e.target.value})}
-                          className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 transition-all font-bold text-sm"
+                          className="w-full px-6 py-4 bg-slate-950 border border-slate-800/80 rounded-2xl outline-none focus:border-indigo-500/40 transition-all font-bold text-sm text-white placeholder:text-slate-600"
                         />
                     </div>
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fichier (PDF)</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fichier (PDF)</label>
                     <div className="relative group">
                        <input 
                          type="file" 
@@ -486,28 +525,28 @@ export default function PaieDocumentsPage() {
                        />
                        <label 
                          htmlFor="doc-upload"
-                         className="flex items-center justify-between w-full px-6 py-4 bg-blue-50 border-2 border-dashed border-blue-200 rounded-2xl cursor-pointer group-hover:border-blue-400 transition-all"
+                         className="flex items-center justify-between w-full px-6 py-4 bg-indigo-500/5 border-2 border-dashed border-slate-800 rounded-2xl cursor-pointer group-hover:border-indigo-500/40 transition-all"
                        >
-                          <span className="text-xs font-bold text-blue-600">
+                          <span className="text-xs font-bold text-indigo-300">
                              {selectedDocFile ? selectedDocFile.name : "Sélectionner le document..."}
                           </span>
-                          <Upload size={18} className="text-blue-500" />
+                          <Upload size={18} className="text-indigo-400" />
                        </label>
                     </div>
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Description (Optionnel)</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Description (Optionnel)</label>
                     <textarea 
                       placeholder="Brève description du contenu..."
                       value={newDoc.description}
                       onChange={(e) => setNewDoc({...newDoc, description: e.target.value})}
-                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-blue-600 transition-all font-bold text-sm h-24 resize-none"
+                      className="w-full px-6 py-4 bg-slate-950 border border-slate-800/80 rounded-2xl outline-none focus:border-indigo-500/40 transition-all font-bold text-sm h-24 resize-none text-white placeholder:text-slate-600"
                     />
                  </div>
                  <button 
                   onClick={handleAddDoc}
                   disabled={!newDoc.titre || !selectedDocFile}
-                  className="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-blue-700 transition-all disabled:opacity-50 disabled:grayscale"
+                  className="w-full bg-gradient-to-r from-indigo-600 to-sky-600 text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:grayscale"
                  >
                     {selectedDocFile ? "Publier dans la bibliothèque" : "Sélectionner un fichier PDF"}
                  </button>
@@ -518,15 +557,3 @@ export default function PaieDocumentsPage() {
     </div>
   );
 }
-
-const X = ({ size }: { size: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-);
-
-const Clock = ({ size }: { size: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-);
-
-const CheckCircle2 = ({ size }: { size: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
-);

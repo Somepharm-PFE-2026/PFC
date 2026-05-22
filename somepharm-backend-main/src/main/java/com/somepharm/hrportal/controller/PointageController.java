@@ -125,4 +125,16 @@ public class PointageController {
         }
         return ResponseEntity.ok(pointageRepository.findByHorodatageBetween(start, end));
     }
+
+    @GetMapping("/my-pointages")
+    public ResponseEntity<List<Pointage>> getMyPointages(
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Utilisateur employe = utilisateurRepository.findByMatricule(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Employé introuvable"));
+        
+        List<Pointage> pointages = pointageRepository.findByEmploye_IdUserAndHorodatageBetween(employe.getIdUser(), start, end);
+        return ResponseEntity.ok(pointages);
+    }
 }

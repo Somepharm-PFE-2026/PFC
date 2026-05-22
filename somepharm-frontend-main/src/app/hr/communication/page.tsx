@@ -208,19 +208,19 @@ export default function CommunicationPage() {
    };
 
    return (
-      <div className="space-y-10 animate-in fade-in duration-700 pb-20 p-8 max-w-[1600px] mx-auto">
+      <div className="space-y-10 animate-in fade-in duration-700 pb-20 text-slate-100">
          {/* HEADER */}
-         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-10 rounded-[3.5rem] shadow-sm border border-gray-100">
+         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[3.5rem]">
             <div className="flex items-center gap-6">
-               <div className="w-20 h-20 bg-blue-600 rounded-[2rem] flex items-center justify-center text-white shadow-2xl shadow-blue-200">
+               <div className="w-20 h-20 bg-indigo-500/10 border border-slate-800 text-indigo-400 rounded-[2rem] flex items-center justify-center shadow-2xl">
                   <Megaphone size={40} />
                </div>
                <div>
-                  <h1 className="text-4xl font-black text-gray-900 tracking-tighter uppercase italic leading-none">
-                     Communication <span className="text-blue-600">Hub</span>
+                  <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">
+                     Communication <span className="text-indigo-400">Hub</span>
                   </h1>
-                  <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.3em] mt-3 flex items-center gap-2">
-                     <ShieldAlert size={14} className="text-blue-500" />
+                  <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em] mt-3 flex items-center gap-2">
+                     <ShieldAlert size={14} className="text-indigo-400" />
                      Gestion & Pilotage des annonces officielles
                   </p>
                </div>
@@ -228,7 +228,7 @@ export default function CommunicationPage() {
 
             <button
                onClick={() => setShowModal(true)}
-               className="bg-blue-600 text-white px-12 py-6 rounded-[2.5rem] shadow-2xl shadow-blue-100 flex items-center gap-4 hover:scale-105 transition-all font-black text-xs uppercase tracking-widest active:scale-95"
+               className="bg-gradient-to-r from-indigo-600 to-sky-600 text-white px-12 py-6 rounded-[2.5rem] shadow-2xl flex items-center gap-4 hover:opacity-90 transition-all font-black text-xs uppercase tracking-widest active:scale-95"
             >
                <Plus size={24} strokeWidth={3} /> Créer une annonce
             </button>
@@ -239,16 +239,16 @@ export default function CommunicationPage() {
             {annonces.map((annonce: any) => (
                <div
                   key={annonce.idAnnonce}
-                  className={`bg-white rounded-[4rem] border-2 shadow-sm p-12 transition-all hover:shadow-2xl relative group flex flex-col
-               ${annonce.pinned ? "border-blue-100 bg-blue-50/10" : "border-gray-50"}
-               ${annonce.priority === "URGENT" ? "border-red-100 ring-8 ring-red-50/30" : ""}`}
+                  className={`bg-slate-950/40 backdrop-blur-xl border shadow-[0_0_15px_rgba(99,102,241,0.05)] p-12 transition-all hover:shadow-[0_0_30px_rgba(99,102,241,0.1)] relative group flex flex-col rounded-[4rem]
+               ${annonce.pinned ? "border-indigo-500/30 bg-indigo-600/[0.03]" : "border-slate-800/80"}
+               ${annonce.priority === "URGENT" ? "border-rose-500/30 ring-8 ring-rose-500/10 bg-rose-950/5" : ""}`}
                >
                   {/* TOP ACTIONS */}
                   <div className="absolute top-8 right-10 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all">
-                     <button onClick={() => togglePin(annonce.idAnnonce)} className="p-4 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-blue-600 shadow-sm transition-all hover:scale-110">
-                        <Pin size={20} fill={annonce.pinned ? "currentColor" : "none"} />
+                     <button onClick={() => togglePin(annonce.idAnnonce)} className="p-4 bg-slate-900 border border-slate-800/80 hover:border-indigo-500/30 rounded-2xl text-slate-400 hover:text-indigo-400 shadow-sm transition-all hover:scale-110">
+                        <Pin size={20} fill={annonce.pinned ? "currentColor" : "none"} className={annonce.pinned ? "text-indigo-400" : ""} />
                      </button>
-                     <button onClick={() => deleteAnnonce(annonce.idAnnonce)} className="p-4 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-red-600 shadow-sm transition-all hover:scale-110">
+                     <button onClick={() => deleteAnnonce(annonce.idAnnonce)} className="p-4 bg-slate-900 border border-slate-800/80 hover:border-indigo-500/30 rounded-2xl text-slate-400 hover:text-rose-500 shadow-sm transition-all hover:scale-110">
                         <Trash2 size={20} />
                      </button>
                   </div>
@@ -257,47 +257,47 @@ export default function CommunicationPage() {
                   <div className="flex items-center gap-4 mb-8">
                      <TypeBadge type={annonce.typeAnnonce} />
                      <div className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 border
-                    ${annonce.priority === "URGENT" ? "bg-red-600 text-white border-red-600" : "bg-gray-100 text-gray-500 border-gray-200"}`}>
+                    ${annonce.priority === "URGENT" ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-slate-950 text-slate-400 border-slate-800/80"}`}>
                         {annonce.priority === "URGENT" ? <ShieldAlert size={12} /> : <Clock size={12} />} {annonce.priority}
                      </div>
-                     <span className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] ml-auto">
+                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-auto">
                         {new Date(annonce.datePublication).toLocaleDateString()}
                      </span>
                   </div>
 
                   {/* CONTENT */}
-                  <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-tight mb-6 uppercase italic">
+                  <h2 className="text-3xl font-black text-white tracking-tight leading-tight mb-6 uppercase italic">
                      {annonce.titre}
                   </h2>
 
                   <div
-                     className="text-gray-500 font-medium leading-relaxed mb-10 prose prose-sm max-w-none ql-editor ql-viewer"
+                     className="text-slate-300 font-medium leading-relaxed mb-10 prose prose-invert prose-sm max-w-none ql-editor ql-viewer"
                      dangerouslySetInnerHTML={{ __html: annonce.contenu }}
                   />
 
                   {/* INTERNAL STATS & INFO WIDGET */}
-                  <div className="bg-gray-50/50 rounded-[3rem] border border-gray-100 p-8 mb-8 space-y-6">
+                  <div className="bg-slate-950/60 rounded-[3rem] border border-slate-800/60 p-8 mb-8 space-y-6">
                      <div className="flex items-center justify-between">
-                        <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center gap-2">
-                           <BarChart3 size={14} className="text-blue-500" /> Métriques & Audience
+                        <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                           <BarChart3 size={14} className="text-indigo-400" /> Métriques & Audience
                         </h4>
-                        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm">
-                           <Eye size={14} className="text-emerald-500" />
-                           <span className="text-xs font-black text-emerald-600">{annonce.readCount || 0} Lectures</span>
+                        <div className="flex items-center gap-2 bg-slate-900 border border-slate-800/80 px-4 py-2 rounded-xl">
+                           <Eye size={14} className="text-emerald-400" />
+                           <span className="text-xs font-black text-emerald-400">{annonce.readCount || 0} Lectures</span>
                         </div>
                      </div>
 
                      <div className="grid grid-cols-2 gap-4">
                         {/* Targeting Info */}
-                        <div className="bg-white p-5 rounded-[2rem] border border-gray-100 flex items-center gap-4">
-                           <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                        <div className="bg-slate-950/40 p-5 rounded-[2rem] border border-slate-800/80 flex items-center gap-4">
+                           <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 border border-slate-800">
                               <TargetSizeIcon type={annonce.targetType} />
                            </div>
                            <div>
-                              <p className="text-[9px] font-black text-gray-400 uppercase">Ciblage</p>
-                              <p className="text-[11px] font-black text-gray-800 uppercase tracking-tighter">
+                              <p className="text-[9px] font-black text-slate-500 uppercase">Ciblage</p>
+                              <p className="text-[11px] font-black text-slate-200 uppercase tracking-tighter">
                                  {annonce.targetType === "GENERAL" ? "Tous les employés" :
-                                    annonce.targetType === "SELECTIVE" ? `Ciblage Spécifique (${annonce.targetValue?.split(',').length || 0})` :
+                                    annonce.targetType === "SELECTIVE" ? `Spécifique (${annonce.targetValue?.split(',').length || 0})` :
                                        annonce.targetValue || "Non spécifié"}
                               </p>
                            </div>
@@ -305,14 +305,14 @@ export default function CommunicationPage() {
 
                         {/* File Info */}
                         <div className={`p-5 rounded-[2rem] border flex items-center gap-4 transition-all
-                         ${annonce.attachmentUrl ? "bg-white border-blue-100" : "bg-gray-50 border-transparent opacity-50"}`}>
-                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center 
-                             ${annonce.attachmentUrl ? "bg-emerald-50 text-emerald-600" : "bg-gray-200 text-gray-400"}`}>
+                          ${annonce.attachmentUrl ? "bg-slate-950/40 border-indigo-500/15" : "bg-slate-950/20 border-slate-800/60 opacity-40"}`}>
+                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border
+                             ${annonce.attachmentUrl ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-slate-900 text-slate-600 border-slate-950"}`}>
                               <Paperclip size={18} />
                            </div>
                            <div>
-                              <p className="text-[9px] font-black text-gray-400 uppercase">Fichier</p>
-                              <p className="text-[11px] font-black text-gray-800 uppercase tracking-tighter">
+                              <p className="text-[9px] font-black text-slate-500 uppercase">Fichier</p>
+                              <p className="text-[11px] font-black text-slate-200 uppercase tracking-tighter">
                                  {annonce.attachmentUrl ? "Document joint" : "Aucun fichier"}
                               </p>
                            </div>
@@ -322,16 +322,16 @@ export default function CommunicationPage() {
                      {/* Progress Bar (Live Reach) */}
                      <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                           <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Taux d'engagement</span>
-                           <span className="text-[10px] font-black text-blue-600 uppercase italic">
-                             {annonce.engagementRate ? annonce.engagementRate.toFixed(1) : 0}% 
-                             <span className="text-gray-300 ml-1 font-bold">({annonce.readCount}/{annonce.totalTarget})</span>
+                           <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Taux d'engagement</span>
+                           <span className="text-[10px] font-black text-indigo-400 uppercase italic">
+                              {annonce.engagementRate ? annonce.engagementRate.toFixed(1) : 0}% 
+                              <span className="text-slate-500 ml-1 font-bold">({annonce.readCount}/{annonce.totalTarget})</span>
                            </span>
                         </div>
-                        <div className="w-full h-3 bg-gray-200/50 rounded-full overflow-hidden border border-gray-100/50">
+                        <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800/60">
                            <div 
-                             className="h-full bg-blue-600 rounded-full shadow-lg shadow-blue-100 transition-all duration-1000 ease-out" 
-                             style={{ width: `${annonce.engagementRate || 0}%` }}
+                              className="h-full bg-gradient-to-r from-indigo-600 to-sky-600 rounded-full shadow-lg transition-all duration-1000 ease-out" 
+                              style={{ width: `${annonce.engagementRate || 0}%` }}
                            />
                         </div>
                      </div>
@@ -340,12 +340,12 @@ export default function CommunicationPage() {
                   {/* FOOTER */}
                   <div className="flex items-center justify-between mt-auto">
                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white text-sm shadow-xl shadow-blue-100 italic">
+                        <div className="w-12 h-12 bg-indigo-500/10 border border-slate-800 rounded-2xl flex items-center justify-center font-black text-indigo-400 text-sm italic">
                            {annonce.auteur?.matricule?.substring(0, 2)}
                         </div>
                         <div>
-                           <p className="text-xs font-black text-gray-900 uppercase italic leading-none">{annonce.auteur?.prenom} {annonce.auteur?.nom}</p>
-                           <p className="text-[10px] text-blue-500 font-bold uppercase tracking-tighter mt-1">Administrateur RH</p>
+                           <p className="text-xs font-black text-white uppercase italic leading-none">{annonce.auteur?.prenom} {annonce.auteur?.nom}</p>
+                           <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-tighter mt-1">Administrateur RH</p>
                         </div>
                      </div>
 
@@ -353,7 +353,7 @@ export default function CommunicationPage() {
                         <a
                            href={`http://localhost:8080${annonce.attachmentUrl}`}
                            target="_blank"
-                           className="bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-xl shadow-emerald-100 flex items-center gap-2 hover:scale-110 transition-all font-black text-[10px] uppercase tracking-widest"
+                           className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all font-black text-[10px] uppercase tracking-widest"
                         >
                            <Download size={14} /> Aperçu
                         </a>
@@ -363,52 +363,52 @@ export default function CommunicationPage() {
             ))}
          </div>
 
-         {/* MODAL CREATION (UNCHANGED LOGIC, JUST RE-STYLED FOR CONSISTENCY) */}
+         {/* MODAL CREATION */}
          {showModal && (
-            <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
-               <div className="bg-white w-full max-w-5xl max-h-[90vh] rounded-[4rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col border border-white/20">
-                  <div className="p-10 border-b flex items-center justify-between bg-gray-50/30">
+            <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+               <div className="bg-slate-900 border border-slate-800 shadow-[0_0_50px_rgba(99,102,241,0.15)] text-white w-full max-w-5xl max-h-[90vh] rounded-[4rem] overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col backdrop-blur-xl">
+                  <div className="p-10 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/50">
                      <div className="flex items-center gap-5">
-                        <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-blue-100">
+                        <div className="w-16 h-16 bg-indigo-500/10 border border-slate-800 text-indigo-400 rounded-3xl flex items-center justify-center shadow-2xl">
                            {success ? <CheckCircle2 size={32} /> : <Plus size={32} />}
                         </div>
                         <div>
-                           <h3 className="text-3xl font-black text-gray-900 uppercase italic tracking-tighter leading-none">
+                           <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">
                               {success ? "Publication Réussie" : "Nouvelle Publication"}
                            </h3>
-                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">
+                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">
                               {success ? "Votre annonce est maintenant en ligne" : "Diffusez votre message à l'entreprise"}
                            </p>
                         </div>
                      </div>
-                     <button onClick={() => { setShowModal(false); resetForm(); setSuccess(false); }} className="p-5 bg-gray-100 text-gray-400 hover:text-gray-600 rounded-3xl transition-all hover:rotate-90">
+                     <button onClick={() => { setShowModal(false); resetForm(); setSuccess(false); }} className="p-5 bg-slate-950 border border-slate-800/80 hover:border-indigo-500/30 text-slate-400 hover:text-white rounded-3xl transition-all hover:rotate-90">
                         <X size={28} />
                      </button>
                   </div>
 
                   {success ? (
                      <div className="p-20 text-center space-y-8 animate-in zoom-in-95 duration-500">
-                        <div className="w-32 h-32 bg-emerald-50 text-emerald-500 rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl shadow-emerald-100 border-4 border-white">
+                        <div className="w-32 h-32 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl">
                            <Send size={48} className="translate-x-1" />
                         </div>
                         <div className="space-y-4">
-                           <h3 className="text-4xl font-black text-gray-900 uppercase italic tracking-tighter">Félicitations !</h3>
-                           <p className="text-gray-500 font-bold text-sm max-w-md mx-auto leading-relaxed">
-                              Votre annonce <span className="text-blue-600 italic">"{newPost.titre}"</span> a été diffusée avec succès. 
+                           <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">Félicitations !</h3>
+                           <p className="text-slate-400 font-bold text-sm max-w-md mx-auto leading-relaxed">
+                              Votre annonce <span className="text-indigo-400 italic">"{newPost.titre}"</span> a été diffusée avec succès. 
                               L'historique se rafraîchit automatiquement...
                            </p>
                         </div>
-                        <div className="flex items-center justify-center gap-3 text-emerald-500 font-black text-[10px] uppercase tracking-[0.3em]">
+                        <div className="flex items-center justify-center gap-3 text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em]">
                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
                            Envoi terminé
                         </div>
                      </div>
                   ) : (
                      <div className="p-12 space-y-12 overflow-y-auto custom-scrollbar">
-                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 text-slate-300">
                         <div className="lg:col-span-2 space-y-10">
                            <div className="space-y-4">
-                              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
                                  <FileText size={14} /> Titre de l'annonce
                               </label>
                               <input
@@ -416,21 +416,21 @@ export default function CommunicationPage() {
                                  value={newPost.titre}
                                  onChange={(e) => setNewPost({ ...newPost, titre: e.target.value })}
                                  placeholder="Ex: Mise à jour des procédures de sécurité 2026"
-                                 className="w-full bg-gray-50 border-2 border-gray-100 p-8 rounded-[2.5rem] text-lg font-black focus:bg-white focus:border-blue-500 outline-none transition-all placeholder:text-gray-300 tracking-tight"
+                                 className="w-full bg-slate-950 border border-slate-800/80 p-8 rounded-[2.5rem] text-lg font-black focus:border-indigo-500/30 outline-none transition-all placeholder:text-slate-700 tracking-tight text-white"
                               />
                            </div>
 
                            <div className="space-y-4">
-                              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
                                  <Megaphone size={14} /> Contenu du message
                               </label>
-                              <div className="border-2 border-gray-100 rounded-[3rem] overflow-hidden bg-gray-50 min-h-[350px]">
+                              <div className="border border-slate-800/80 rounded-[3rem] overflow-hidden bg-slate-950 min-h-[350px] text-white">
                                  <ReactQuill
                                     theme="snow"
                                     value={newPost.contenu}
                                     onChange={(content) => setNewPost({ ...newPost, contenu: content })}
                                     placeholder="Rédigez votre annonce ici..."
-                                    className="h-[280px] mb-12"
+                                    className="h-[280px] mb-12 text-white"
                                  />
                               </div>
                            </div>
@@ -438,41 +438,41 @@ export default function CommunicationPage() {
 
                         <div className="space-y-8">
                            {/* TYPE & PRIO */}
-                           <div className="bg-gray-50/50 p-8 rounded-[3rem] border border-gray-100 space-y-8">
-                              <h4 className="text-[10px] font-black uppercase text-blue-600 tracking-widest flex items-center gap-2">
+                           <div className="bg-slate-950/40 p-8 rounded-[3rem] border border-slate-800/80 space-y-8">
+                              <h4 className="text-[10px] font-black uppercase text-indigo-400 tracking-widest flex items-center gap-2">
                                  <Info size={16} /> Configuration
                               </h4>
 
                               <div className="space-y-3">
-                                 <label className="text-[9px] font-black uppercase tracking-widest text-gray-400">Type d'annonce</label>
+                                 <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Type d'annonce</label>
                                  <select
                                     value={newPost.typeAnnonce}
                                     onChange={(e) => setNewPost({ ...newPost, typeAnnonce: e.target.value })}
-                                    className="w-full bg-white border-2 border-gray-100 p-5 rounded-2xl text-xs font-black uppercase outline-none focus:border-blue-500 transition-all cursor-pointer"
+                                    className="w-full bg-slate-950 border border-slate-800/80 p-5 rounded-2xl text-xs font-black uppercase outline-none focus:border-indigo-500/30 text-white cursor-pointer"
                                  >
-                                    <option value="NEWS">📢 Actualité</option>
-                                    <option value="EVENT">🎉 Événement</option>
-                                    <option value="NOTE_SERVICE">📋 Note de Service</option>
+                                    <option value="NEWS" className="bg-slate-900">📢 Actualité</option>
+                                    <option value="EVENT" className="bg-slate-900">🎉 Événement</option>
+                                    <option value="NOTE_SERVICE" className="bg-slate-900">📋 Note de Service</option>
                                  </select>
                               </div>
 
                               <div className="space-y-3">
-                                 <label className="text-[9px] font-black uppercase tracking-widest text-gray-400">Niveau d'Urgence</label>
+                                 <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Niveau d'Urgence</label>
                                  <select
                                     value={newPost.priority}
                                     onChange={(e) => setNewPost({ ...newPost, priority: e.target.value })}
-                                    className={`w-full border-2 p-5 rounded-2xl text-xs font-black uppercase outline-none transition-all cursor-pointer
-                                  ${newPost.priority === "URGENT" ? "bg-red-50 border-red-200 text-red-600" : "bg-white border-gray-100 text-gray-600"}`}
+                                    className={`w-full border p-5 rounded-2xl text-xs font-black uppercase outline-none transition-all cursor-pointer bg-slate-950 border-slate-800/80 text-white
+                                   ${newPost.priority === "URGENT" ? "bg-rose-500/10 border-rose-500/20 text-rose-400 focus:border-rose-500" : ""}`}
                                  >
-                                    <option value="NORMAL">🟢 Normal</option>
-                                    <option value="URGENT">🔴 Urgent (Popup)</option>
+                                    <option value="NORMAL" className="bg-slate-900 text-white">🟢 Normal</option>
+                                    <option value="URGENT" className="bg-slate-900 text-white">🔴 Urgent (Popup)</option>
                                  </select>
                               </div>
                            </div>
 
                            {/* TARGETING */}
-                           <div className="bg-blue-50/30 p-8 rounded-[3rem] border border-blue-100/50 space-y-6">
-                              <h4 className="text-[10px] font-black uppercase text-blue-600 tracking-widest flex items-center gap-2">
+                           <div className="bg-indigo-500/5 p-8 rounded-[3rem] border border-slate-800/80 space-y-6">
+                              <h4 className="text-[10px] font-black uppercase text-indigo-400 tracking-widest flex items-center gap-2">
                                  <Target size={16} /> Audience
                               </h4>
                               <div className="flex flex-wrap gap-2">
@@ -481,7 +481,7 @@ export default function CommunicationPage() {
                                        key={type}
                                        onClick={() => setNewPost({ ...newPost, targetType: type, targetValue: "" })}
                                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all
-                                    ${newPost.targetType === type ? "bg-blue-600 text-white shadow-xl shadow-blue-100" : "bg-white text-gray-400 border border-gray-100 hover:bg-gray-100"}`}
+                                    ${newPost.targetType === type ? "bg-gradient-to-r from-indigo-600 to-sky-600 text-white shadow-md" : "bg-slate-950 text-slate-400 border border-slate-800/80 hover:bg-slate-900 hover:text-white"}`}
                                     >
                                        {type}
                                     </button>
@@ -490,27 +490,27 @@ export default function CommunicationPage() {
 
                               {newPost.targetType === "DEPARTMENT" && (
                                  <div className="space-y-3">
-                                    <label className="text-[9px] font-black uppercase text-gray-400">Choisir les départements</label>
+                                    <label className="text-[9px] font-black uppercase text-slate-500">Choisir les départements</label>
                                     <select
                                        value={newPost.targetValue}
                                        onChange={(e) => setNewPost({ ...newPost, targetValue: e.target.value })}
-                                       className="w-full bg-white border-2 border-gray-100 p-5 rounded-2xl text-xs font-black uppercase outline-none focus:border-blue-500 transition-all"
+                                       className="w-full bg-slate-950 border border-slate-800/80 p-5 rounded-2xl text-xs font-black uppercase outline-none focus:border-indigo-500/30 text-white cursor-pointer"
                                     >
-                                       <option value="">Tous les départements</option>
-                                       {depts.map((d: any) => <option key={d.id} value={d.nomDept || d.nom}>{d.nomDept || d.nom}</option>)}
+                                       <option value="" className="bg-slate-900 text-white">Tous les départements</option>
+                                       {depts.map((d: any) => <option key={d.id} value={d.nomDept || d.nom} className="bg-slate-900 text-white">{d.nomDept || d.nom}</option>)}
                                     </select>
                                  </div>
                               )}
 
                               {newPost.targetType === "ROLE" && (
                                  <div className="space-y-3">
-                                    <label className="text-[9px] font-black uppercase text-gray-400">Ciblage par Rôle</label>
+                                    <label className="text-[9px] font-black uppercase text-slate-500">Ciblage par Rôle</label>
                                     <select
                                        value={newPost.targetValue}
                                        onChange={(e) => setNewPost({ ...newPost, targetValue: e.target.value })}
-                                       className="w-full bg-white border-2 border-gray-100 p-5 rounded-2xl text-xs font-black uppercase outline-none focus:border-blue-500 transition-all"
+                                       className="w-full bg-slate-950 border border-slate-800/80 p-5 rounded-2xl text-xs font-black uppercase outline-none focus:border-indigo-500/30 text-white cursor-pointer"
                                     >
-                                       <option value="">Tous les rôles</option>
+                                       <option value="" className="bg-slate-900 text-white">Tous les rôles</option>
                                        {roles
                                           .filter((r: any) => 
                                              !r.nomRole.includes("HR_MANAGER") && 
@@ -518,7 +518,7 @@ export default function CommunicationPage() {
                                              !r.nomRole.includes("RH_ADMIN")
                                           )
                                           .map((r: any) => (
-                                          <option key={r.idRole} value={r.nomRole}>
+                                          <option key={r.idRole} value={r.nomRole} className="bg-slate-900 text-white">
                                              {formatRoleName(r.nomRole)}
                                           </option>
                                        ))}
@@ -528,14 +528,14 @@ export default function CommunicationPage() {
 
                               {newPost.targetType === "SITE" && (
                                  <div className="space-y-3">
-                                    <label className="text-[9px] font-black uppercase text-gray-400">Filtrer par Site</label>
+                                    <label className="text-[9px] font-black uppercase text-slate-500">Filtrer par Site</label>
                                     <select
                                        value={newPost.targetValue}
                                        onChange={(e) => setNewPost({ ...newPost, targetValue: e.target.value })}
-                                       className="w-full bg-white border-2 border-gray-100 p-5 rounded-2xl text-xs font-black uppercase outline-none focus:border-blue-500 transition-all"
+                                       className="w-full bg-slate-950 border border-slate-800/80 p-5 rounded-2xl text-xs font-black uppercase outline-none focus:border-indigo-500/30 text-white cursor-pointer"
                                     >
-                                       <option value="">Tous les sites</option>
-                                       {sites.map((s: any) => <option key={s.idSite} value={s.idSite}>{s.nomSite || s.nom}</option>)}
+                                       <option value="" className="bg-slate-900 text-white">Tous les sites</option>
+                                       {sites.map((s: any) => <option key={s.idSite} value={s.idSite} className="bg-slate-900 text-white">{s.nomSite || s.nom}</option>)}
                                     </select>
                                  </div>
                               )}
@@ -543,17 +543,17 @@ export default function CommunicationPage() {
                               {newPost.targetType === "SELECTIVE" && (
                                  <div className="space-y-4">
                                     <div className="relative">
-                                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={14} />
+                                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
                                        <input
                                           type="text"
                                           placeholder="Rechercher par nom ou matricule..."
                                           value={searchUser}
                                           onChange={(e) => setSearchUser(e.target.value)}
-                                          className="w-full bg-white border-2 border-gray-100 pl-12 pr-5 py-5 rounded-2xl text-[11px] font-black outline-none focus:border-blue-500 uppercase tracking-tight"
+                                          className="w-full bg-slate-950 border border-slate-800/80 pl-12 pr-5 py-5 rounded-2xl text-[11px] font-black outline-none focus:border-indigo-500/30 text-white uppercase tracking-tight"
                                        />
 
                                        {searchUser && (
-                                          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl z-[110] max-h-[200px] overflow-y-auto custom-scrollbar">
+                                          <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl z-[110] max-h-[200px] overflow-y-auto custom-scrollbar text-white backdrop-blur-xl">
                                              {users
                                                 .filter((u: any) =>
                                                    (u.nom + " " + u.prenom).toLowerCase().includes(searchUser.toLowerCase()) ||
@@ -568,14 +568,14 @@ export default function CommunicationPage() {
                                                             setSelectedUsers([...selectedUsers, u] as any);
                                                          }
                                                          setSearchUser("");
-                                                      }}
-                                                      className="p-4 hover:bg-blue-50 cursor-pointer flex items-center justify-between border-b last:border-0 group"
+                                                       }}
+                                                      className="p-4 hover:bg-indigo-500/10 cursor-pointer flex items-center justify-between border-b border-slate-800/60 last:border-0 group"
                                                    >
                                                       <div>
-                                                         <p className="text-[10px] font-black text-gray-800 uppercase italic">{u.prenom} {u.nom}</p>
-                                                         <p className="text-[8px] font-black text-gray-400 uppercase">#{u.matricule} • {u.departement}</p>
+                                                         <p className="text-[10px] font-black text-slate-200 uppercase italic">{u.prenom} {u.nom}</p>
+                                                         <p className="text-[8px] font-black text-slate-500 uppercase">#{u.matricule} • {u.departement}</p>
                                                       </div>
-                                                      <Plus size={14} className="text-gray-300 group-hover:text-blue-500" />
+                                                      <Plus size={14} className="text-slate-500 group-hover:text-indigo-400" />
                                                    </div>
                                                 ))
                                              }
@@ -585,17 +585,17 @@ export default function CommunicationPage() {
 
                                     <div className="flex flex-wrap gap-2 pt-2">
                                        {selectedUsers.map((u: any) => (
-                                          <div key={u.idUser} className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[9px] font-black flex items-center gap-3 border border-blue-100 animate-in zoom-in-95">
+                                          <div key={u.idUser} className="bg-indigo-500/10 text-indigo-400 px-4 py-2 rounded-xl text-[9px] font-black flex items-center gap-3 border border-slate-800 animate-in zoom-in-95">
                                              {u.nom}
                                              <X
                                                 size={12}
-                                                className="cursor-pointer hover:text-red-500 transition-colors"
+                                                className="cursor-pointer hover:text-rose-500 transition-colors"
                                                 onClick={() => setSelectedUsers(selectedUsers.filter((su: any) => su.idUser !== u.idUser))}
                                              />
                                           </div>
                                        ))}
                                        {selectedUsers.length === 0 && !searchUser && (
-                                          <p className="text-[9px] text-gray-300 font-bold uppercase italic">Aucun utilisateur sélectionné</p>
+                                          <p className="text-[9px] text-slate-500 font-bold uppercase italic">Aucun utilisateur sélectionné</p>
                                        )}
                                     </div>
                                  </div>
@@ -607,44 +607,44 @@ export default function CommunicationPage() {
                               <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
                               <div
                                  onClick={() => !uploading && fileInputRef.current?.click()}
-                                 className={`border-4 border-dashed p-8 rounded-[3rem] flex flex-col items-center justify-center gap-3 transition-all cursor-pointer group relative
-                               ${newPost.attachmentUrl ? "border-emerald-200 bg-emerald-50" : "border-gray-100 hover:border-blue-200 hover:bg-blue-50/20"}`}
+                                 className={`border-4 border-dashed p-8 rounded-[3rem] flex flex-col items-center justify-center gap-3 transition-all cursor-pointer group relative bg-slate-950
+                                ${newPost.attachmentUrl ? "border-emerald-500/20 bg-emerald-500/5" : "border-slate-800/80 hover:border-indigo-500/30 hover:bg-indigo-500/5"}`}
                               >
                                  {uploading ? (
-                                    <Loader2 className="animate-spin text-blue-600" size={32} />
+                                    <Loader2 className="animate-spin text-indigo-400" size={32} />
                                  ) : newPost.attachmentUrl ? (
                                     <div className="text-center">
-                                       <CheckCircle2 className="text-emerald-500 mx-auto mb-2" size={32} />
-                                       <p className="text-[10px] font-black text-emerald-900 uppercase truncate max-w-[150px]">{uploadedFile?.name}</p>
+                                       <CheckCircle2 className="text-emerald-400 mx-auto mb-2 animate-bounce" size={32} />
+                                       <p className="text-[10px] font-black text-emerald-300 uppercase truncate max-w-[150px]">{uploadedFile?.name}</p>
                                     </div>
                                  ) : (
                                     <>
-                                       <Paperclip className="text-gray-300 group-hover:text-blue-500" size={32} />
-                                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Ajouter un document</span>
+                                       <Paperclip className="text-slate-600 group-hover:text-indigo-400" size={32} />
+                                       <span className="text-[10px] font-black text-slate-500 group-hover:text-slate-400 uppercase tracking-widest text-center">Ajouter un document</span>
                                     </>
                                  )}
                               </div>
                            </div>
                         </div>
                      </div>
-
-                     <div className="flex items-center gap-8 pt-8 border-t border-gray-100">
-                        <button
-                           onClick={() => { setShowModal(false); resetForm(); }}
-                           className="flex-1 bg-gray-100 text-gray-500 py-8 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-gray-200 transition-all active:scale-95"
-                        >
-                           Annuler
-                        </button>
-                        <button
-                           onClick={handleCreate}
-                           disabled={uploading}
-                           className="flex-[2] bg-blue-600 text-white py-8 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-4 active:scale-95 disabled:opacity-50"
-                        >
-                           <Send size={24} /> Diffuser la publication
-                        </button>
                      </div>
-                  </div>
                   )}
+
+                  <div className="flex items-center gap-8 p-10 bg-slate-950/50 border-t border-slate-800/80">
+                     <button
+                        onClick={() => { setShowModal(false); resetForm(); }}
+                        className="flex-1 bg-slate-800 text-slate-400 hover:text-white py-8 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-95"
+                     >
+                        Annuler
+                     </button>
+                     <button
+                        onClick={handleCreate}
+                        disabled={uploading}
+                        className="flex-[2] bg-gradient-to-r from-indigo-600 to-sky-600 text-white py-8 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:opacity-90 transition-all flex items-center justify-center gap-4 active:scale-95 disabled:opacity-50"
+                     >
+                        <Send size={24} /> Diffuser la publication
+                     </button>
+                  </div>
                </div>
             </div>
          )}
@@ -652,25 +652,11 @@ export default function CommunicationPage() {
    );
 }
 
-function StatCard({ title, value, icon, color }: any) {
-   return (
-      <div className="bg-white p-10 rounded-[3.5rem] border border-gray-100 shadow-sm flex items-center gap-8 hover:shadow-lg transition-shadow">
-         <div className={`w-20 h-20 rounded-[2rem] bg-${color}-50 flex items-center justify-center text-${color}-600`}>
-            {React.cloneElement(icon as React.ReactElement, { size: 32 })}
-         </div>
-         <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{title}</p>
-            <p className="text-4xl font-black text-gray-900 tracking-tighter mt-1">{value}</p>
-         </div>
-      </div>
-   );
-}
-
 function TypeBadge({ type }: { type: any }) {
    const configs: any = {
-      NEWS: { label: "Actualité", icon: <Globe size={14} />, color: "bg-emerald-50 text-emerald-600 border-emerald-100" },
-      EVENT: { label: "Événement", icon: <PartyPopper size={14} />, color: "bg-blue-50 text-blue-600 border-blue-100" },
-      NOTE_SERVICE: { label: "Note de Service", icon: <Briefcase size={14} />, color: "bg-amber-50 text-amber-600 border-amber-100" },
+      NEWS: { label: "Actualité", icon: <Globe size={14} />, color: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" },
+      EVENT: { label: "Événement", icon: <PartyPopper size={14} />, color: "bg-indigo-500/10 text-indigo-300 border border-slate-800" },
+      NOTE_SERVICE: { label: "Note de Service", icon: <Briefcase size={14} />, color: "bg-sky-500/10 text-sky-300 border border-sky-500/20" },
    };
    const config = configs[type] || configs.NEWS;
    return (

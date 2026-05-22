@@ -61,6 +61,10 @@ public class WorkflowService {
         req.setStatutCycleVie("EN_ATTENTE_RH");
     }
 
+    public boolean hasMapping(String typeRequete) {
+        return mappingRepository.findByTypeRequete(typeRequete).isPresent();
+    }
+
     @Transactional
     public Requete processValidation(Requete req, String action, String comment, String actorName) {
         if ("REFUSE".equalsIgnoreCase(action) || "REFUSÉ".equalsIgnoreCase(action)) {
@@ -295,7 +299,14 @@ public class WorkflowService {
             boolean matches = switch (typeRequete) {
                 case "DEMANDE_CONGE" -> req instanceof DemandeConge;
                 default -> {
-                    if (req instanceof DemandeDocument doc) yield typeRequete.equals(doc.getTypeDocument());
+                    if (req instanceof DemandeConge dc) {
+                        if (dc.getTypeConge() != null) {
+                            String specName = "CONGE_" + dc.getTypeConge().getNom().toUpperCase().replaceAll("[^A-Z0-9_]", "_");
+                            yield typeRequete.equals(specName) || typeRequete.equals(dc.getTypeConge().getNom());
+                        }
+                        yield false;
+                    }
+                    else if (req instanceof DemandeDocument doc) yield typeRequete.equals(doc.getTypeDocument());
                     else if (req instanceof DemandeAdministrative adm) yield typeRequete.equals(adm.getTypeDemande());
                     else yield false;
                 }

@@ -257,7 +257,7 @@ public class DashboardService {
         LocalDate today = LocalDate.now();
         LocalDateTime start = today.atStartOfDay();
         LocalDateTime end = today.atTime(LocalTime.MAX);
-        long presentToday = pointageRepository.countByHorodatageBetween(start, end);
+        long presentToday = pointageRepository.countDistinctPresentByDate(start, end);
         
         boolean isHoliday = holidayService.isHoliday(today);
         int dow = today.getDayOfWeek().getValue();

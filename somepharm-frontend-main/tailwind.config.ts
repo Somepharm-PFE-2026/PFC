@@ -17,6 +17,9 @@ const config: Config = {
         'md': '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
         'lg': '0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05)',
       },
+      colors: {
+        // Restored default tailwind yellow and amber colors for global portals contrast
+      },
       borderRadius: {
         'sm': '0.25rem',
         'md': '0.5rem',

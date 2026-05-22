@@ -3,6 +3,7 @@ package com.somepharm.hrportal.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "BULLETIN_PAIE")
@@ -16,6 +17,7 @@ public class BulletinPaie {
 
     @ManyToOne
     @JoinColumn(name = "id_user", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "poste", "departement", "managerDirect", "site"})
     private Utilisateur employe;
 
     @Column(nullable = false)

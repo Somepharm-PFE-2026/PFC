@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import DemandeModal from "./DemandeModal";
-import { X, Check, AlertCircle, Download } from "lucide-react";
+import { X, Check, AlertCircle, Download, FileText, Sparkles, Calendar, Clock, RefreshCw } from "lucide-react";
 
 export default function DemandesPage() {
   const [user, setUser] = useState<any>(null);
@@ -154,73 +154,92 @@ export default function DemandesPage() {
   }
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen font-sans">
-      <div className="flex justify-between items-center mb-10">
-        <h1 className="text-3xl font-black text-gray-800 italic uppercase">Somepharm Portal</h1>
-        <div className="bg-white shadow-sm border px-6 py-2 rounded-2xl font-bold text-blue-600">
-          {user?.sub} ({user?.role})
-        </div>
+    <div className="space-y-10 animate-in fade-in duration-700 pb-20 text-slate-100">
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[3.5rem]">
+         <div className="flex items-center gap-6">
+            <div className="w-20 h-20 bg-indigo-500/10 border border-slate-800 text-indigo-400 rounded-[2rem] flex items-center justify-center shadow-2xl">
+               <FileText size={40} />
+            </div>
+            <div>
+               <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">
+                  Demandes <span className="text-indigo-400">Portal</span>
+               </h1>
+               <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em] mt-3 flex items-center gap-2">
+                  <Sparkles size={14} className="text-indigo-400" />
+                  Historique & Initialisation des requêtes de congés ou documents
+               </p>
+            </div>
+         </div>
+
+         <div className="flex items-center gap-4 bg-slate-900/60 border border-slate-800/80 px-6 py-4 rounded-[2rem] text-slate-300 font-bold text-xs uppercase tracking-wider backdrop-blur-md">
+            <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
+            {user?.sub} <span className="text-indigo-400">({user?.role})</span>
+         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border-b-8 border-blue-600">
-          <p className="text-gray-400 text-xs font-black uppercase tracking-widest mb-4">Solde de Congé Actuel</p>
-          <p className="text-7xl font-black text-gray-900 flex items-baseline gap-2">
-            {typeof userSolde === 'number' ? userSolde.toFixed(2) : userSolde} <span className="text-2xl font-bold text-gray-300 italic uppercase">Jours</span>
+      {/* STATS HUD */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[2.5rem] relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-all duration-500"></div>
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">Solde de Congé Actuel</p>
+          <p className="text-6xl font-black text-white flex items-baseline gap-2">
+            {typeof userSolde === 'number' ? userSolde.toFixed(2) : userSolde} <span className="text-xl font-bold text-indigo-400 italic uppercase">Jours</span>
           </p> 
         </div>
-        <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border-b-8 border-purple-500">
-          <p className="text-gray-400 text-xs font-black uppercase tracking-widest mb-4">Dossiers Affichés</p>
-          <p className="text-7xl font-black text-gray-800">{filteredAndSortedRequests.length}</p>
+        <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_15px_rgba(99,102,241,0.05)] p-10 rounded-[2.5rem] relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-all duration-500"></div>
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">Dossiers Affichés</p>
+          <p className="text-6xl font-black text-white flex items-baseline gap-2">
+            {filteredAndSortedRequests.length} <span className="text-xl font-bold text-purple-400 italic uppercase">Dossiers</span>
+          </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden border border-gray-100/50">
+      {/* LIST TABLE CONTAINER */}
+      <div className="bg-slate-950/40 backdrop-blur-xl border border-slate-800/80 text-slate-100 shadow-[0_0_20px_rgba(99,102,241,0.05)] rounded-[3rem] overflow-hidden">
         
         {/* --- PREMIUM COMMAND CENTER --- */}
-        <div className="p-10 bg-gradient-to-br from-gray-50 to-white border-b relative">
-          <div className="flex flex-col xl:flex-row justify-between items-start gap-10">
+        <div className="p-10 bg-slate-950/50 border-b border-slate-800/80 relative">
+          <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-10">
             
             {/* Title & Stats HUD */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-8 bg-blue-600 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.4)]"></div>
-                <h2 className="text-4xl font-black text-gray-900 italic uppercase tracking-tighter leading-none">
-                  HISTORIQUE
+                <div className="w-2.5 h-8 bg-indigo-600 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.4)]"></div>
+                <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter leading-none">
+                  HISTORIQUE DES DEMANDES
                 </h2>
               </div>
               <div className="flex items-center gap-6">
                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Flux de Données Actif</span>
+                    <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Flux de Données Actif</span>
                  </div>
-                 <div className="text-[10px] font-black text-blue-600/60 uppercase tracking-[0.2em] bg-blue-50 px-3 py-1 rounded-full">
+                 <div className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] bg-indigo-500/10 px-3 py-1 rounded-full border border-slate-800">
                     {filteredAndSortedRequests.length} Dossiers Identifiés
                  </div>
               </div>
             </div>
 
-            {/* Action & Filter HUD (Unified Row) */}
+            {/* Action & Filter HUD */}
             <div className="flex flex-col xl:flex-row items-center gap-6 w-full xl:w-auto">
               {(user?.role === "EMPLOYE" || user?.role === "MANAGER") && (
                 <button 
                   onClick={() => setIsModalOpen(true)} 
-                  className="group relative w-full xl:w-auto bg-gray-900 text-white px-10 py-5 rounded-[2rem] font-black shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-1 overflow-hidden shrink-0"
+                  className="w-full xl:w-auto bg-gradient-to-r from-indigo-600 to-sky-600 text-white px-10 py-5 rounded-[2rem] font-black shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:opacity-90 transition-all hover:scale-[1.02] active:scale-95 text-[10px] uppercase tracking-widest shrink-0"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <span className="relative z-10 flex items-center justify-center gap-2 tracking-[0.1em] text-[10px] uppercase">
-                    + Initialiser une demande
-                  </span>
+                  + Initialiser une demande
                 </button>
               )}
 
               {/* --- ADAPTIVE FILTER HUD --- */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 bg-white/50 backdrop-blur-md p-2 rounded-[2rem] sm:rounded-[2.5rem] border border-gray-100 shadow-inner w-full md:w-auto">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 bg-slate-900/60 backdrop-blur-md p-2 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-800/80 w-full xl:w-auto">
                 
                 {/* Type Filter */}
-                <div className="group relative w-full sm:w-auto">
+                <div className="relative w-full sm:w-auto">
                   <select 
-                    className="appearance-none bg-white border border-gray-100 rounded-[1.5rem] pl-10 pr-8 py-3 font-black text-gray-700 outline-none focus:ring-2 ring-blue-500/20 text-[10px] uppercase tracking-widest transition-all hover:bg-gray-50 cursor-pointer shadow-sm w-full"
+                    className="appearance-none bg-slate-950 border border-slate-800/80 text-white rounded-[1.5rem] pl-10 pr-8 py-3 font-black outline-none focus:border-indigo-500/30 text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full"
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
                   >
@@ -228,15 +247,15 @@ export default function DemandesPage() {
                     <option value="CONGE">🌴 Congés</option>
                     <option value="DOCUMENT">📄 Documents</option>
                   </select>
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-blue-600 transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 pointer-events-none">
                      <AlertCircle size={14} />
                   </div>
                 </div>
 
                 {/* Status Filter */}
-                <div className="group relative">
+                <div className="relative w-full sm:w-auto">
                   <select 
-                    className="appearance-none bg-white border border-gray-100 rounded-[1.5rem] pl-10 pr-8 py-3 font-black text-gray-700 outline-none focus:ring-2 ring-purple-500/20 text-[10px] uppercase tracking-widest transition-all hover:bg-gray-50 cursor-pointer shadow-sm"
+                    className="appearance-none bg-slate-950 border border-slate-800/80 text-white rounded-[1.5rem] pl-10 pr-8 py-3 font-black outline-none focus:border-indigo-500/30 text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full"
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                   >
@@ -245,22 +264,22 @@ export default function DemandesPage() {
                     <option value="APPROVED">✅ Approuvés</option>
                     <option value="REJECTED">❌ Refusés</option>
                   </select>
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-purple-600 transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400 pointer-events-none">
                      <Check size={14} />
                   </div>
                 </div>
 
                 {/* Sort Order */}
-                <div className="group relative">
+                <div className="relative w-full sm:w-auto">
                   <select 
-                    className="appearance-none bg-gray-900 border border-gray-800 rounded-[1.5rem] pl-10 pr-8 py-3 font-black text-white outline-none focus:ring-2 ring-white/10 text-[10px] uppercase tracking-widest transition-all hover:bg-black cursor-pointer shadow-xl"
+                    className="appearance-none bg-indigo-600 text-slate-950 border border-indigo-500 rounded-[1.5rem] pl-10 pr-8 py-3 font-black outline-none text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full"
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value)}
                   >
-                    <option value="NEWEST">Plus récents</option>
-                    <option value="OLDEST">Plus anciens</option>
+                    <option value="NEWEST" className="bg-slate-950 text-white">Plus récents</option>
+                    <option value="OLDEST" className="bg-slate-950 text-white">Plus anciens</option>
                   </select>
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-950 pointer-events-none">
                      <Download size={14} className="rotate-180" />
                   </div>
                 </div>
@@ -270,149 +289,152 @@ export default function DemandesPage() {
           </div>
         </div>
         
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 text-gray-400 text-[11px] uppercase font-black border-b">
-            <tr>
-              <th className="p-8">Détails de la Demande</th>
-              <th className="p-8">Période / Motif</th>
-              <th className="p-8">Statut</th>
-              <th className="p-8 text-center">Action / Document</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {filteredAndSortedRequests.map((req: any) => {
-              const isApproved = req.statutCycleVie === 'APPROUVE' || req.statutCycleVie === 'APPROUVÉ';
-              const isDoc = req._group === 'DOCUMENT';
-              const isCancellable = !isApproved && !req.statutCycleVie.includes("REFUSE") && req.statutCycleVie !== "ANNULE" && req.statutCycleVie !== "ANNULÉ";
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-900/40 border-b border-slate-800/80 text-slate-400 font-black uppercase text-[10px] tracking-widest">
+              <tr>
+                <th className="p-8">Détails de la Demande</th>
+                <th className="p-8">Période / Motif</th>
+                <th className="p-8">Statut</th>
+                <th className="p-8 text-center">Action / Document</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/80">
+              {filteredAndSortedRequests.map((req: any) => {
+                const isApproved = req.statutCycleVie === 'APPROUVE' || req.statutCycleVie === 'APPROUVÉ';
+                const isDoc = req._group === 'DOCUMENT';
+                const isCancellable = !isApproved && !req.statutCycleVie.includes("REFUSE") && req.statutCycleVie !== "ANNULE" && req.statutCycleVie !== "ANNULÉ";
 
-              return (
-              <tr key={`${req._group}-${req.idRequete}`} className="hover:bg-blue-50/30 transition-colors">
-                
-                {/* DÉTAILS DE LA DEMANDE (Type + Employé) */}
-                <td className="p-8">
-                  <div className="flex items-center gap-3 mb-1">
-                     <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${isDoc ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
-                        {isDoc ? 'DOCUMENT' : 'CONGÉ'}
-                     </span>
-                  </div>
-                  <p className="font-black text-gray-900 capitalize">
-                    {isDoc 
-                      ? req.typeDocument.replace(/_/g, ' ').toLowerCase() 
-                      : req.typeConge.replace(/_/g, ' ').toLowerCase()}
-                  </p>
-                  {(user?.role === "MANAGER" || user?.role === "RH_ADMIN" || user?.role === "SUPER_ADMIN") && (
-                    <p className="text-xs text-gray-500 font-bold mt-1">
-                      De: <span className="text-blue-600 font-black">{req.demandeurMatricule}</span>
+                return (
+                <tr key={`${req._group}-${req.idRequete}`} className="hover:bg-indigo-500/5 transition-colors border-b border-slate-800/60">
+                  
+                  {/* DÉTAILS DE LA DEMANDE (Type + Employé) */}
+                  <td className="p-8">
+                    <div className="flex items-center gap-3 mb-1">
+                       <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${isDoc ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400' : 'bg-indigo-500/10 border border-slate-800 text-indigo-300'}`}>
+                          {isDoc ? 'DOCUMENT' : 'CONGÉ'}
+                       </span>
+                    </div>
+                    <p className="font-black text-white capitalize text-base italic">
+                      {isDoc 
+                        ? req.typeDocument.replace(/_/g, ' ').toLowerCase() 
+                        : req.typeConge.replace(/_/g, ' ').toLowerCase()}
                     </p>
-                  )}
-                </td>
-
-                <td className="p-8">
-                   {!isDoc ? (
-                       <div className="text-sm font-black text-gray-800 mb-1">
-                          {req.dateDebut} <span className="text-blue-500 mx-1">→</span> {req.dateFin}
-                       </div>
-                   ) : req.typeDocument === 'BON_SORTIE' ? (
-                       <div className="text-sm font-black text-gray-800 mb-1">
-                          {req.heureDebut} <span className="text-blue-500 mx-1">→</span> {req.heureFin}
-                       </div>
-                   ) : null}
-                   <p className="text-[10px] font-bold text-gray-400 max-w-[200px] truncate uppercase tracking-tight" title={req.motif || req.description}>
-                     {req.motif || req.description || "Aucune justification."}
-                   </p>
-                </td>
-                
-                <td className="p-8">
-                  <div className="flex flex-col gap-1 items-start">
-                    <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter shadow-sm border ${
-                      isApproved ? 'bg-green-50 border-green-200 text-green-700' : 
-                      req.statutCycleVie.includes('REFUSE') ? 'bg-red-50 border-red-200 text-red-700' : 'bg-amber-50 border-amber-200 text-amber-700'
-                    }`}>
-                      {req.statutCycleVie === "EN_ATTENTE_MANAGER" ? "⌛ Attente Manager" :
-                       req.statutCycleVie === "EN_ATTENTE_RH" ? "⌛ Attente RH" :
-                       req.statutCycleVie === "VALIDE_MANAGER" ? "🛡️ Validé Manager" :
-                       req.statutCycleVie === "APPROUVE" ? "✅ Approuvé" : 
-                       req.statutCycleVie === "REFUSE" ? "❌ Refusé" : req.statutCycleVie}
-                    </span>
-                    {req.commentaireAction && (
-                      <span className="text-[9px] text-gray-400 font-bold italic mt-1 border-l-2 border-gray-200 pl-2">
-                        Note: {req.commentaireAction}
-                      </span>
+                    {(user?.role === "MANAGER" || user?.role === "RH_ADMIN" || user?.role === "SUPER_ADMIN") && (
+                      <p className="text-xs text-slate-400 font-bold mt-1">
+                        De: <span className="text-indigo-400 font-black">{req.demandeurMatricule}</span>
+                      </p>
                     )}
-                  </div>
-                </td>
+                  </td>
 
-                <td className="p-8 text-center flex justify-center gap-2">
-                  {/* Action Validation (Managers/RH view) but keep in mind that the new RH Validation page will handle RH validations, this is mostly for the employee's history. But since we use one component, let's keep basic Manager controls here for leaves. Document requests skip Manager so they only show here as EN_ATTENTE_RH */}
-                  {/* 🛡️ SELF-APPROVAL PROTECTION: User cannot validate their own requests */}
-                  {user?.role === "MANAGER" && !isDoc && req.statutCycleVie === "EN_ATTENTE_MANAGER" && (
-                    <div className="flex gap-2">
-                      {req.demandeurMatricule?.trim().toLowerCase() !== user?.sub?.trim().toLowerCase() ? (
-                        <>
-                          <button onClick={() => handleUpdateStatus(req.idRequete, 'VALIDE_MANAGER', "", false)} className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition shadow-md"><Check size={16} /></button>
-                          <button onClick={() => { setRefuseId(req.idRequete); setRefuseIsDoc(false); }} className="bg-red-500 text-white p-3 rounded-xl hover:bg-red-600 transition shadow-md"><X size={16} /></button>
-                        </>
-                      ) : (
-                        <span className="text-[9px] font-black text-blue-600 uppercase italic bg-blue-50 px-2 py-1 rounded-md">Dossier Personnel</span>
+                  <td className="p-8">
+                     {!isDoc ? (
+                         <div className="text-sm font-black text-slate-200 mb-1 flex items-center gap-2">
+                            <Calendar size={14} className="text-indigo-400" />
+                            {req.dateDebut} <span className="text-indigo-400 mx-1">→</span> {req.dateFin}
+                         </div>
+                     ) : req.typeDocument === 'BON_SORTIE' ? (
+                         <div className="text-sm font-black text-slate-200 mb-1 flex items-center gap-2">
+                            <Clock size={14} className="text-purple-400" />
+                            {req.heureDebut} <span className="text-purple-400 mx-1">→</span> {req.heureFin}
+                         </div>
+                     ) : null}
+                     <p className="text-[10px] font-bold text-slate-500 max-w-[200px] truncate uppercase tracking-tight" title={req.motif || req.description}>
+                       {req.motif || req.description || "Aucune justification."}
+                     </p>
+                  </td>
+                  
+                  <td className="p-8">
+                    <div className="flex flex-col gap-1 items-start">
+                      <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter shadow-sm border ${
+                        isApproved ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 
+                        req.statutCycleVie.includes('REFUSE') ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' : 'bg-sky-500/10 border-sky-500/20 text-sky-300'
+                      }`}>
+                        {req.statutCycleVie === "EN_ATTENTE_MANAGER" ? "⌛ Attente Manager" :
+                         req.statutCycleVie === "EN_ATTENTE_RH" ? "⌛ Attente RH" :
+                         req.statutCycleVie === "VALIDE_MANAGER" ? "🛡️ Validé Manager" :
+                         req.statutCycleVie === "APPROUVE" ? "✅ Approuvé" : 
+                         req.statutCycleVie === "REFUSE" ? "❌ Refusé" : req.statutCycleVie}
+                      </span>
+                      {req.commentaireAction && (
+                        <span className="text-[9px] text-slate-500 font-bold italic mt-1 border-l-2 border-slate-800 pl-2">
+                          Note: {req.commentaireAction}
+                        </span>
                       )}
                     </div>
-                  )}
+                  </td>
 
-                  {/* 📥 Download Button for Employee when APPROVED */}
-                  {isApproved && (isDoc || !isDoc) && (
-                      <button 
-                         onClick={() => handleDownload(req.idRequete)}
-                         className="bg-gray-900 border border-gray-800 text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-800 transition shadow-md flex items-center gap-2"
-                      >
-                         <Download size={14} className="text-blue-400" /> Générer
-                      </button>
-                  )}
+                  <td className="p-8 text-center flex flex-col justify-center items-center gap-2">
+                    {/* Action Validation (Managers/RH view) */}
+                    {user?.role === "MANAGER" && !isDoc && req.statutCycleVie === "EN_ATTENTE_MANAGER" && (
+                      <div className="flex gap-2">
+                        {req.demandeurMatricule?.trim().toLowerCase() !== user?.sub?.trim().toLowerCase() ? (
+                          <>
+                            <button onClick={() => handleUpdateStatus(req.idRequete, 'VALIDE_MANAGER', "", false)} className="bg-indigo-500/10 border border-slate-800 text-indigo-300 p-3 rounded-xl hover:bg-indigo-600 hover:text-slate-950 transition shadow-md"><Check size={16} /></button>
+                            <button onClick={() => { setRefuseId(req.idRequete); setRefuseIsDoc(false); }} className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-3 rounded-xl hover:bg-rose-600 hover:text-white transition shadow-md"><X size={16} /></button>
+                          </>
+                        ) : (
+                          <span className="text-[9px] font-black text-indigo-400 uppercase italic bg-indigo-500/10 border border-slate-800 px-2 py-1 rounded-md">Dossier Personnel</span>
+                        )}
+                      </div>
+                    )}
 
-                  {/* ❌ CANCEL BUTTON (Visible for anyone when their own request is still pending) */}
-                  {isCancellable && (user?.role === "EMPLOYE" || user?.role === "MANAGER" || user?.role === "RH_ADMIN" || user?.role === "HR_MANAGER" || user?.role === "SUPER_ADMIN") && (
-                      <button 
-                         onClick={() => handleCancel(req.idRequete, isDoc)}
-                         className="text-red-500 font-black text-[9px] uppercase tracking-widest hover:text-red-700 hover:underline transition-all mt-2"
-                      >
-                         Annuler la demande
-                      </button>
-                  )}
+                    {/* 📥 Download Button for Employee when APPROVED */}
+                    {isApproved && (
+                        <button 
+                           onClick={() => handleDownload(req.idRequete)}
+                           className="bg-slate-900 border border-slate-800/80 text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-slate-950 transition shadow-md flex items-center gap-2"
+                        >
+                           <Download size={14} /> Générer
+                        </button>
+                    )}
 
-                  {(!isApproved && !isCancellable && user?.role === "EMPLOYE") && (
-                      <span className="text-gray-300 font-bold text-[10px] uppercase">En Attente</span>
-                  )}
-                </td>
+                    {/* ❌ CANCEL BUTTON (Visible for anyone when their own request is still pending) */}
+                    {isCancellable && (
+                        <button 
+                           onClick={() => handleCancel(req.idRequete, isDoc)}
+                           className="text-rose-400 font-black text-[9px] uppercase tracking-widest hover:text-rose-300 hover:underline transition-all mt-2"
+                        >
+                           Annuler la demande
+                        </button>
+                    )}
 
-              </tr>
-            )})}
-          </tbody>
-        </table>
+                    {(!isApproved && !isCancellable && user?.role === "EMPLOYE") && (
+                        <span className="text-slate-500 font-bold text-[10px] uppercase">En Cours</span>
+                    )}
+                  </td>
+
+                </tr>
+              )})}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {refuseId && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[100] p-4">
-          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden border border-red-50 animate-in zoom-in duration-200">
-            <div className="bg-red-600 p-8 text-white flex items-center gap-4">
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex justify-center items-center z-[100] p-4 animate-in fade-in duration-300">
+          <div className="bg-slate-900 border border-slate-800 shadow-[0_0_50px_rgba(99,102,241,0.15)] text-white w-full max-w-md rounded-[3rem] overflow-hidden animate-in zoom-in duration-200 backdrop-blur-xl">
+            <div className="bg-rose-950/30 p-8 border-b border-rose-500/10 text-rose-400 flex items-center gap-4">
                <AlertCircle size={32} />
                <div>
                   <h3 className="font-black uppercase tracking-widest text-lg italic">Refuser le dossier</h3>
-                  <p className="text-red-100 text-xs font-bold">Un motif est obligatoire pour cette action.</p>
+                  <p className="text-slate-400 text-xs font-bold">Un motif est obligatoire pour cette action.</p>
                </div>
             </div>
-            <div className="p-8 space-y-4">
-               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Motif du refus</label>
+            <div className="p-8 space-y-6">
+               <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Motif du refus</label>
                <textarea 
-                 className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-medium text-gray-700 focus:border-red-500 outline-none transition-all h-32 resize-none"
+                 className="w-full bg-slate-950 border border-slate-800/80 rounded-2xl p-4 font-medium text-slate-300 placeholder:text-slate-600 focus:border-rose-500 outline-none transition-all h-32 resize-none"
                  placeholder="Ex: Période de forte activité..."
                  value={refuseComment}
                  onChange={(e) => setRefuseComment(e.target.value)}
                />
                <div className="flex gap-4 pt-2">
-                 <button onClick={() => {setRefuseId(null); setRefuseComment("");}} className="flex-1 px-6 py-4 rounded-xl font-black text-gray-400 uppercase text-xs hover:bg-gray-100 transition">Annuler</button>
+                 <button onClick={() => {setRefuseId(null); setRefuseComment("");}} className="flex-1 bg-slate-800 text-slate-400 hover:text-white py-4 rounded-xl font-black uppercase text-xs transition">Annuler</button>
                  <button 
                    onClick={() => handleUpdateStatus(refuseId, 'REFUSE', refuseComment, refuseIsDoc)} 
                    disabled={!refuseComment.trim()}
-                   className="flex-[2] bg-red-600 text-white px-6 py-4 rounded-xl font-black uppercase text-xs shadow-lg hover:bg-red-700 transition disabled:opacity-30"
+                   className="flex-[2] bg-gradient-to-r from-rose-600 to-red-700 text-white py-4 rounded-xl font-black uppercase text-xs shadow-lg hover:from-rose-500 hover:to-red-600 transition disabled:opacity-30"
                  >
                    Confirmer
                  </button>
@@ -421,6 +443,7 @@ export default function DemandesPage() {
           </div>
         </div>
       )}
+      
       <DemandeModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 

@@ -32,7 +32,8 @@ import {
   UserMinus,
   RefreshCw,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  X
 } from "lucide-react";
 
 export default function AdminSettingsPage() {
@@ -48,6 +49,14 @@ export default function AdminSettingsPage() {
   const [holidays, setHolidays] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [editingLeaveId, setEditingLeaveId] = useState<number | null>(null);
+  const [showCreateLeaveModal, setShowCreateLeaveModal] = useState(false);
+  const [newLeaveType, setNewLeaveType] = useState({
+    nom: "",
+    quotaInitial: 30,
+    justificatifObligatoire: false,
+    couleurHex: "#3B82F6",
+    description: ""
+  });
   const [departments, setDepartments] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [selectedEmpId, setSelectedEmpId] = useState<number | null>(null);
@@ -70,6 +79,7 @@ export default function AdminSettingsPage() {
   const [signaturePlacement, setSignaturePlacement] = useState("BOTTOM_RIGHT");
   const [sigPreview, setSigPreview] = useState<string | null>(null);
   const [stampPreview, setStampPreview] = useState<string | null>(null);
+  const [selectedTestEmployee, setSelectedTestEmployee] = useState<string>("");
 
   // --- WORKFLOW STATE ---
   const [circuits, setCircuits] = useState<any[]>([]);
@@ -182,6 +192,43 @@ export default function AdminSettingsPage() {
       alert("❌ Erreur : " + err.message);
     }
   };
+  
+  const handleCreateLeaveType = async () => {
+    if (!newLeaveType.nom.trim()) {
+      alert("⚠️ Le nom du type de congé est requis.");
+      return;
+    }
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:8080/api/config/leave-types", {
+        method: "POST",
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(newLeaveType)
+      });
+      if (res.ok) {
+        alert("✅ Type de congé créé avec succès !");
+        setShowCreateLeaveModal(false);
+        setNewLeaveType({
+          nom: "",
+          quotaInitial: 30,
+          justificatifObligatoire: false,
+          couleurHex: "#3B82F6",
+          description: ""
+        });
+        fetchConfig();
+      } else {
+        const errorText = await res.text();
+        alert("❌ Erreur : " + (errorText || res.statusText));
+      }
+    } catch (err: any) {
+      console.error("Error creating leave type:", err);
+      alert("❌ Erreur : " + err.message);
+    }
+  };
+
   const handleUpdateLeaveType = async (type: any) => {
     try {
       const token = localStorage.getItem("token");
@@ -484,7 +531,11 @@ export default function AdminSettingsPage() {
   const toggleBypass = (rule: any) => { wfPut(`/bypass-rules/${rule.idRule}`, { ...rule, actif: !rule.actif }); };
 
   const REQUEST_TYPES = [
-    { value: "DEMANDE_CONGE", label: "Demande de Congé" },
+    { value: "DEMANDE_CONGE", label: "Demande de Congé (Général)" },
+    ...leaveTypes.map((type: any) => ({
+      value: "CONGE_" + type.nom.toUpperCase().replaceAll(/[^A-Z0-9_]/g, "_"),
+      label: `Congé : ${type.nom}`
+    })),
     { value: "ATTESTATION_TRAVAIL", label: "Attestation de Travail" },
     { value: "ATTESTATION_SALAIRE", label: "Attestation de Salaire" },
     { value: "RELEVE_EMOLUMENTS", label: "Relève d'Émoluments" },
@@ -581,29 +632,97 @@ export default function AdminSettingsPage() {
                           <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100">
                             <div className="bg-blue-600 p-8 text-white flex justify-between items-center">
                               <div>
-                                <h3 className="text-xl font-black uppercase italic tracking-tighter">Modifier Quota</h3>
+                                <h3 className="text-xl font-black uppercase italic tracking-tighter">Modifier Type Congé</h3>
                                 <p className="text-[10px] font-bold text-blue-100 uppercase mt-1">
                                   {leaveTypes.find((t: any) => t.idTypeConge === editingLeaveId)?.nom}
                                 </p>
                               </div>
                               <button onClick={() => setEditingLeaveId(null)} className="text-white/60 hover:text-white transition-colors">
-                                <AlertCircle size={24} />
+                                <X size={24} />
                               </button>
                             </div>
 
-                            <div className="p-10 space-y-8">
-                              <div className="space-y-4">
-                                <label className="text-[10px] font-black uppercase text-gray-400 pl-2 tracking-[0.2em]">Nouveau Quota Annuel (Jours)</label>
+                            <div className="p-10 space-y-6 max-h-[70vh] overflow-y-auto">
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-gray-400 pl-2 tracking-[0.2em]">Nom du Type de Congé</label>
+                                <input 
+                                  type="text" 
+                                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-5 font-bold outline-none transition-all text-sm text-gray-900"
+                                  value={leaveTypes.find((t: any) => t.idTypeConge === editingLeaveId)?.nom || ""}
+                                  onChange={(e) => {
+                                    setLeaveTypes(leaveTypes.map((t: any) => t.idTypeConge === editingLeaveId ? {...t, nom: e.target.value} : t) as any);
+                                  }}
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-gray-400 pl-2 tracking-[0.2em]">Quota Annuel (Jours)</label>
                                 <input 
                                   type="number" 
-                                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-5 px-6 font-black text-2xl text-gray-900 outline-none transition-all"
+                                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-5 font-bold outline-none transition-all text-sm text-gray-900"
                                   value={leaveTypes.find((t: any) => t.idTypeConge === editingLeaveId)?.quotaInitial || 0}
                                   onChange={(e) => {
                                     const newVal = parseInt(e.target.value);
-                                    setLeaveTypes(leaveTypes.map((t: any) => t.idTypeConge === editingLeaveId ? {...t, quotaInitial: newVal} : t) as any);
+                                    setLeaveTypes(leaveTypes.map((t: any) => t.idTypeConge === editingLeaveId ? {...t, quotaInitial: isNaN(newVal) ? 0 : newVal} : t) as any);
                                   }}
                                 />
-                                <p className="text-[10px] text-gray-400 italic px-2">Ce quota sera appliqué comme base de calcul pour tous les collaborateurs.</p>
+                              </div>
+
+                              <div className="space-y-3">
+                                <label className="text-[10px] font-black uppercase text-gray-400 pl-2 tracking-[0.2em]">Couleur Distinctive</label>
+                                <div className="flex flex-wrap gap-2 items-center">
+                                  {["#6366F1", "#0EA5E9", "#10B981", "#F43F5E", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6"].map((color) => (
+                                    <button
+                                      key={color}
+                                      type="button"
+                                      onClick={() => {
+                                        setLeaveTypes(leaveTypes.map((t: any) => t.idTypeConge === editingLeaveId ? {...t, couleurHex: color} : t) as any);
+                                      }}
+                                      className={`w-7 h-7 rounded-full transition-all hover:scale-110 active:scale-95 border-2 ${
+                                        leaveTypes.find((t: any) => t.idTypeConge === editingLeaveId)?.couleurHex === color
+                                          ? "border-gray-800 scale-105 shadow-md"
+                                          : "border-transparent"
+                                      }`}
+                                      style={{ backgroundColor: color }}
+                                    />
+                                  ))}
+                                  <input 
+                                    type="color" 
+                                    className="w-8 h-8 rounded-lg bg-transparent border-0 cursor-pointer"
+                                    value={leaveTypes.find((t: any) => t.idTypeConge === editingLeaveId)?.couleurHex || "#3B82F6"}
+                                    onChange={(e) => {
+                                      setLeaveTypes(leaveTypes.map((t: any) => t.idTypeConge === editingLeaveId ? {...t, couleurHex: e.target.value} : t) as any);
+                                    }}
+                                  />
+                                </div>
+                              </div>
+
+                              <label className="flex items-center justify-between p-2 cursor-pointer bg-gray-50 rounded-2xl border border-gray-100 group">
+                                 <span className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Justificatif Obligatoire</span>
+                                 <div className="relative inline-flex items-center cursor-pointer">
+                                    <input 
+                                      type="checkbox" 
+                                      className="sr-only peer" 
+                                      checked={leaveTypes.find((t: any) => t.idTypeConge === editingLeaveId)?.justificatifObligatoire || false} 
+                                      onChange={(e) => {
+                                        setLeaveTypes(leaveTypes.map((t: any) => t.idTypeConge === editingLeaveId ? {...t, justificatifObligatoire: e.target.checked} : t) as any);
+                                      }}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 border border-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                 </div>
+                              </label>
+
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-gray-400 pl-2 tracking-[0.2em]">Description / Remarques</label>
+                                <textarea 
+                                  rows={2}
+                                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white text-gray-900 rounded-2xl py-3 px-4 font-medium outline-none transition-all text-xs resize-none"
+                                  value={leaveTypes.find((t: any) => t.idTypeConge === editingLeaveId)?.description || ""}
+                                  onChange={(e) => {
+                                    setLeaveTypes(leaveTypes.map((t: any) => t.idTypeConge === editingLeaveId ? {...t, description: e.target.value} : t) as any);
+                                  }}
+                                  placeholder="Ex: Justification médicale requise sous 48h..."
+                                />
                               </div>
 
                               <div className="flex gap-4 pt-4">
@@ -627,8 +746,121 @@ export default function AdminSettingsPage() {
                           </div>
                         </div>
                       )}
+
+                      {/* --- LEAVE CREATION MODAL --- */}
+                      {showCreateLeaveModal && (
+                        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+                          <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100">
+                            <div className="bg-blue-600 p-8 text-white flex justify-between items-center">
+                              <div>
+                                <h3 className="text-xl font-black uppercase italic tracking-tighter">Ajouter Type Congé</h3>
+                                <p className="text-[10px] font-bold text-blue-100 uppercase mt-1">Créer une nouvelle catégorie d'absence</p>
+                              </div>
+                              <button onClick={() => setShowCreateLeaveModal(false)} className="text-white/60 hover:text-white transition-colors">
+                                <X size={24} />
+                              </button>
+                            </div>
+
+                            <div className="p-10 space-y-6 max-h-[70vh] overflow-y-auto">
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-gray-400 pl-2 tracking-[0.2em]">Nom du Type de Congé</label>
+                                <input 
+                                  type="text" 
+                                  placeholder="Ex: Congé Paternité, Sans Solde..."
+                                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-5 font-bold outline-none transition-all text-sm text-gray-900"
+                                  value={newLeaveType.nom}
+                                  onChange={(e) => setNewLeaveType({...newLeaveType, nom: e.target.value})}
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-gray-400 pl-2 tracking-[0.2em]">Quota Annuel Initial (Jours)</label>
+                                <input 
+                                  type="number" 
+                                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl py-4 px-5 font-bold outline-none transition-all text-sm text-gray-900"
+                                  value={newLeaveType.quotaInitial}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value);
+                                    setNewLeaveType({...newLeaveType, quotaInitial: isNaN(val) ? 0 : val});
+                                  }}
+                                />
+                              </div>
+
+                              <div className="space-y-3">
+                                <label className="text-[10px] font-black uppercase text-gray-400 pl-2 tracking-[0.2em]">Couleur Distinctive</label>
+                                <div className="flex flex-wrap gap-2 items-center">
+                                  {["#6366F1", "#0EA5E9", "#10B981", "#F43F5E", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6"].map((color) => (
+                                    <button
+                                      key={color}
+                                      type="button"
+                                      onClick={() => setNewLeaveType({...newLeaveType, couleurHex: color})}
+                                      className={`w-7 h-7 rounded-full transition-all hover:scale-110 active:scale-95 border-2 ${
+                                        newLeaveType.couleurHex === color
+                                          ? "border-gray-800 scale-105 shadow-md"
+                                          : "border-transparent"
+                                      }`}
+                                      style={{ backgroundColor: color }}
+                                    />
+                                  ))}
+                                  <input 
+                                    type="color" 
+                                    className="w-8 h-8 rounded-lg bg-transparent border-0 cursor-pointer"
+                                    value={newLeaveType.couleurHex}
+                                    onChange={(e) => setNewLeaveType({...newLeaveType, couleurHex: e.target.value})}
+                                  />
+                                </div>
+                              </div>
+
+                              <label className="flex items-center justify-between p-2 cursor-pointer bg-gray-50 rounded-2xl border border-gray-100 group">
+                                 <span className="text-xs font-bold text-gray-700 group-hover:text-blue-600 transition-colors">Justificatif Obligatoire</span>
+                                 <div className="relative inline-flex items-center cursor-pointer">
+                                    <input 
+                                      type="checkbox" 
+                                      className="sr-only peer" 
+                                      checked={newLeaveType.justificatifObligatoire} 
+                                      onChange={(e) => setNewLeaveType({...newLeaveType, justificatifObligatoire: e.target.checked})}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 border border-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                 </div>
+                              </label>
+
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-gray-400 pl-2 tracking-[0.2em]">Description / Remarques</label>
+                                <textarea 
+                                  rows={2}
+                                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white text-gray-900 rounded-2xl py-3 px-4 font-medium outline-none transition-all text-xs resize-none"
+                                  value={newLeaveType.description}
+                                  onChange={(e) => setNewLeaveType({...newLeaveType, description: e.target.value})}
+                                  placeholder="Ex: Justification médicale requise sous 48h..."
+                                />
+                              </div>
+
+                              <div className="flex gap-4 pt-4">
+                                <button 
+                                  type="button"
+                                  onClick={() => setShowCreateLeaveModal(false)}
+                                  className="flex-1 py-4 font-black text-[10px] uppercase tracking-widest text-gray-400 hover:bg-gray-50 rounded-2xl transition-all"
+                                >
+                                  Annuler
+                                </button>
+                                <button 
+                                  type="button"
+                                  onClick={handleCreateLeaveType}
+                                  className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all"
+                                >
+                                  Créer
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {!isReadOnly && (
-                        <button className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center gap-3 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all">
+                        <button 
+                          onClick={() => setShowCreateLeaveModal(true)}
+                          className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center gap-3 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all"
+                        >
                            <Plus size={16} /> Ajouter un type de congé
                         </button>
                       )}
@@ -1154,6 +1386,7 @@ export default function AdminSettingsPage() {
                              { tag: "{{prenom_employe}}", label: "Prénom" },
                              { tag: "{{matricule}}", label: "ID Interne" },
                              { tag: "{{poste}}", label: "Intitulé du poste" },
+                             { tag: "{{role_employe}}", label: "Rôle de l'employé" },
                              { tag: "{{departement}}", label: "Service" },
                              { tag: "{{date_entree}}", label: "Date d'embauche" },
                              { tag: "{{date_jour}}", label: "Aujourd'hui" },
@@ -1176,6 +1409,32 @@ export default function AdminSettingsPage() {
                        </h3>
                     </div>
 
+                    {/* 👥 Dynamic Test Collaborator Selector */}
+                    <div className="bg-gray-50/70 border border-gray-100 p-6 rounded-[2rem] space-y-4 shadow-sm">
+                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div>
+                             <h4 className="text-xs font-black text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                                <Users className="text-blue-600" size={16} /> Collaborateur de test
+                             </h4>
+                             <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">Sélectionnez un employé pour prévisualiser les documents avec ses données réelles</p>
+                          </div>
+                          <div className="w-full md:w-64">
+                             <select 
+                               className="w-full bg-white border border-gray-200 p-3 rounded-xl text-[10px] font-black uppercase outline-none focus:border-blue-400 transition-all text-gray-700 cursor-pointer hover:border-blue-300"
+                               value={selectedTestEmployee}
+                               onChange={(e) => setSelectedTestEmployee(e.target.value)}
+                             >
+                                <option value="">-- Aucun (Données de test par défaut) --</option>
+                                {allUsers.map((u: any) => (
+                                   <option key={u.idUser} value={u.matricule}>
+                                      {u.prenom} {u.nom} ({u.matricule}) - {u.role || u.role?.nomRole || "Employé"}
+                                   </option>
+                                ))}
+                             </select>
+                          </div>
+                       </div>
+                    </div>
+
                     <div className="grid grid-cols-1 gap-4">
                        {templates.map((tmpl: any) => (
                           <div key={tmpl.id} className="bg-white border border-gray-100 p-6 rounded-[2.5rem] flex items-center justify-between hover:shadow-lg hover:border-blue-200 transition-all group">
@@ -1194,14 +1453,36 @@ export default function AdminSettingsPage() {
                              
                              <div className="flex items-center gap-2">
                                 {tmpl.fileUrl ? (
-                                  <div className="flex items-center gap-2">
-                                     <button className="p-3 bg-gray-50 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
-                                        <Eye size={18} />
-                                     </button>
-                                     <div className="flex items-center gap-2 bg-green-50 text-green-600 px-3 py-2 rounded-xl text-[8px] font-black uppercase">
-                                        <CheckCircle2 size={12} /> Prêt
-                                     </div>
-                                  </div>
+                                   <div className="flex items-center gap-2">
+                                      <button 
+                                        onClick={async () => {
+                                           try {
+                                              const token = localStorage.getItem("token");
+                                              const queryParam = selectedTestEmployee ? `?matricule=${selectedTestEmployee}` : "";
+                                              const res = await fetch(`http://localhost:8080/api/document-templates/${tmpl.id}/generate${queryParam}`, {
+                                                 headers: { "Authorization": `Bearer ${token}` }
+                                              });
+                                              if (res.ok) {
+                                                 const blob = await res.blob();
+                                                 const pdfBlob = new Blob([blob], { type: "application/pdf" });
+                                                 const url = window.URL.createObjectURL(pdfBlob);
+                                                 window.open(url, "_blank");
+                                              } else {
+                                                 alert("Erreur lors de la génération du document de test.");
+                                              }
+                                           } catch (err) {
+                                              console.error(err);
+                                           }
+                                        }}
+                                        className="p-3 bg-gray-50 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                                        title="Tester la génération de PDF"
+                                      >
+                                         <Eye size={18} />
+                                      </button>
+                                      <div className="flex items-center gap-2 bg-green-50 text-green-600 px-3 py-2 rounded-xl text-[8px] font-black uppercase">
+                                         <CheckCircle2 size={12} /> Prêt
+                                      </div>
+                                   </div>
                                 ) : !isReadOnly ? (
                                    <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-100">
                                       <Upload size={12} /> Upload .docx

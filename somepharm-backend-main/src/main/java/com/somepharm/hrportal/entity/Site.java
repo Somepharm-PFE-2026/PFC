@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "SITE")
 @Data
 @NoArgsConstructor
-@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(value = {"hibernateLazyInitializer", "handler"}, ignoreUnknown = true)
 public class Site {
 
     @Id

@@ -62,8 +62,8 @@ export default function AdminLayout({
       <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-[1.5px] z-[-1] pointer-events-none" />
       <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none opacity-40">
         {/* Glowing gold ambient lights */}
-        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-yellow-500/10 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[700px] h-[700px] rounded-full bg-amber-500/10 blur-[150px] animate-pulse" style={{ animationDuration: '12s' }} />
+        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-500/10 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[700px] h-[700px] rounded-full bg-sky-500/10 blur-[150px] animate-pulse" style={{ animationDuration: '12s' }} />
         <div className="absolute top-[40%] right-[20%] w-[400px] h-[400px] rounded-full bg-indigo-500/10 blur-[100px]" />
         
         {/* Soft abstract luxury pattern */}

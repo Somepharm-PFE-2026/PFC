@@ -45,7 +45,7 @@ public class BackupService {
         ProcessBuilder pb = new ProcessBuilder(
             pgDumpPath,
             "--host", "localhost",
-            "--port", "5432",
+            "--port", extractPort(dbUrl),
             "--username", dbUser,
             "--format", "plain",
             "--file", backupFile.getAbsolutePath(),
@@ -65,6 +65,20 @@ public class BackupService {
         } else {
             throw new IOException("pg_dump failed with exit code " + exitCode);
         }
+    }
+
+    private String extractPort(String url) {
+        // jdbc:postgresql://localhost:5433/somepharm_hr_db?charSet=UTF-8
+        int prefixIndex = url.indexOf("://");
+        if (prefixIndex != -1) {
+            String remainder = url.substring(prefixIndex + 3);
+            int colonIndex = remainder.indexOf(":");
+            int slashIndex = remainder.indexOf("/");
+            if (colonIndex != -1 && colonIndex < slashIndex) {
+                return remainder.substring(colonIndex + 1, slashIndex);
+            }
+        }
+        return "5432"; // default fallback
     }
 
     private String extractDbName(String url) {

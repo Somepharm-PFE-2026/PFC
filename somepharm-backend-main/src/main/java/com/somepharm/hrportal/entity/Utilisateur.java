@@ -30,7 +30,7 @@ import java.util.HashMap;
 @Check(constraints = "solde_conges >= 0")
 @Data
 @NoArgsConstructor
-@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(value = {"hibernateLazyInitializer", "handler"}, ignoreUnknown = true)
 @lombok.EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @lombok.ToString(onlyExplicitlyIncluded = true)
 public class Utilisateur implements UserDetails {

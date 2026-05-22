@@ -27,8 +27,12 @@ public class AnnonceController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Annonce>> getAll() {
-        return ResponseEntity.ok(annonceService.getAllAnnonces());
+    public ResponseEntity<List<Map<String, Object>>> getAll() {
+        List<Annonce> annonces = annonceService.getAllAnnonces();
+        List<Map<String, Object>> safeAnnonces = annonces.stream()
+            .map(this::convertToSafeMap)
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(safeAnnonces);
     }
 
     @GetMapping("/targeted")
@@ -45,28 +49,8 @@ public class AnnonceController {
             System.out.println("[AnnonceController] Fetching targeted annonces for: " + auth.getName() + " (Found: " + targeted.size() + ")");
 
             List<Map<String, Object>> result = targeted.stream().map(a -> {
-                Map<String, Object> map = new java.util.HashMap<>();
-                map.put("idAnnonce", a.getIdAnnonce());
-                map.put("titre", a.getTitre());
-                map.put("contenu", a.getContenu());
-                map.put("typeAnnonce", a.getTypeAnnonce());
-                map.put("datePublication", a.getDatePublication());
-                map.put("priority", a.getPriority());
-                map.put("isPinned", a.isPinned());
-                map.put("imageUrl", a.getImageUrl());
-                map.put("attachmentUrl", a.getAttachmentUrl());
+                Map<String, Object> map = convertToSafeMap(a);
                 map.put("isRead", annonceService.isRead(a.getIdAnnonce(), user.getIdUser()));
-                
-                // Safe author serialization (avoid circular refs)
-                if (a.getAuteur() != null) {
-                    Map<String, Object> authorMap = new java.util.HashMap<>();
-                    authorMap.put("idUser", a.getAuteur().getIdUser());
-                    authorMap.put("matricule", a.getAuteur().getMatricule());
-                    authorMap.put("nom", a.getAuteur().getNom());
-                    authorMap.put("prenom", a.getAuteur().getPrenom());
-                    map.put("auteur", authorMap);
-                }
-                
                 return map;
             }).collect(Collectors.toList());
             
@@ -99,10 +83,11 @@ public class AnnonceController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('RH_ADMIN', 'HR_MANAGER')")
-    public ResponseEntity<Annonce> create(@RequestBody Annonce annonce, Authentication auth) {
+    public ResponseEntity<Map<String, Object>> create(@RequestBody Annonce annonce, Authentication auth) {
         Utilisateur auteur = utilisateurRepository.findByMatricule(auth.getName()).orElseThrow();
         annonce.setAuteur(auteur);
-        return ResponseEntity.ok(annonceService.saveAnnonce(annonce));
+        Annonce saved = annonceService.saveAnnonce(annonce);
+        return ResponseEntity.ok(convertToSafeMap(saved));
     }
 
     @DeleteMapping("/{id}")
@@ -114,7 +99,36 @@ public class AnnonceController {
 
     @PatchMapping("/{id}/pin")
     @PreAuthorize("hasAnyRole('RH_ADMIN', 'HR_MANAGER', 'SUPER_ADMIN')")
-    public ResponseEntity<Annonce> togglePin(@PathVariable Long id) {
-        return ResponseEntity.ok(annonceService.togglePin(id));
+    public ResponseEntity<Map<String, Object>> togglePin(@PathVariable Long id) {
+        Annonce pinned = annonceService.togglePin(id);
+        return ResponseEntity.ok(convertToSafeMap(pinned));
+    }
+
+    private Map<String, Object> convertToSafeMap(Annonce a) {
+        Map<String, Object> map = new java.util.HashMap<>();
+        map.put("idAnnonce", a.getIdAnnonce());
+        map.put("titre", a.getTitre());
+        map.put("contenu", a.getContenu());
+        map.put("typeAnnonce", a.getTypeAnnonce());
+        map.put("datePublication", a.getDatePublication());
+        map.put("priority", a.getPriority());
+        map.put("isPinned", a.isPinned());
+        map.put("pinned", a.isPinned());
+        map.put("imageUrl", a.getImageUrl());
+        map.put("attachmentUrl", a.getAttachmentUrl());
+        map.put("targetType", a.getTargetType());
+        map.put("targetValue", a.getTargetValue());
+        map.put("status", a.getStatus());
+        map.put("dateExpiration", a.getDateExpiration());
+        
+        if (a.getAuteur() != null) {
+            Map<String, Object> authorMap = new java.util.HashMap<>();
+            authorMap.put("idUser", a.getAuteur().getIdUser());
+            authorMap.put("matricule", a.getAuteur().getMatricule());
+            authorMap.put("nom", a.getAuteur().getNom());
+            authorMap.put("prenom", a.getAuteur().getPrenom());
+            map.put("auteur", authorMap);
+        }
+        return map;
     }
 }

@@ -49,11 +49,11 @@ export default function LiveChronometer({ startTime, isStopped }: LiveChronomete
     }, [startTime]);
 
     return (
-        <div className="flex items-center gap-3 bg-red-50 px-6 py-4 rounded-2xl border border-red-100 group hover:bg-red-600 transition-all duration-300">
-            <Clock className="text-red-600 group-hover:text-white animate-pulse" size={18} />
+        <div className="flex items-center gap-3 bg-rose-500/10 px-6 py-4 rounded-2xl border border-rose-500/20 group hover:bg-rose-500/20 transition-all duration-300 backdrop-blur-md">
+            <Clock className="text-rose-400 group-hover:text-rose-300 animate-pulse" size={18} />
             <div>
-                <p className="text-[10px] text-red-500 group-hover:text-white/80 font-black uppercase tracking-widest">Temps de traitement (Live)</p>
-                <p className="text-xl font-black text-red-600 group-hover:text-white font-mono">{elapsed}</p>
+                <p className="text-[10px] text-rose-400/80 group-hover:text-rose-300/80 font-black uppercase tracking-widest">Temps de traitement (Live)</p>
+                <p className="text-xl font-black text-rose-400 group-hover:text-rose-300 font-mono">{elapsed}</p>
             </div>
         </div>
     );

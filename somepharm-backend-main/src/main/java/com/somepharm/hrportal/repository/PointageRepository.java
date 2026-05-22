@@ -15,6 +15,9 @@ public interface PointageRepository extends JpaRepository<Pointage, Long> {
 
     long countByHorodatageBetween(LocalDateTime start, LocalDateTime end);
 
+    @Query("SELECT COUNT(DISTINCT p.employe.idUser) FROM Pointage p WHERE p.horodatage BETWEEN :start AND :end AND p.typePointage = 'ENTREE'")
+    long countDistinctPresentByDate(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
     // Count distinct employees who have an ENTREE record today (for manager team)
     @Query("SELECT COUNT(DISTINCT p.employe.idUser) FROM Pointage p WHERE p.horodatage BETWEEN :start AND :end AND p.employe.managerDirect.idUser = :managerId AND p.typePointage = 'ENTREE'")
     long countDistinctPresentByManagerAndDate(@Param("managerId") Long managerId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);

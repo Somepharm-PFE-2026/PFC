@@ -48,19 +48,16 @@ public class PresenceService {
         LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
 
         boolean isHoliday = holidayService.isHoliday(today);
+        int dow = today.getDayOfWeek().getValue();
+        boolean isWeekend = (dow == 5 || dow == 6);
 
         List<Pointage> todayPointages = pointageRepository.findByHorodatageBetween(startOfDay, endOfDay);
         long totalEmployees = utilisateurRepository.count();
         
-        Map<Long, Pointage> latestByEmployee = todayPointages.stream()
-                .collect(Collectors.toMap(
-                        p -> p.getEmploye().getIdUser(),
-                        p -> p,
-                        (p1, p2) -> p1.getHorodatage().isAfter(p2.getHorodatage()) ? p1 : p2
-                ));
-
-        long presentCount = latestByEmployee.values().stream()
+        long presentCount = todayPointages.stream()
                 .filter(p -> "ENTREE".equals(p.getTypePointage()))
+                .map(p -> p.getEmploye().getIdUser())
+                .distinct()
                 .count();
         
         long lateCount = todayPointages.stream()
@@ -72,7 +69,7 @@ public class PresenceService {
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalEmployees", totalEmployees);
         stats.put("presentCount", presentCount);
-        stats.put("absentCount", isHoliday ? 0 : totalEmployees - presentCount);
+        stats.put("absentCount", (isHoliday || isWeekend) ? 0 : totalEmployees - presentCount);
         stats.put("lateCount", lateCount);
         stats.put("isHoliday", isHoliday);
         stats.put("todayLogs", todayPointages);

@@ -71,7 +71,20 @@ public class DemandeCongeController {
         }
         
         // 🚀 DYNAMIC ROUTING: Use WorkflowService to assign the circuit based on mapping
-        workflowService.initiateWorkflow(demande, "DEMANDE_CONGE");
+        String workflowType = "DEMANDE_CONGE";
+        if (demande.getTypeConge() != null && demande.getTypeConge().getIdTypeConge() != null) {
+            com.somepharm.hrportal.entity.TypeConge fullType = typeCongeRepository.findById(demande.getTypeConge().getIdTypeConge()).orElse(null);
+            if (fullType != null) {
+                demande.setTypeConge(fullType);
+                String specName = "CONGE_" + fullType.getNom().toUpperCase().replaceAll("[^A-Z0-9_]", "_");
+                if (workflowService.hasMapping(specName)) {
+                    workflowType = specName;
+                } else if (workflowService.hasMapping(fullType.getNom())) {
+                    workflowType = fullType.getNom();
+                }
+            }
+        }
+        workflowService.initiateWorkflow(demande, workflowType);
 
         DemandeConge saved = demandeCongeService.createDemande(demande);
         return new ResponseEntity<>(demandeCongeService.convertToDTO(saved), HttpStatus.CREATED);
