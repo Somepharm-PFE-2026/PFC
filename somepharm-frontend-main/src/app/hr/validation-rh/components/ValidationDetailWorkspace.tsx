@@ -172,7 +172,7 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction, 
                     <p className="text-xs text-slate-400 font-medium mt-1">Demande initiee par l'employe.</p>
                  </div>
 
-                 {request.dateActionManager || ["VALIDE_MANAGER", "APPROUVÉ", "REFUSE", "ATTENTE"].includes(request.statutCycleVie) ? (
+                 {request.dateActionManager || ["VALIDE_MANAGER", "APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "ATTENTE"].includes(request.statutCycleVie) ? (
                     <div className="relative">
                       <div className="absolute -left-[30px] top-1 w-5 h-5 bg-emerald-500 rounded-full border-4 border-slate-900 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avis du Manager</p>
@@ -193,13 +193,40 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction, 
                  )}
 
                  <div className="relative pt-4">
-                    <div className={`absolute -left-[30px] top-4 w-6 h-6 rounded-full border-4 border-slate-900 shadow-lg ${["APPROUVE", "APPROUVÉ", "REFUSE"].includes(request.statutCycleVie) ? 'bg-slate-700' : 'bg-rose-500 animate-pulse'}`}></div>
+                    <div className={`absolute -left-[30px] top-4 w-6 h-6 rounded-full border-4 border-slate-900 shadow-lg ${["APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "ATTENTE"].includes(request.statutCycleVie) ? 'bg-slate-700' : 'bg-rose-500 animate-pulse'}`}></div>
                     <LiveChronometer 
                       startTime={request.dateArriveeRh || request.dateActionManager || request.dateSoumission} 
-                      isStopped={["APPROUVE", "APPROUVÉ", "REFUSE"].includes(request.statutCycleVie)} 
+                      isStopped={["APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "ATTENTE"].includes(request.statutCycleVie)} 
                     />
                  </div>
 
+                 {["APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "ATTENTE"].includes(request.statutCycleVie) && (
+                    <div className="relative animate-in fade-in duration-500">
+                      <div className={`absolute -left-[30px] top-1 w-5 h-5 rounded-full border-4 border-slate-900 shadow-[0_0_10px_rgba(99,102,241,0.3)] ${
+                        (request.statutCycleVie === "APPROUVE" || request.statutCycleVie === "APPROUVÉ") ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' :
+                        (request.statutCycleVie === "REFUSE" || request.statutCycleVie === "REFUSÉ") ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]' :
+                        'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]'
+                      }`}></div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Décision RH</p>
+                      <p className="text-sm font-black text-slate-200 text-indigo-200">
+                        {(request.statutCycleVie === "APPROUVE" || request.statutCycleVie === "APPROUVÉ") ? "Dossier validé et approuvé" :
+                         (request.statutCycleVie === "REFUSE" || request.statutCycleVie === "REFUSÉ") ? "Dossier refusé" :
+                         "Dossier mis en attente de justificatifs"}
+                      </p>
+                      <p className="text-xs text-slate-500 font-bold mb-3 italic">
+                        Signé électroniquement par le Service RH
+                      </p>
+                      {request.commentaireAction && (
+                        <div className={`border p-4 rounded-2xl text-xs italic font-medium ${
+                          (request.statutCycleVie === "APPROUVE" || request.statutCycleVie === "APPROUVÉ") ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                          (request.statutCycleVie === "REFUSE" || request.statutCycleVie === "REFUSÉ") ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' :
+                          'bg-amber-500/10 border-amber-500/20 text-amber-500'
+                        }`}>
+                          {request.commentaireAction}
+                        </div>
+                      )}
+                    </div>
+                 )}
                </div>
             </div>
 
@@ -209,29 +236,29 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction, 
                  <div className="flex items-center gap-3 text-white mb-2">
                     <ShieldCheck size={18} strokeWidth={3} />
                     <h3 className="font-black text-xs uppercase tracking-widest">
-                      {["APPROUVE", "APPROUVÉ", "REFUSE", "ATTENTE"].includes(request.statutCycleVie) ? "Resultat du Traitement" : "Actions de validation"}
+                      {["APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "ATTENTE"].includes(request.statutCycleVie) ? "Resultat du Traitement" : "Actions de validation"}
                     </h3>
                  </div>
 
-                 {["APPROUVE", "APPROUVÉ", "REFUSE", "ATTENTE"].includes(request.statutCycleVie) ? (
+                 {["APPROUVE", "APPROUVÉ", "REFUSE", "REFUSÉ", "ATTENTE"].includes(request.statutCycleVie) ? (
                    <div className="space-y-6">
                       <div className={`p-10 rounded-[2.5rem] border shadow-xl flex flex-col items-center text-center gap-6 animate-in zoom-in duration-300 ${
                         (request.statutCycleVie === "APPROUVE" || request.statutCycleVie === "APPROUVÉ") ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
-                        request.statutCycleVie === "REFUSE" ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
-                        "bg-indigo-500/10 border-slate-800 text-indigo-400"
+                        (request.statutCycleVie === "REFUSE" || request.statutCycleVie === "REFUSÉ") ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
+                        "bg-amber-500/10 border-amber-500/20 text-amber-500"
                       }`}>
                          <div className={`p-5 rounded-3xl ${
                            (request.statutCycleVie === "APPROUVE" || request.statutCycleVie === "APPROUVÉ") ? "bg-emerald-500 text-slate-950" :
-                           request.statutCycleVie === "REFUSE" ? "bg-rose-500 text-slate-950" : "bg-indigo-600 text-slate-950"
+                           (request.statutCycleVie === "REFUSE" || request.statutCycleVie === "REFUSÉ") ? "bg-rose-500 text-slate-950" : "bg-amber-500 text-slate-950"
                          } shadow-lg`}>
                             {(request.statutCycleVie === "APPROUVE" || request.statutCycleVie === "APPROUVÉ") ? <CheckCircle2 size={40} /> :
-                             request.statutCycleVie === "REFUSE" ? <XCircle size={40} /> : <Clock size={40} />}
+                             (request.statutCycleVie === "REFUSE" || request.statutCycleVie === "REFUSÉ") ? <XCircle size={40} /> : <Clock size={40} />}
                          </div>
                          <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-1">Status Final</p>
                             <h4 className="text-2xl font-black uppercase italic tracking-tighter">
                               {(request.statutCycleVie === "APPROUVE" || request.statutCycleVie === "APPROUVÉ") ? "Dossier Valide" :
-                               request.statutCycleVie === "REFUSE" ? "Dossier Refuse" : "Mis en attente"}
+                               (request.statutCycleVie === "REFUSE" || request.statutCycleVie === "REFUSÉ") ? "Dossier Refuse" : "Dossier en suspens"}
                             </h4>
                          </div>
                       </div>
@@ -278,14 +305,6 @@ export default function ValidationDetailWorkspace({ request, onClose, onAction, 
                                className="w-full bg-gradient-to-r from-indigo-600 to-sky-600 text-white py-6 rounded-3xl font-black uppercase tracking-widest flex items-center justify-center gap-4 hover:opacity-90 hover:scale-[1.02] transition-all shadow-[0_0_30px_rgba(99,102,241,0.15)] disabled:opacity-30 disabled:grayscale"
                              >
                                <CheckCircle2 size={24} /> Valider la demande
-                             </button>
-
-                             <button 
-                               onClick={() => setCommentModalConfig({ isOpen: true, type: "ATTENTE" })}
-                               disabled={request.statutCycleVie === "ATTENTE"}
-                               className="w-full bg-slate-950/85 text-indigo-400 border border-slate-800/80 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-500/10 transition-all flex items-center justify-center gap-2"
-                             >
-                               <Clock size={18} /> Mettre en attente
                              </button>
 
                              <button 

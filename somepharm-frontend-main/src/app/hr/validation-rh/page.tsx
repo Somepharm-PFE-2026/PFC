@@ -211,7 +211,9 @@ export default function ValidationRHPage() {
                 </td>
                 <td className="px-10 py-8">
                   <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter border ${
-                    req.statutCycleVie === "VALIDE_MANAGER" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
+                    (req.statutCycleVie === "VALIDE_MANAGER" || req.statutCycleVie === "APPROUVE" || req.statutCycleVie === "APPROUVÉ") ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
+                    (req.statutCycleVie === "REFUSE" || req.statutCycleVie === "REFUSÉ") ? "bg-rose-500/10 border-rose-500/20 text-rose-400" :
+                    req.statutCycleVie === "ATTENTE" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" :
                     "bg-slate-900 border-slate-800/80 text-indigo-400"
                   }`}>
                     {req.statutCycleVie.replace(/_/g, " ")}

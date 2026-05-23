@@ -73,6 +73,12 @@ public class WorkflowService {
             return requeteRepository.save(req);
         }
 
+        if ("ATTENTE".equalsIgnoreCase(action)) {
+            req.setStatutCycleVie("ATTENTE");
+            req.setCommentaireAction(comment);
+            return requeteRepository.save(req);
+        }
+
         if (req.getCurrentCircuit() == null) {
             // Fallback for requests without dynamic workflow
             req.setStatutCycleVie("APPROUVÉ");
@@ -147,7 +153,7 @@ public class WorkflowService {
     }
 
     public boolean canUserValidate(Requete req, Utilisateur user) {
-        if (req.getStatutCycleVie().startsWith("APPROUV") || req.getStatutCycleVie().startsWith("REFUS")) {
+        if (req.getStatutCycleVie().startsWith("APPROUV") || req.getStatutCycleVie().startsWith("REFUS") || "ATTENTE".equals(req.getStatutCycleVie())) {
             return false;
         }
 
