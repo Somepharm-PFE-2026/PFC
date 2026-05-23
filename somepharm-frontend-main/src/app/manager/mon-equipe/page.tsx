@@ -4,7 +4,7 @@ import {
   Users, UserPlus, Search, List, Network, 
   MoreHorizontal, Phone, Mail, MapPin, 
   Filter, CheckCircle2, XCircle, ShieldCheck,
-  Building, Briefcase, Plus, Shield
+  Building, Briefcase, Plus, Shield, Calendar, Info
 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import EmployeeTree from "../../components/EmployeeTree";
@@ -18,6 +18,7 @@ export default function CollaborateursPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [selectedEmployeeProfile, setSelectedEmployeeProfile] = useState<any | null>(null);
 
   // Filtered employees for the list view
   const filteredEmployees = employees.filter(emp => 
@@ -296,6 +297,140 @@ export default function CollaborateursPage() {
           </form>
         </Modal>
 
+        {/* --- STAFF PROFILE MODAL --- */}
+        <Modal
+          isOpen={selectedEmployeeProfile !== null}
+          onClose={() => setSelectedEmployeeProfile(null)}
+          title="Profil du Collaborateur"
+          maxWidth="max-w-[650px]"
+        >
+          {selectedEmployeeProfile && (
+            <div className="space-y-6 text-slate-900">
+              {/* Header profile section */}
+              <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100">
+                <div className={`w-24 h-24 rounded-3xl flex items-center justify-center overflow-hidden border-4 border-white shadow-md bg-teal-50 text-teal-600`}>
+                  {selectedEmployeeProfile.photoUrl ? (
+                    <img src={selectedEmployeeProfile.photoUrl} alt={selectedEmployeeProfile.nom} className="w-full h-full object-cover" />
+                  ) : (
+                    <Users size={40} />
+                  )}
+                </div>
+                <div className="text-center sm:text-left space-y-1">
+                  <h3 className="text-2xl font-bold text-slate-900">{selectedEmployeeProfile.prenom} {selectedEmployeeProfile.nom}</h3>
+                  <p className="text-teal-600 font-bold text-sm uppercase tracking-wider">{selectedEmployeeProfile.poste || "Poste non défini"}</p>
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-2 pt-1">
+                    <span className="px-2.5 py-0.5 bg-slate-100 border border-slate-200 rounded-md text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                      Matricule: #{selectedEmployeeProfile.matricule}
+                    </span>
+                    <span className="px-2.5 py-0.5 bg-slate-100 border border-slate-200 rounded-md text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                      Dept: {selectedEmployeeProfile.departement || "Général"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid content */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Coordonnées</h4>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm">
+                      <Mail size={16} className="text-slate-400 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Email Professionnel</p>
+                        <p className="font-semibold text-slate-800 break-all">{selectedEmployeeProfile.email}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-sm">
+                      <Phone size={16} className="text-slate-400 shrink-0" />
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Téléphone</p>
+                        <p className="font-semibold text-slate-800">{selectedEmployeeProfile.telephone || "Non renseigné"}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-sm">
+                      <MapPin size={16} className="text-slate-400 shrink-0" />
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Adresse / Localisation</p>
+                        <p className="font-semibold text-slate-800">{selectedEmployeeProfile.adresse || "Algérie (Siège)"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Informations Carrière & Système</h4>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm">
+                      <Calendar size={16} className="text-slate-400 shrink-0" />
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Date d'Embauche</p>
+                        <p className="font-semibold text-slate-800">
+                          {selectedEmployeeProfile.dateEmbauche 
+                            ? new Date(selectedEmployeeProfile.dateEmbauche).toLocaleDateString("fr-FR", { day: 'numeric', month: 'long', year: 'numeric' })
+                            : "Non renseignée"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-sm">
+                      <Shield size={16} className="text-slate-400 shrink-0" />
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Rôle Système</p>
+                        <p className="font-semibold text-slate-800 uppercase tracking-tight">
+                          {typeof selectedEmployeeProfile.role === 'string' 
+                            ? selectedEmployeeProfile.role.replace('ROLE_', '')
+                            : selectedEmployeeProfile.role?.nomRole?.replace('ROLE_', '') || "Employé"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-sm">
+                      <Info size={16} className="text-slate-400 shrink-0" />
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Statut du Compte</p>
+                        <span className={`inline-block px-2.5 py-0.5 mt-0.5 text-[9px] font-bold uppercase tracking-widest border rounded-md ${
+                          selectedEmployeeProfile.statutCompte === "ACTIF" 
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
+                            : "bg-amber-50 text-amber-700 border-amber-100"
+                        }`}>
+                          {selectedEmployeeProfile.statutCompte === "ACTIF" ? "Actif" : "En Attente"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Extra Info: emergency and situation */}
+              <div className="pt-6 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Situation Familiale</p>
+                  <p className="font-bold text-slate-800 mt-0.5">{selectedEmployeeProfile.situationFamiliale || "Non renseignée"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-rose-500">Contact d'Urgence</p>
+                  <p className="font-bold text-rose-800 mt-0.5">{selectedEmployeeProfile.contactUrgence || "Aucun contact d'urgence rattaché"}</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4 border-t border-slate-100">
+                <button 
+                  type="button"
+                  onClick={() => setSelectedEmployeeProfile(null)}
+                  className="w-full sm:w-auto px-8 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          )}
+        </Modal>
+
         {/* --- CONTENT AREA --- */}
 
         {loading ? (
@@ -313,7 +448,13 @@ export default function CollaborateursPage() {
             
             <div className="flex flex-col divide-y divide-slate-50">
               {filteredEmployees.map((emp) => (
-                <EmployeeRow key={emp.idUser} employee={emp} currentUser={currentUser} onActivate={() => handleActivate(emp.idUser)} />
+                <EmployeeRow 
+                  key={emp.idUser} 
+                  employee={emp} 
+                  currentUser={currentUser} 
+                  onActivate={() => handleActivate(emp.idUser)} 
+                  onViewProfile={() => setSelectedEmployeeProfile(emp)}
+                />
               ))}
               {filteredEmployees.length === 0 && (
                 <div className="p-16 text-center text-slate-400 font-medium text-sm italic">
@@ -335,7 +476,7 @@ export default function CollaborateursPage() {
   );
 }
 
-function EmployeeRow({ employee, currentUser, onActivate }: { employee: any, currentUser: any, onActivate: () => void }) {
+function EmployeeRow({ employee, currentUser, onActivate, onViewProfile }: { employee: any, currentUser: any, onActivate: () => void, onViewProfile: () => void }) {
   const isActive = employee.statutCompte === "ACTIF";
 
   return (
@@ -390,7 +531,11 @@ function EmployeeRow({ employee, currentUser, onActivate }: { employee: any, cur
             <CheckCircle2 size={16} className="group-hover:scale-110 transition-transform" />
           </button>
         )}
-        <button className="p-2.5 bg-white border border-slate-200 text-slate-400 rounded-xl hover:bg-slate-50 hover:text-teal-600 transition-all shadow-sm">
+        <button 
+          onClick={onViewProfile}
+          className="p-2.5 bg-white border border-slate-200 text-slate-400 rounded-xl hover:bg-slate-50 hover:text-teal-600 transition-all shadow-sm"
+          title="Consulter le profil"
+        >
           <MoreHorizontal size={16} />
         </button>
       </div>
